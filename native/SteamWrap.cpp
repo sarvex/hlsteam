@@ -1,6 +1,4 @@
-#define IMPLEMENT_API
-#include <hx/CFFI.h>
-#include <hx/CFFIPrime.h>
+#include <hl.h>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -13,23 +11,6 @@
 #include <map>
 
 #include <steam/steam_api.h>
-
-//Thanks to Sven Bergström for these two helper functions:
-inline value bytes_to_hx( const unsigned char* bytes, int byteLength )
-{
-	buffer buf = alloc_buffer_len(byteLength);
-	char* dest = buffer_data(buf);
-	memcpy(dest, bytes, byteLength);
-	return buffer_val(buf);
-}
-
-inline value bytes_to_hx( unsigned char* bytes, int byteLength )
-{
-	buffer buf = alloc_buffer_len(byteLength);
-	char* dest = buffer_data(buf);
-	memcpy(dest, bytes, byteLength);
-	return buffer_val(buf);
-}
 
 //just splits a string
 void split(const std::string &s, char delim, std::vector<std::string> &elems) {
@@ -96,32 +77,35 @@ void deleteSteamParamStringArray(SteamParamStringArray_t * params)
 }
 
 
-AutoGCRoot *g_eventHandler = 0;
+//AutoGCRoot *g_eventHandler = 0;
 
 //-----------------------------------------------------------------------------------------------------------
 // Event
 //-----------------------------------------------------------------------------------------------------------
-static const char* kEventTypeNone = "None";
-static const char* kEventTypeOnGamepadTextInputDismissed = "GamepadTextInputDismissed";
-static const char* kEventTypeOnUserStatsReceived = "UserStatsReceived";
-static const char* kEventTypeOnUserStatsStored = "UserStatsStored";
-static const char* kEventTypeOnUserAchievementStored = "UserAchievementStored";
-static const char* kEventTypeOnLeaderboardFound = "LeaderboardFound";
-static const char* kEventTypeOnScoreUploaded = "ScoreUploaded";
-static const char* kEventTypeOnScoreDownloaded = "ScoreDownloaded";
-static const char* kEventTypeOnGlobalStatsReceived = "GlobalStatsReceived";
-static const char* kEventTypeUGCLegalAgreement = "UGCLegalAgreementStatus";
-static const char* kEventTypeUGCItemCreated = "UGCItemCreated";
-static const char* kEventTypeOnItemUpdateSubmitted = "UGCItemUpdateSubmitted";
-static const char* kEventTypeOnFileShared = "RemoteStorageFileShared";
-static const char* kEventTypeOnEnumerateUserSharedWorkshopFiles = "UserSharedWorkshopFilesEnumerated";
-static const char* kEventTypeOnEnumerateUserPublishedFiles = "UserPublishedFilesEnumerated";
-static const char* kEventTypeOnEnumerateUserSubscribedFiles = "UserSubscribedFilesEnumerated";
-static const char* kEventTypeOnUGCDownload = "UGCDownloaded";
-static const char* kEventTypeOnGetPublishedFileDetails = "PublishedFileDetailsGotten";
-static const char* kEventTypeOnDownloadItem = "ItemDownloaded";
-static const char* kEventTypeOnItemInstalled = "ItemInstalled";
-static const char* kEventTypeOnUGCQueryCompleted = "UGCQueryCompleted";
+
+typedef enum {
+	None,
+	GamepadTextInputDismissed,
+	UserStatsReceived,
+	UserStatsStored,
+	UserAchievementStored,
+	LeaderboardFound,
+	ScoreUploaded,
+	ScoreDownloaded,
+	GlobalStatsReceived,
+	UGCLegalAgreementStatus,
+	UGCItemCreated,
+	UGCItemUpdateSubmitted,
+	RemoteStorageFileShared,
+	UserSharedWorkshopFilesEnumerated,
+	UserPublishedFilesEnumerated,
+	UserSubscribedFilesEnumerated,
+	UGCDownloaded,
+	PublishedFileDetailsGotten,
+	ItemDownloaded,
+	ItemInstalled,
+	UGCQueryCompleted
+} event_type;
 
 //A simple data structure that holds on to the native 64-bit handles and maps them to regular ints.
 //This is because it is cumbersome to pass back 64-bit values over CFFI, and strictly speaking, the haxe 
@@ -191,12 +175,11 @@ static steamHandleMap mapControllers;
 static ControllerAnalogActionData_t analogActionData;
 static ControllerMotionData_t motionData;
 
-struct Event
-{
-	const char* m_type;
-	int m_success;
-	std::string m_data;
-	Event(const char* type, bool success=false, const std::string& data="") : m_type(type), m_success(success), m_data(data) {}
+struct Event {
+	hl_type *t;
+	event_type type;
+	int success;
+	char *data;
 };
 
 static void SendEvent(const Event& e)
