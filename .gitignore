@@ -12,3 +12,4 @@ temp/
 *.VC.*
 *.user
 /.vs
+/*.hl

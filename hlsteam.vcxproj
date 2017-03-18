@@ -22,6 +22,7 @@
     <ProjectGuid>{790A6ECF-AEBA-48EB-BB22-6420079DFAFC}</ProjectGuid>
     <RootNamespace>hlsteam</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>steam</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

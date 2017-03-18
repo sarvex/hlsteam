@@ -1,8 +1,5 @@
 package steamwrap.api;
-import cpp.Lib;
 import steamwrap.api.Steam;
-import steamwrap.helpers.Loader;
-import steamwrap.helpers.MacroHelper;
 
 /**
  * The User Generated Content API. Used by API.hx, should never be created manually by the user.
@@ -302,17 +299,17 @@ class UGC
 	private var SteamWrap_GetQueryUGCMetadata:Dynamic;
 	
 	//CFFI PRIME calls:
-	private var SteamWrap_GetNumSubscribedItems = Loader.load("SteamWrap_GetNumSubscribedItems","ii");
-	private var SteamWrap_GetItemState = Loader.load("SteamWrap_GetItemState","ci");
-	private var SteamWrap_DownloadItem = Loader.load("SteamWrap_DownloadItem","cii");
-	private var SteamWrap_AddRequiredKeyValueTag = Loader.load("SteamWrap_AddRequiredKeyValueTag", "ccci");
-	private var SteamWrap_AddRequiredTag = Loader.load("SteamWrap_AddRequiredTag", "cci");
-	private var SteamWrap_AddExcludedTag = Loader.load("SteamWrap_AddExcludedTag", "cci");
-	private var SteamWrap_SendQueryUGCRequest = Loader.load("SteamWrap_SendQueryUGCRequest", "cv");
-	private var SteamWrap_SetReturnMetadata = Loader.load("SteamWrap_SetReturnMetadata", "cii");
-	private var SteamWrap_SetReturnKeyValueTags = Loader.load("SteamWrap_SetReturnKeyValueTags", "cii");
-	private var SteamWrap_ReleaseQueryUGCRequest = Loader.load("SteamWrap_ReleaseQueryUGCRequest", "ci");
-	private var SteamWrap_GetQueryUGCNumKeyValueTags = Loader.load("SteamWrap_GetQueryUGCNumKeyValueTags", "cii");
+	private var SteamWrap_GetNumSubscribedItems:Dynamic;
+	private var SteamWrap_GetItemState:Dynamic;
+	private var SteamWrap_DownloadItem:Dynamic;
+	private var SteamWrap_AddRequiredKeyValueTag:Dynamic;
+	private var SteamWrap_AddRequiredTag :Dynamic;
+	private var SteamWrap_AddExcludedTag:Dynamic;
+	private var SteamWrap_SendQueryUGCRequest:Dynamic;
+	private var SteamWrap_SetReturnMetadata:Dynamic;
+	private var SteamWrap_SetReturnKeyValueTags:Dynamic;
+	private var SteamWrap_ReleaseQueryUGCRequest:Dynamic;
+	private var SteamWrap_GetQueryUGCNumKeyValueTags:Dynamic;
 	
 	private function new(appId_:Int, CustomTrace:String->Void) {
 		#if sys		//TODO: figure out what targets this will & won't work with and upate this guard
@@ -321,35 +318,6 @@ class UGC
 		
 		appId = appId_;
 		customTrace = CustomTrace;
-		
-		try {
-			//Old-school CFFI calls:
-			SteamWrap_CreateUGCItem = cpp.Lib.load("steamwrap", "SteamWrap_CreateUGCItem", 1);
-			SteamWrap_SetUGCItemContent = cpp.Lib.load("steamwrap", "SteamWrap_SetUGCItemContent", 2);
-			SteamWrap_SetUGCItemDescription = cpp.Lib.load("steamwrap", "SteamWrap_SetUGCItemDescription", 2);
-			SteamWrap_SetUGCItemPreviewImage = cpp.Lib.load("steamwrap", "SteamWrap_SetUGCItemPreviewImage", 2);
-			SteamWrap_SetUGCItemTitle = cpp.Lib.load("steamwrap", "SteamWrap_SetUGCItemTitle", 2);
-			SteamWrap_SetUGCItemTags = cpp.Lib.load("steamwrap", "SteamWrap_SetUGCItemTags", 2);
-			SteamWrap_AddUGCItemKeyValueTag = cpp.Lib.load("steamwrap", "SteamWrap_AddUGCItemKeyValueTag", 3);
-			SteamWrap_RemoveUGCItemKeyValueTags = cpp.Lib.load("steamwrap", "SteamWrap_RemoveUGCItemKeyValueTags", 2);
-			SteamWrap_SetUGCItemVisibility = cpp.Lib.load("steamwrap", "SteamWrap_SetUGCItemVisibility", 2);
-			SteamWrap_StartUpdateUGCItem = cpp.Lib.load("steamwrap", "SteamWrap_StartUpdateUGCItem", 2);
-			SteamWrap_SubmitUGCItemUpdate = cpp.Lib.load("steamwrap", "SteamWrap_SubmitUGCItemUpdate", 2);
-			SteamWrap_GetSubscribedItems = cpp.Lib.load("steamwrap", "SteamWrap_GetSubscribedItems", 0);
-			SteamWrap_GetItemDownloadInfo = cpp.Lib.load("steamwrap", "SteamWrap_GetItemDownloadInfo", 1);
-			SteamWrap_GetItemInstallInfo = cpp.Lib.load("steamwrap", "SteamWrap_GetItemInstallInfo", 2);
-			
-			SteamWrap_CreateQueryAllUGCRequest = cpp.Lib.load("steamwrap", "SteamWrap_CreateQueryAllUGCRequest", 5);
-			SteamWrap_CreateQueryUGCDetailsRequest = cpp.Lib.load("steamwrap", "SteamWrap_CreateQueryUGCDetailsRequest", 1);
-			SteamWrap_GetQueryUGCResult = cpp.Lib.load("steamwrap", "SteamWrap_GetQueryUGCResult", 2);
-			SteamWrap_GetQueryUGCKeyValueTag = cpp.Lib.load("steamwrap", "SteamWrap_GetQueryUGCKeyValueTag", 5);
-			SteamWrap_GetQueryUGCMetadata = cpp.Lib.load("steamwrap", "SteamWrap_GetQueryUGCMetadata", 3);
-		}
-		catch (e:Dynamic) {
-			customTrace("Running non-Steam version (" + e + ")");
-			return;
-		}
-		
 		
 		
 		// if we get this far, the dlls loaded ok and we need Steam controllers to init.

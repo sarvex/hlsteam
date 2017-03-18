@@ -1,10 +1,7 @@
 package steamwrap.api;
-import cpp.Lib;
 import haxe.io.Bytes;
 import haxe.io.BytesData;
 import steamwrap.api.Steam;
-import steamwrap.helpers.Loader;
-import steamwrap.helpers.MacroHelper;
 
 /**
  * NOTE: The Workshop API is deprecated, it's here for legacy purposes. You should use the UGC API for new projects.
@@ -177,12 +174,11 @@ class Workshop
 	private var SteamWrap_UGCRead:Dynamic;
 	
 	//CFFI PRIME calls:
-	private var SteamWrap_GetPublishedFileDetails          = Loader.load("SteamWrap_GetPublishedFileDetails"         , "civ");
-	//private var SteamWrap_EnumeratePublishedWorkshopFiles  = Loader.load("SteamWrap_EnumeratePublishedWorkshopFiles" , "iiiicci");
-	private var SteamWrap_EnumerateUserSharedWorkshopFiles = Loader.load("SteamWrap_EnumerateUserSharedWorkshopFiles", "ciccv");
-	private var SteamWrap_EnumerateUserSubscribedFiles     = Loader.load("SteamWrap_EnumerateUserSubscribedFiles"    , "iv");
-	private var SteamWrap_EnumerateUserPublishedFiles      = Loader.load("SteamWrap_EnumerateUserPublishedFiles"     , "iv");
-	private var SteamWrap_UGCDownload                      = Loader.load("SteamWrap_UGCDownload"                     , "civ");
+	private var SteamWrap_GetPublishedFileDetails:Dynamic;
+	private var SteamWrap_EnumerateUserSharedWorkshopFiles:Dynamic;
+	private var SteamWrap_EnumerateUserSubscribedFiles:Dynamic;
+	private var SteamWrap_EnumerateUserPublishedFiles:Dynamic;
+	private var SteamWrap_UGCDownload:Dynamic;
 	
 	private function new(appId_:Int, CustomTrace:String->Void) {
 		#if sys		//TODO: figure out what targets this will & won't work with and upate this guard
@@ -191,16 +187,6 @@ class Workshop
 		
 		appId = appId_;
 		customTrace = CustomTrace;
-		
-		try {
-			//Old-school CFFI calls:
-			SteamWrap_GetUGCDownloadProgress = cpp.Lib.load("steamwrap", "SteamWrap_GetUGCDownloadProgress", 1);
-			SteamWrap_UGCRead = cpp.Lib.load("steamwrap", "SteamWrap_UGCRead", 4);
-		}
-		catch (e:Dynamic) {
-			customTrace("Running non-Steam version (" + e + ")");
-			return;
-		}
 		
 		// if we get this far, the dlls loaded ok and we need Steam controllers to init.
 		// otherwise, we're trying to run the Steam version without the Steam client

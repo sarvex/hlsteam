@@ -1,14 +1,6 @@
 package steamwrap.api;
 
-import cpp.Lib;
 import haxe.Int64;
-import steamwrap.api.Steam.EnumerateWorkshopFilesResult;
-import steamwrap.api.Steam.DownloadUGCResult;
-import steamwrap.api.Steam.GetItemInstallInfoResult;
-import steamwrap.api.Steam.GetPublishedFileDetailsResult;
-import steamwrap.api.Steam.SteamUGCDetails;
-import steamwrap.api.Steam.SteamUGCQueryCompleted;
-import steamwrap.helpers.Loader;
 import steamwrap.helpers.Util;
 
 private enum LeaderboardOp
@@ -99,45 +91,6 @@ class Steam
 		appId = appId_;
 		leaderboardIds = new Array<String>();
 		leaderboardOps = new List<LeaderboardOp>();
-		
-		try {
-			SteamWrap_ClearAchievement = cpp.Lib.load("steamwrap", "SteamWrap_ClearAchievement", 1);
-			SteamWrap_DownloadScores = cpp.Lib.load("steamwrap", "SteamWrap_DownloadScores", 3);
-			SteamWrap_FindLeaderboard = cpp.Lib.load("steamwrap", "SteamWrap_FindLeaderboard", 1);
-			SteamWrap_GetCurrentGameLanguage = cpp.Lib.load("steamwrap", "SteamWrap_GetCurrentGameLanguage", 0);
-			SteamWrap_GetGlobalStat = cpp.Lib.load("steamwrap", "SteamWrap_GetGlobalStat", 1);
-			SteamWrap_GetStat = cpp.Lib.load("steamwrap", "SteamWrap_GetStat", 1);
-			SteamWrap_GetStatFloat = cpp.Lib.load("steamwrap", "SteamWrap_GetStatFloat", 1);
-			SteamWrap_GetStatInt = cpp.Lib.load("steamwrap", "SteamWrap_GetStatInt", 1);
-			SteamWrap_IndicateAchievementProgress = cpp.Lib.load("steamwrap", "SteamWrap_IndicateAchievementProgress", 3);
-			SteamWrap_Init = cpp.Lib.load("steamwrap", "SteamWrap_Init", 2);
-			SteamWrap_IsSteamInBigPictureMode = cpp.Lib.load("steamwrap", "SteamWrap_IsSteamInBigPictureMode", 0);
-			SteamWrap_IsSteamRunning = cpp.Lib.load("steamwrap", "SteamWrap_IsSteamRunning", 0);
-			SteamWrap_IsOverlayEnabled = cpp.Lib.load("steamwrap", "SteamWrap_IsOverlayEnabled", 0);
-			SteamWrap_BOverlayNeedsPresent = cpp.Lib.load("steamwrap", "SteamWrap_BOverlayNeedsPresent", 0);
-			SteamWrap_RequestStats = cpp.Lib.load("steamwrap", "SteamWrap_RequestStats", 0);
-			SteamWrap_RunCallbacks = cpp.Lib.load("steamwrap", "SteamWrap_RunCallbacks", 0);
-			SteamWrap_SetAchievement = cpp.Lib.load("steamwrap", "SteamWrap_SetAchievement", 1);
-			SteamWrap_GetAchievement = cpp.Lib.load("steamwrap", "SteamWrap_GetAchievement", 1);
-			SteamWrap_GetAchievementDisplayAttribute = cpp.Lib.load("steamwrap", "SteamWrap_GetAchievementDisplayAttribute", 2);
-			SteamWrap_GetNumAchievements = cpp.Lib.load("steamwrap", "SteamWrap_GetNumAchievements", 0);
-			SteamWrap_GetAchievementName = cpp.Lib.load("steamwrap", "SteamWrap_GetAchievementName", 1);
-			SteamWrap_GetSteamID = cpp.Lib.load("steamwrap", "SteamWrap_GetSteamID", 0);
-			SteamWrap_GetPersonaName = cpp.Lib.load("steamwrap", "SteamWrap_GetPersonaName", 0);
-			SteamWrap_SetStat = cpp.Lib.load("steamwrap", "SteamWrap_SetStat", 2);
-			SteamWrap_SetStatFloat = cpp.Lib.load("steamwrap", "SteamWrap_SetStatFloat", 2);
-			SteamWrap_SetStatInt = cpp.Lib.load("steamwrap", "SteamWrap_SetStatInt", 2);
-			SteamWrap_Shutdown = cpp.Lib.load("steamwrap", "SteamWrap_Shutdown", 0);
-			SteamWrap_StoreStats = cpp.Lib.load("steamwrap", "SteamWrap_StoreStats", 0);
-			SteamWrap_UploadScore = cpp.Lib.load("steamwrap", "SteamWrap_UploadScore", 3);
-			SteamWrap_RequestGlobalStats = cpp.Lib.load("steamwrap", "SteamWrap_RequestGlobalStats", 0);
-			SteamWrap_RestartAppIfNecessary = cpp.Lib.load("steamwrap", "SteamWrap_RestartAppIfNecessary", 1);
-			SteamWrap_OpenOverlay = cpp.Lib.load("steamwrap", "SteamWrap_OpenOverlay", 1);
-		}
-		catch (e:Dynamic) {
-			customTrace("Running non-Steam version (" + e + ")");
-			return;
-		}
 		
 		// if we get this far, the dlls loaded ok and we need Steam to init.
 		// otherwise, we're trying to run the Steam version without the Steam client
@@ -704,7 +657,6 @@ class EnumerateWorkshopFilesResult extends EnumerateUserPublishedFilesResult
 		var startIndex:Int = 0;
 		
 		var arr = str.split(",");
-		var currField = "";
 		for (str in arr){
 			
 			if (str.indexOf(":") != -1)
@@ -1037,6 +989,7 @@ class GetPublishedFileDetailsResult
 			tagsTruncated,
 			fileName,
 			fileSize,
+			previewFileSize,
 			url,
 			fileType,
 			acceptedForUse

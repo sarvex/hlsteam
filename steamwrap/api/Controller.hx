@@ -1,7 +1,4 @@
 package steamwrap.api;
-import cpp.Lib;
-import haxe.Int32;
-import steamwrap.helpers.Loader;
 import steamwrap.helpers.MacroHelper;
 
 /**
@@ -103,10 +100,7 @@ class Controller
 		
 		if (!active) return data;
 		
-		data.bActive = SteamWrap_GetAnalogActionData.call(controller, action);
-		data.eMode = cast SteamWrap_GetAnalogActionData_eMode.call(0);
-		data.x = SteamWrap_GetAnalogActionData_x.call(0);
-		data.y = SteamWrap_GetAnalogActionData_y.call(0);
+		SteamWrap_GetAnalogActionData.call(controller, action, data);
 		
 		return data;
 	}
@@ -435,18 +429,8 @@ class Controller
 		
 		if (!active) return data;
 		
-		SteamWrap_GetMotionData.call(controller);
+		SteamWrap_GetMotionData.call(controller, data);
 		
-		data.posAccelX = SteamWrap_GetMotionData_posAccelX.call(0);
-		data.posAccelY = SteamWrap_GetMotionData_posAccelY.call(0);
-		data.posAccelZ = SteamWrap_GetMotionData_posAccelZ.call(0);
-		data.rotQuatX  = SteamWrap_GetMotionData_rotQuatX.call(0);
-		data.rotQuatY  = SteamWrap_GetMotionData_rotQuatY.call(0);
-		data.rotQuatZ  = SteamWrap_GetMotionData_rotQuatZ.call(0);
-		data.rotQuatW  = SteamWrap_GetMotionData_rotQuatW.call(0);
-		data.rotVelX   = SteamWrap_GetMotionData_rotVelX.call(0);
-		data.rotVelY   = SteamWrap_GetMotionData_rotVelY.call(0);
-		data.rotVelZ   = SteamWrap_GetMotionData_rotVelZ.call(0);
 		
 		return data;
 	}
@@ -504,34 +488,21 @@ class Controller
 	private static var SteamWrap_GetControllerMinAnalogActionData:Dynamic;
 	
 	//CFFI PRIME calls
-	private var SteamWrap_ActivateActionSet       = Loader.load("SteamWrap_ActivateActionSet","iii");
-	private var SteamWrap_GetCurrentActionSet     = Loader.load("SteamWrap_GetCurrentActionSet","ii");
-	private var SteamWrap_GetActionSetHandle      = Loader.load("SteamWrap_GetActionSetHandle","ci");
-	private var SteamWrap_GetAnalogActionData     = Loader.load("SteamWrap_GetAnalogActionData", "iii");
-	private var SteamWrap_GetAnalogActionHandle   = Loader.load("SteamWrap_GetAnalogActionHandle","ci");
-	private var SteamWrap_GetDigitalActionData    = Loader.load("SteamWrap_GetDigitalActionData", "iii");
-		private var SteamWrap_GetAnalogActionData_eMode = Loader.load("SteamWrap_GetAnalogActionData_eMode", "ii");
-		private var SteamWrap_GetAnalogActionData_x     = Loader.load("SteamWrap_GetAnalogActionData_x", "if");
-		private var SteamWrap_GetAnalogActionData_y     = Loader.load("SteamWrap_GetAnalogActionData_y", "if");
-	private var SteamWrap_GetDigitalActionHandle  = Loader.load("SteamWrap_GetDigitalActionHandle", "ci");
-	private var SteamWrap_ShowGamepadTextInput    = Loader.load("SteamWrap_ShowGamepadTextInput", "iicici");
-	private var SteamWrap_TriggerHapticPulse      = Loader.load("SteamWrap_TriggerHapticPulse", "iiiv");
-	private var SteamWrap_TriggerRepeatedHapticPulse = Loader.load("SteamWrap_TriggerRepeatedHapticPulse", "iiiiiiv");
-	private var SteamWrap_TriggerVibration        = Loader.load("SteamWrap_TriggerVibration", "iiiv");
-	private var SteamWrap_SetLEDColor             = Loader.load("SteamWrap_SetLEDColor", "iiiiiv");
-	private var SteamWrap_GetMotionData           = Loader.load("SteamWrap_GetMotionData", "iv");
-		private var SteamWrap_GetMotionData_rotQuatX =  Loader.load("SteamWrap_GetMotionData_rotQuatX", "ii");
-		private var SteamWrap_GetMotionData_rotQuatY =  Loader.load("SteamWrap_GetMotionData_rotQuatY", "ii");
-		private var SteamWrap_GetMotionData_rotQuatZ =  Loader.load("SteamWrap_GetMotionData_rotQuatZ", "ii");
-		private var SteamWrap_GetMotionData_rotQuatW =  Loader.load("SteamWrap_GetMotionData_rotQuatW", "ii");
-		private var SteamWrap_GetMotionData_posAccelX = Loader.load("SteamWrap_GetMotionData_posAccelX", "ii");
-		private var SteamWrap_GetMotionData_posAccelY = Loader.load("SteamWrap_GetMotionData_posAccelY", "ii");
-		private var SteamWrap_GetMotionData_posAccelZ = Loader.load("SteamWrap_GetMotionData_posAccelZ", "ii");
-		private var SteamWrap_GetMotionData_rotVelX =   Loader.load("SteamWrap_GetMotionData_rotVelX", "ii");
-		private var SteamWrap_GetMotionData_rotVelY =   Loader.load("SteamWrap_GetMotionData_rotVelY", "ii");
-		private var SteamWrap_GetMotionData_rotVelZ =   Loader.load("SteamWrap_GetMotionData_rotVelZ", "ii");
-	private var SteamWrap_ShowDigitalActionOrigins = Loader.load("SteamWrap_ShowDigitalActionOrigins", "iifffi");
-	private var SteamWrap_ShowAnalogActionOrigins  = Loader.load("SteamWrap_ShowDigitalActionOrigins", "iifffi");
+	private var SteamWrap_ActivateActionSet:Dynamic;
+	private var SteamWrap_GetCurrentActionSet:Dynamic;
+	private var SteamWrap_GetActionSetHandle:Dynamic;
+	private var SteamWrap_GetAnalogActionData:Dynamic;
+	private var SteamWrap_GetAnalogActionHandle:Dynamic;
+	private var SteamWrap_GetDigitalActionData:Dynamic;
+	private var SteamWrap_GetDigitalActionHandle:Dynamic;
+	private var SteamWrap_ShowGamepadTextInput:Dynamic;
+	private var SteamWrap_TriggerHapticPulse:Dynamic;
+	private var SteamWrap_TriggerRepeatedHapticPulse:Dynamic;
+	private var SteamWrap_TriggerVibration:Dynamic;
+	private var SteamWrap_SetLEDColor:Dynamic;
+	private var SteamWrap_GetMotionData:Dynamic;
+	private var SteamWrap_ShowDigitalActionOrigins:Dynamic;
+	private var SteamWrap_ShowAnalogActionOrigins:Dynamic;
 	
 	
 	private function new(CustomTrace:String->Void)
@@ -542,39 +513,11 @@ class Controller
 	
 	private function init()
 	{
-		#if sys		//TODO: figure out what targets this will & won't work with and upate this guard
-		
 		if (active) return;
-		
-		try {
-			//Old-school CFFI calls:
-			SteamWrap_GetConnectedControllers = cpp.Lib.load("steamwrap", "SteamWrap_GetConnectedControllers", 0);
-			SteamWrap_GetDigitalActionOrigins = cpp.Lib.load("steamwrap", "SteamWrap_GetDigitalActionOrigins", 3);
-			SteamWrap_GetEnteredGamepadTextInput = cpp.Lib.load("steamwrap", "SteamWrap_GetEnteredGamepadTextInput", 0);
-			SteamWrap_GetAnalogActionOrigins = cpp.Lib.load("steamwrap", "SteamWrap_GetAnalogActionOrigins", 3);
-			SteamWrap_InitControllers = cpp.Lib.load("steamwrap", "SteamWrap_InitControllers", 0);
-			SteamWrap_ShowBindingPanel = cpp.Lib.load("steamwrap", "SteamWrap_ShowBindingPanel", 1);
-			SteamWrap_GetGlyphForActionOrigin = cpp.Lib.load("steamwrap", "SteamWrap_GetGlyphForActionOrigin", 1);
-			SteamWrap_GetStringForActionOrigin = cpp.Lib.load("steamwrap", "SteamWrap_GetStringForActionOrigin", 1);
-			SteamWrap_ShutdownControllers = cpp.Lib.load("steamwrap", "SteamWrap_ShutdownControllers", 0);
-			
-			SteamWrap_GetControllerMaxCount = cpp.Lib.load("steamwrap", "SteamWrap_GetControllerMaxCount", 0);
-			SteamWrap_GetControllerMaxAnalogActions = cpp.Lib.load("steamwrap", "SteamWrap_GetControllerMaxAnalogActions", 0);
-			SteamWrap_GetControllerMaxDigitalActions = cpp.Lib.load("steamwrap", "SteamWrap_GetControllerMaxDigitalActions", 0);
-			SteamWrap_GetControllerMaxOrigins = cpp.Lib.load("steamwrap", "SteamWrap_GetControllerMaxOrigins", 0);
-			SteamWrap_GetControllerMaxAnalogActionData = cpp.Lib.load("steamwrap", "SteamWrap_GetControllerMaxAnalogActionData", 0);
-			SteamWrap_GetControllerMinAnalogActionData = cpp.Lib.load("steamwrap", "SteamWrap_GetControllerMinAnalogActionData", 0);
-		}
-		catch (e:Dynamic) {
-			customTrace("Running non-Steam version (" + e + ")");
-			return;
-		}
 		
 		// if we get this far, the dlls loaded ok and we need Steam controllers to init.
 		// otherwise, we're trying to run the Steam version without the Steam client
 		active = SteamWrap_InitControllers();
-		
-		#end
 	}
 	
 	private var max_controllers:Int = -1;
@@ -641,10 +584,10 @@ abstract ControllerDigitalActionData(Int) from Int to Int{
 
 class ControllerAnalogActionData
 {
+	public var bActive:Int = 0;
 	public var eMode:EControllerSourceMode = NONE;
 	public var x:Float = 0.0;
 	public var y:Float = 0.0;
-	public var bActive:Int = 0;
 	
 	public function new(){}
 }

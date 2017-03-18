@@ -1,10 +1,5 @@
 package steamwrap.api;
-import cpp.Lib;
 import haxe.io.Bytes;
-import haxe.io.BytesData;
-import steamwrap.api.Steam;
-import steamwrap.helpers.Loader;
-import steamwrap.helpers.MacroHelper;
 
 /**
  * The Steam Cloud API. Used by API.hx, should never be created manually by the user.
@@ -94,35 +89,20 @@ class Cloud
 	private var SteamWrap_GetQuota:Dynamic;
 	
 	//CFFI PRIME calls:
-	private var SteamWrap_GetFileCount     = Loader.load("SteamWrap_GetFileCount", "ii");
-	private var SteamWrap_FileExists    = Loader.load("SteamWrap_FileExists", "ci");
-	private var SteamWrap_FileDelete    = Loader.load("SteamWrap_FileDelete", "ci");
-	private var SteamWrap_GetFileSize      = Loader.load("SteamWrap_GetFileSize", "ci");
-	private var SteamWrap_FileShare     = Loader.load("SteamWrap_FileShare", "cv");
-	private var SteamWrap_IsCloudEnabledForApp   = Loader.load("SteamWrap_IsCloudEnabledForApp", "ii");
-	private var SteamWrap_SetCloudEnabledForApp  = Loader.load("SteamWrap_SetCloudEnabledForApp", "iv");
+	private var SteamWrap_GetFileCount:Dynamic;
+	private var SteamWrap_FileExists:Dynamic;
+	private var SteamWrap_FileDelete:Dynamic;
+	private var SteamWrap_GetFileSize:Dynamic;
+	private var SteamWrap_FileShare:Dynamic;
+	private var SteamWrap_IsCloudEnabledForApp:Dynamic;
+	private var SteamWrap_SetCloudEnabledForApp:Dynamic;
 	
 	private function new(appId_:Int, CustomTrace:String->Void) {
-		#if sys		//TODO: figure out what targets this will & won't work with and upate this guard
-		
 		if (active) return;
 		
 		appId = appId_;
 		customTrace = CustomTrace;
 		
-		try {
-			//Old-school CFFI calls:
-			SteamWrap_FileRead  = cpp.Lib.load("steamwrap", "SteamWrap_FileRead", 1);
-			SteamWrap_FileWrite = cpp.Lib.load("steamwrap", "SteamWrap_FileWrite", 2);
-			SteamWrap_GetQuota = cpp.Lib.load("steamwrap", "SteamWrap_GetQuota", 0);
-		}
-		catch (e:Dynamic) {
-			customTrace("Running non-Steam version (" + e + ")");
-			return;
-		}
-		
 		active = true;
-		
-		#end
 	}
 }
