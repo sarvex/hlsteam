@@ -20,35 +20,35 @@ class UGC
 	//TODO: these all need documentation headers
 	
 	public function createItem():Void {
-		SteamWrap_CreateUGCItem(appId);
+		_CreateUGCItem(appId);
 	}
 	
 	public function setItemContent(updateHandle:String, absPath:String):Bool {
-		return SteamWrap_SetUGCItemContent(updateHandle, absPath);
+		return _SetUGCItemContent(@:privateAccess updateHandle.toUtf8(), @:privateAccess absPath.toUtf8());
 	}
 	
 	public function setItemDescription(updateHandle:String, itemDesc:String):Bool {
-		return SteamWrap_SetUGCItemDescription(updateHandle, itemDesc.substr(0, 8000));
+		return _SetUGCItemDescription(@:privateAccess updateHandle.toUtf8(), @:privateAccess itemDesc.substr(0, 8000).toUtf8());
 	}
 	
 	public function setItemPreviewImage(updateHandle:String, absPath:String):Bool {
-		return SteamWrap_SetUGCItemPreviewImage(updateHandle, absPath);
+		return _SetUGCItemPreviewImage(@:privateAccess updateHandle.toUtf8(), @:privateAccess absPath.toUtf8());
 	}
 	
 	public function setItemTags(updateHandle:String, tags:String):Bool {
-		return SteamWrap_SetUGCItemTags(updateHandle, tags);
+		return _SetUGCItemTags(@:privateAccess updateHandle.toUtf8(), @:privateAccess tags.toUtf8());
 	}
 	
 	public function addItemKeyValueTag(updateHandle:String, key:String, value:String):Bool {
-		return SteamWrap_AddUGCItemKeyValueTag(updateHandle, key, value);
+		return _AddUGCItemKeyValueTag(@:privateAccess updateHandle.toUtf8(), @:privateAccess key.toUtf8(), @:privateAccess value.toUtf8());
 	}
 	
 	public function removeItemKeyValueTags(updateHandle:String, key:String):Bool {
-		return SteamWrap_RemoveUGCItemKeyValueTags(updateHandle, key);
+		return _RemoveUGCItemKeyValueTags(@:privateAccess updateHandle.toUtf8(), @:privateAccess key.toUtf8());
 	}
 	
 	public function setItemTitle(updateHandle:String, itemTitle:String):Bool {
-		return SteamWrap_SetUGCItemTitle(updateHandle, itemTitle.substr(0, 128));
+		return _SetUGCItemTitle(@:privateAccess updateHandle.toUtf8(), @:privateAccess itemTitle.substr(0, 128).toUtf8());
 	}
 	
 	public function setItemVisibility(updateHandle:String, visibility:Int):Bool {
@@ -58,23 +58,23 @@ class UGC
 		*	1 : Friends Only
 		*	2 : Private
 		*/
-		return SteamWrap_SetUGCItemVisibility(updateHandle, visibility);
+		return _SetUGCItemVisibility(@:privateAccess updateHandle.toUtf8(), visibility);
 	}
 	
 	public function startUpdateItem(itemID:Int):String {
-		return SteamWrap_StartUpdateUGCItem(appId, itemID);
+		return @:privateAccess String.fromUTF8(_StartUpdateUGCItem(appId, itemID));
 	}
 	
 	public function submitItemUpdate(updateHandle:String, changeNotes:String):Bool {
-		return SteamWrap_SubmitUGCItemUpdate(updateHandle, changeNotes);
+		return _SubmitUGCItemUpdate(@:privateAccess updateHandle.toUtf8(), @:privateAccess changeNotes.toUtf8());
 	}
 	
 	public function getNumSubscribedItems():Int {
-		return SteamWrap_GetNumSubscribedItems.call(0);
+		return _GetNumSubscribedItems();
 	}
 	
 	public function getItemState(fileID:String):EItemState {
-		var result:EItemState = SteamWrap_GetItemState.call(fileID);
+		var result:EItemState = _GetItemState(@:privateAccess fileID.toUtf8());
 		return result;
 	}
 	
@@ -85,8 +85,7 @@ class UGC
 	 * @return
 	 */
 	public function downloadItem(fileID:String, highPriority:Bool):Bool {
-		var result = SteamWrap_DownloadItem.call(fileID, highPriority ? 1 : 0);
-		return result == 1;
+		return _DownloadItem(@:privateAccess fileID.toUtf8(), highPriority);
 	}
 	
 	/**
@@ -96,8 +95,7 @@ class UGC
 	 * @return
 	 */
 	public function addRequiredTag(queryHandle:String, tagName:String):Bool {
-		var result = SteamWrap_AddRequiredTag.call(queryHandle, tagName);
-		return result == 1;
+		return _AddRequiredTag(@:privateAccess queryHandle.toUtf8(), @:privateAccess tagName.toUtf8());
 	}
 	
 	/**
@@ -107,8 +105,7 @@ class UGC
 	 * @return
 	 */
 	public function addExcludedTag(queryHandle:String, tagName:String):Bool {
-		var result:Int = SteamWrap_AddExcludedTag.call(queryHandle, tagName);
-		return result == 1;
+		return _AddExcludedTag(@:privateAccess queryHandle.toUtf8(), @:privateAccess tagName.toUtf8());
 	}
 	
 	/**
@@ -119,8 +116,7 @@ class UGC
 	 * @return
 	 */
 	public function addRequiredKeyValueTag(queryHandle:String, key:String, value:String):Bool {
-		var result:Int = SteamWrap_AddRequiredKeyValueTag.call(queryHandle, key, value);
-		return result == 1;
+		return _AddRequiredKeyValueTag(@:privateAccess queryHandle.toUtf8(), @:privateAccess key.toUtf8(), @:privateAccess value.toUtf8());
 	}
 	
 	/**
@@ -130,8 +126,7 @@ class UGC
 	 * @return
 	 */
 	public function setReturnKeyValueTags(queryHandle:String, returnKeyValueTags:Bool):Bool {
-		var result:Int = SteamWrap_SetReturnKeyValueTags.call(queryHandle, returnKeyValueTags? 1 : 0);
-		return result == 1;
+		return _SetReturnKeyValueTags(@:privateAccess queryHandle.toUtf8(), returnKeyValueTags);
 	}
 	
 	/**
@@ -141,8 +136,7 @@ class UGC
 	 * @return
 	 */
 	public function setReturnMetadata(queryHandle:String, returnMetadata:Bool):Bool {
-		var result:Int = SteamWrap_SetReturnMetadata.call(queryHandle, returnMetadata ? 1 : 0);
-		return result == 1;
+		return _SetReturnMetadata(@:privateAccess queryHandle.toUtf8(), returnMetadata);
 	}
 	
 	/**
@@ -150,7 +144,7 @@ class UGC
 	 * @return publishedFileID array (represented as strings)
 	 */
 	public function getSubscribedItems():Array<String>{
-		var result = SteamWrap_GetSubscribedItems();
+		var result = @:privateAccess String.fromUTF8(_GetSubscribedItems());
 		if (result == "" || result == null) return [];
 		var arr:Array<String> = result.split(",");
 		return arr;
@@ -161,20 +155,15 @@ class UGC
 	 * @param	fileID the publishedFileID for this UGC item
 	 * @return	an array: [0] is bytesDownloaded, [1] is bytesTotal
 	 */
-	public function getItemDownloadInfo(fileID:String):Array<Int>{
-		var result = SteamWrap_GetItemDownloadInfo(fileID);
-		if (result == "" || result == null) return [0, 0];
-		var arr:Array<String> = result.split(",");
-		var a = Std.parseInt(arr[0]);
-		var b = Std.parseInt(arr[1]);
-		var ai:Int = a != null ? a : 0;
-		var bi:Int = b != null ? b : 0;
+	public function getItemDownloadInfo(fileID:String):Array<Float>{
+		var ai = 0., bi = 0.;
+		_GetItemDownloadInfo(@:privateAccess fileID.toUtf8(), ai, bi);
 		return [ai, bi];
 	}
 	
 	public function getItemInstallInfo(fileID:String):GetItemInstallInfoResult{
-		var result = SteamWrap_GetItemInstallInfo(fileID, 30000);
-		return GetItemInstallInfoResult.fromString(result);
+		var result = _GetItemInstallInfo(@:privateAccess fileID.toUtf8(), 30000);
+		return GetItemInstallInfoResult.fromString(@:privateAccess String.fromUTF8(result));
 	}
 	
 	/*
@@ -198,7 +187,7 @@ class UGC
 	 */
 	public function createQueryAllUGCRequest(queryType:EUGCQuery, matchingUGCType:EUGCMatchingUGCType, creatorAppID:Int, consumerAppID:Int, page:Int):String
 	{
-		var result:String = SteamWrap_CreateQueryAllUGCRequest(queryType, matchingUGCType, creatorAppID, consumerAppID, page);
+		var result:String = @:privateAccess String.fromUTF8(_CreateQueryAllUGCRequest(queryType, matchingUGCType, creatorAppID, consumerAppID, page));
 		return result;
 	}
 	
@@ -209,7 +198,7 @@ class UGC
 	 */
 	public function createQueryUGCDetailsRequest(fileIDs:Array<String>):String
 	{
-		var result = SteamWrap_CreateQueryUGCDetailsRequest(fileIDs.join(","));
+		var result = @:privateAccess String.fromUTF8(_CreateQueryUGCDetailsRequest(@:privateAccess fileIDs.join(",").toUtf8()));
 		return result;
 	}
 	
@@ -220,7 +209,7 @@ class UGC
 	public function sendQueryUGCRequest(handle:String):Void
 	{
 		trace("sendQueryUGCRequest(" + handle+")");
-		SteamWrap_SendQueryUGCRequest.call(handle);
+		_SendQueryUGCRequest(@:privateAccess handle.toUtf8());
 	}
 	
 	/**
@@ -231,7 +220,7 @@ class UGC
 	 */
 	public function getQueryUGCResult(handle:String, index:Int):SteamUGCDetails
 	{
-		var result:String = SteamWrap_GetQueryUGCResult(handle, index);
+		var result:String = @:privateAccess String.fromUTF8(_GetQueryUGCResult(@:privateAccess handle.toUtf8(), index));
 		var details:SteamUGCDetails = SteamUGCDetails.fromString(result);
 		return details;
 	}
@@ -242,21 +231,20 @@ class UGC
 	 * @param	index
 	 * @return
 	 */
-	public function getQueryUGCMetadata(handle:Int, index:Int):String
+	public function getQueryUGCMetadata(handle:String, index:Int):String
 	{
-		var result:String = SteamWrap_GetQueryUGCMetadata(handle, index, 5000);
+		var result:String = @:privateAccess String.fromUTF8(_GetQueryUGCMetadata(@:privateAccess handle.toUtf8(), index, 5000));
 		return result;
 	}
 	
 	public function getQueryUGCNumKeyValueTags(handle:String, index:Int):Int
 	{
-		var result = SteamWrap_GetQueryUGCNumKeyValueTags.call(handle, index);
-		return result;
+		return _GetQueryUGCNumKeyValueTags(@:privateAccess handle.toUtf8(), index);
 	}
 	
 	public function getQueryUGCKeyValueTag(handle:String, index:Int, keyValueTagIndex:Int):Array<String>
 	{
-		var result:String = SteamWrap_GetQueryUGCKeyValueTag(handle, index, keyValueTagIndex, 255, 255);
+		var result:String = @:privateAccess String.fromUTF8(_GetQueryUGCKeyValueTag(@:privateAccess handle.toUtf8(), index, keyValueTagIndex, 255, 255));
 		if (result != null && result.indexOf("=") != -1){
 			var arr = result.split("=");
 			if (arr != null && arr.length == 2 && arr[0] != null && arr[1] != null){
@@ -268,8 +256,7 @@ class UGC
 	
 	public function releaseQueryUGCRequest(handle:String):Bool
 	{
-		var result = SteamWrap_ReleaseQueryUGCRequest.call(handle);
-		return result == 1;
+		return _ReleaseQueryUGCRequest(@:privateAccess handle.toUtf8());
 	}
 	
 	/*************PRIVATE***************/
@@ -277,39 +264,36 @@ class UGC
 	private var customTrace:String->Void;
 	private var appId:Int;
 	
-	//Old-school CFFI calls:
-	private var SteamWrap_CreateUGCItem:Dynamic;
-	private var SteamWrap_SetUGCItemTitle:Dynamic;
-	private var SteamWrap_SetUGCItemTags:Dynamic;
-	private var SteamWrap_AddUGCItemKeyValueTag:Dynamic;
-	private var SteamWrap_RemoveUGCItemKeyValueTags:Dynamic;
-	private var SteamWrap_SetUGCItemDescription:Dynamic;
-	private var SteamWrap_SetUGCItemVisibility:Dynamic;
-	private var SteamWrap_SetUGCItemContent:Dynamic;
-	private var SteamWrap_SetUGCItemPreviewImage:Dynamic;
-	private var SteamWrap_StartUpdateUGCItem:Dynamic;
-	private var SteamWrap_SubmitUGCItemUpdate:Dynamic;
-	private var SteamWrap_GetSubscribedItems:Dynamic;
-	private var SteamWrap_GetItemDownloadInfo:Dynamic;
-	private var SteamWrap_GetItemInstallInfo:Dynamic;
-	private var SteamWrap_CreateQueryAllUGCRequest:Dynamic;
-	private var SteamWrap_CreateQueryUGCDetailsRequest:Dynamic;
-	private var SteamWrap_GetQueryUGCResult:Dynamic;
-	private var SteamWrap_GetQueryUGCKeyValueTag:Dynamic;
-	private var SteamWrap_GetQueryUGCMetadata:Dynamic;
-	
-	//CFFI PRIME calls:
-	private var SteamWrap_GetNumSubscribedItems:Dynamic;
-	private var SteamWrap_GetItemState:Dynamic;
-	private var SteamWrap_DownloadItem:Dynamic;
-	private var SteamWrap_AddRequiredKeyValueTag:Dynamic;
-	private var SteamWrap_AddRequiredTag :Dynamic;
-	private var SteamWrap_AddExcludedTag:Dynamic;
-	private var SteamWrap_SendQueryUGCRequest:Dynamic;
-	private var SteamWrap_SetReturnMetadata:Dynamic;
-	private var SteamWrap_SetReturnKeyValueTags:Dynamic;
-	private var SteamWrap_ReleaseQueryUGCRequest:Dynamic;
-	private var SteamWrap_GetQueryUGCNumKeyValueTags:Dynamic;
+	@:hlNative("steam","create_ugc_item") private static function _CreateUGCItem( id : Int ) : Bool { return false; }
+	@:hlNative("steam","set_ugc_item_title") private static function _SetUGCItemTitle( h : hl.Bytes, title : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","set_ugc_item_tags") private static function _SetUGCItemTags( h : hl.Bytes, tags : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","add_ugc_item_key_value_tag") private static function _AddUGCItemKeyValueTag( h : hl.Bytes, key : hl.Bytes, value : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","remove_ugc_item_key_value_tags") private static function _RemoveUGCItemKeyValueTags( h: hl.Bytes, key : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","set_ugc_item_description") private static function _SetUGCItemDescription( h : hl.Bytes, desc : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","set_ugc_item_visibility") private static function _SetUGCItemVisibility( h : hl.Bytes, visibility : Int ) : Bool { return false; }
+	@:hlNative("steam","set_ugc_item_content") private static function _SetUGCItemContent( h : hl.Bytes, path : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","set_ugc_item_preview_image") private static function _SetUGCItemPreviewImage( h : hl.Bytes, path : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","start_update_ugc_item") private static function _StartUpdateUGCItem( id : Int, item : Int ) : hl.Bytes { return null; }
+	@:hlNative("steam","submit_ugc_item_update") private static function _SubmitUGCItemUpdate( h : hl.Bytes, changeNotes : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","get_subscribed_items") private static function _GetSubscribedItems() : hl.Bytes { return null; }
+	@:hlNative("steam","get_item_download_info") private static function _GetItemDownloadInfo( publishedFileID : hl.Bytes, downloaded : hl.Ref<Float>, total : hl.Ref<Float> ) : Void{};
+	@:hlNative("steam","get_item_install_info") private static function _GetItemInstallInfo( publishedFileID : hl.Bytes, maxFolderPathLength : Int ) : hl.Bytes { return null; }
+	@:hlNative("steam","create_query_all_ugc_request") private static function _CreateQueryAllUGCRequest( queryType : Int, matchingUGCType : Int, creatorAppID : Int, consumerAppID : Int, page : Int ) : hl.Bytes { return null; }
+	@:hlNative("steam","create_query_ugc_details_request") private static function _CreateQueryUGCDetailsRequest( fileIDs : hl.Bytes ) : hl.Bytes { return null; }
+	@:hlNative("steam","get_query_ugc_result") private static function _GetQueryUGCResult( h : hl.Bytes, index : Int ) : hl.Bytes { return null; }
+	@:hlNative("steam","get_query_ugc_key_value_tag") private static function _GetQueryUGCKeyValueTag( h : hl.Bytes, index : Int, keyValueTagIndex : Int, keySize : Int, valueSize : Int ) : hl.Bytes { return null; } 
+	@:hlNative("steam","get_query_ugc_metadata") private static function _GetQueryUGCMetadata( h : hl.Bytes, index : Int, metadataSize : Int ) : hl.Bytes { return null; }
+	@:hlNative("steam","get_num_subscribed_items") private static function _GetNumSubscribedItems() : Int { return 0; }
+	@:hlNative("steam","get_item_state") private static function _GetItemState( publishedFileID : hl.Bytes ) : Int { return 0; }
+	@:hlNative("steam","download_item") private static function _DownloadItem( publishedFileID : hl.Bytes, highPriority : Bool ) : Bool { return false; }
+	@:hlNative("steam","add_required_key_value_tag") private static function _AddRequiredKeyValueTag( h : hl.Bytes, key : hl.Bytes, value : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","add_required_tag") private static function _AddRequiredTag( h : hl.Bytes, tag : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","add_excluded_tag") private static function _AddExcludedTag( h : hl.Bytes, tag : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","send_query_ugc_request") private static function _SendQueryUGCRequest( h : hl.Bytes ): Void{};
+	@:hlNative("steam","set_return_metadata") private static function _SetReturnMetadata( h : hl.Bytes, returnMetadata : Bool ) : Bool { return false; }
+	@:hlNative("steam","set_return_key_value_tags") private static function _SetReturnKeyValueTags( h : hl.Bytes, returnKeyValueTags : Bool ) : Bool { return false; }
+	@:hlNative("steam","release_query_ugc_request") private static function _ReleaseQueryUGCRequest( h : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","get_query_ugc_num_key_value_tags") private static function _GetQueryUGCNumKeyValueTags( h : hl.Bytes, index : Int ) : Int { return 0; }
 	
 	private function new(appId_:Int, CustomTrace:String->Void) {
 		#if sys		//TODO: figure out what targets this will & won't work with and upate this guard
@@ -322,7 +306,7 @@ class UGC
 		
 		// if we get this far, the dlls loaded ok and we need Steam controllers to init.
 		// otherwise, we're trying to run the Steam version without the Steam client
-		active = true;//SteamWrap_InitControllers();
+		active = true;//_InitControllers();
 		
 		#end
 	}

@@ -58,9 +58,9 @@ class Controller
 	 * @param	actionSet	handle received from getActionSetHandle()
 	 * @return	1 = success, 0 = failure
 	 */
-	public function activateActionSet(controller:Int, actionSet:Int):Int {
-		if (!active) return 0;
-		return SteamWrap_ActivateActionSet.call(controller, actionSet);
+	public function activateActionSet(controller:Int, actionSet:Int):Void {
+		if (!active) return;
+		_ActivateActionSet(controller, actionSet);
 	}
 	
 	/**
@@ -71,7 +71,7 @@ class Controller
 	 */
 	public function getCurrentActionSet(controller:Int):Int {
 		if (!active) return -1;
-		return SteamWrap_GetCurrentActionSet.call(controller);
+		return _GetCurrentActionSet(controller);
 	}
 	
 	/**
@@ -82,7 +82,7 @@ class Controller
 	 */
 	public function getActionSetHandle(name:String):Int {
 		if (!active) return -1;
-		return SteamWrap_GetActionSetHandle.call(name);
+		return _GetActionSetHandle(@:privateAccess name.toUtf8());
 	}
 	
 	/**
@@ -100,7 +100,7 @@ class Controller
 		
 		if (!active) return data;
 		
-		SteamWrap_GetAnalogActionData.call(controller, action, data);
+		_GetAnalogActionData(controller, action, data);
 		
 		return data;
 	}
@@ -113,7 +113,7 @@ class Controller
 	 */
 	public function getAnalogActionHandle(name:String):Int {
 		if (!active) return -1;
-		return SteamWrap_GetAnalogActionHandle.call(name);
+		return _GetAnalogActionHandle(@:privateAccess name.toUtf8());
 	}
 	
 	/**
@@ -130,23 +130,16 @@ class Controller
 	
 	public function getAnalogActionOrigins(controller:Int, actionSet:Int, action:Int, ?originsOut:Array<EControllerActionOrigin>):Int {
 		if (!active) return -1;
-		var str:String = SteamWrap_GetAnalogActionOrigins(controller, actionSet, action);
-		var strArr:Array<String> = str.split(",");
+		var a:hl.NativeArray<Int> = _GetAnalogActionOrigins(controller, actionSet, action);
+		if( a == null ) return 0;
 		
-		var result = 0;
-		
-		//result is the first value in the array
-		if(strArr != null && strArr.length > 0){
-			result = Std.parseInt(strArr[0]);
-		}
-		
-		if (strArr.length > 1 && originsOut != null) {
-			for (i in 1...strArr.length) {
-				originsOut[i] = strArr[i];
+		if (originsOut != null) {
+			for (i in 0...a.length) {
+				originsOut[i] = cast a[i];
 			}
 		}
 		
-		return result;
+		return a.length;
 	}
 	
 	/**
@@ -158,17 +151,11 @@ class Controller
 	 * 
 	 * @return controller handles
 	 */
+	static var connectedControllers : hl.NativeArray<Int>;
 	public function getConnectedControllers():Array<Int> {
 		if (!active) return [];
-		var str:String = SteamWrap_GetConnectedControllers();
-		var arrStr:Array<String> = str.split(",");
-		var intArr = [];
-		for (astr in arrStr) {
-			if (astr != "") {
-				intArr.push(Std.parseInt(astr));
-			}
-		}
-		return intArr;
+		connectedControllers = _GetConnectedControllers(connectedControllers);
+		return [for(idx in connectedControllers) idx];
 	}
 	
 	/**
@@ -180,7 +167,7 @@ class Controller
 	 */
 	public function getDigitalActionData(controller:Int, action:Int):ControllerDigitalActionData {
 		if (!active) return new ControllerDigitalActionData(0);
-		return new ControllerDigitalActionData(SteamWrap_GetDigitalActionData.call(controller, action));
+		return new ControllerDigitalActionData(_GetDigitalActionData(controller, action));
 	}
 	
 	/**
@@ -191,7 +178,7 @@ class Controller
 	 */
 	public function getDigitalActionHandle(name:String):Int {
 		if (!active) return -1;
-		return SteamWrap_GetDigitalActionHandle.call(name);
+		return _GetDigitalActionHandle(@:privateAccess name.toUtf8());
 	}
 	
 	/**
@@ -206,24 +193,17 @@ class Controller
 	
 	public function getDigitalActionOrigins(controller:Int, actionSet:Int, action:Int, ?originsOut:Array<EControllerActionOrigin>):Int {
 		if (!active) return 0;
-		var str:String = SteamWrap_GetDigitalActionOrigins(controller, actionSet, action);
-		var strArr:Array<String> = str.split(",");
-		
-		var result = 0;
-		
-		//result is the first value in the array
-		if(strArr != null && strArr.length > 0){
-			result = Std.parseInt(strArr[0]);
-		}
+		var a:hl.NativeArray<Int> = _GetDigitalActionOrigins(controller, actionSet, action);
+		if( a == null ) return 0;
 		
 		//rest of the values are the actual origins
-		if (strArr.length > 1 && originsOut != null) {
-			for (i in 1...strArr.length) {
-				originsOut[i] = strArr[i];
+		if (originsOut != null) {
+			for (i in 0...a.length) {
+				originsOut[i] = cast a[i];
 			}
 		}
 		
-		return result;
+		return a.length;
 	}
 	
 	/**
@@ -232,9 +212,7 @@ class Controller
 	 * @return
 	 */
 	public function getGlyphForActionOrigin(origin:EControllerActionOrigin):String {
-		
-		return SteamWrap_GetGlyphForActionOrigin(origin);
-		
+		return @:privateAccess String.fromUTF8(_GetGlyphForActionOrigin(origin));
 	}
 	
 	/**
@@ -244,7 +222,7 @@ class Controller
 	 */
 	public function getStringForActionOrigin(origin:EControllerActionOrigin):String {
 		
-		return SteamWrap_GetStringForActionOrigin(origin);
+		return @:privateAccess String.fromUTF8(_GetStringForActionOrigin(origin));
 		
 	}
 	
@@ -254,7 +232,7 @@ class Controller
 	 * @return false if overlay is disabled / unavailable, or if the Steam client is not in Big Picture mode
 	 */
 	public function showBindingPanel(controller:Int):Bool {
-		var result:Bool = SteamWrap_ShowBindingPanel(controller);
+		var result:Bool = _ShowBindingPanel(controller);
 		return result;
 	}
 	
@@ -269,7 +247,7 @@ class Controller
 	 * @return
 	 */
 	public function showGamepadTextInput(inputMode:EGamepadTextInputMode, lineMode:EGamepadTextInputLineMode, description:String, charMax:Int = 0xFFFFFF, existingText:String = ""):Bool {
-		return (1 == SteamWrap_ShowGamepadTextInput.call(cast inputMode, cast lineMode, description, charMax, existingText));
+		return _ShowGamepadTextInput(inputMode, lineMode, @:privateAccess description.toUtf8(), charMax, @:privateAccess existingText.toUtf8());
 	}
 
 	/**
@@ -277,7 +255,7 @@ class Controller
 	 * @return
 	 */
 	public function getEnteredGamepadTextInput():String {
-		return SteamWrap_GetEnteredGamepadTextInput();
+		return @:privateAccess String.fromUTF8(_GetEnteredGamepadTextInput());
 	}
 	
 	
@@ -285,7 +263,7 @@ class Controller
 	 * Must be called when ending use of this API
 	 */
 	public function shutdown() {
-		SteamWrap_ShutdownControllers();
+		_ShutdownControllers();
 		active = false;
 	}
 	
@@ -338,7 +316,7 @@ class Controller
 		switch(targetPad)
 		{
 			case LEFT, RIGHT:
-				SteamWrap_TriggerHapticPulse.call(controller, cast targetPad, durationMicroSec);	
+				_TriggerHapticPulse(controller, cast targetPad, durationMicroSec);	
 			case BOTH:
 				triggerHapticPulse(controller,  LEFT, durationMicroSec);
 				triggerHapticPulse(controller, RIGHT, durationMicroSec);
@@ -361,7 +339,7 @@ class Controller
 		switch(targetPad)
 		{
 			case LEFT, RIGHT:
-				SteamWrap_TriggerRepeatedHapticPulse.call(controller, cast targetPad, durationMicroSec, offMicroSec, repeat, flags);
+				_TriggerRepeatedHapticPulse(controller, cast targetPad, durationMicroSec, offMicroSec, repeat, flags);
 			case BOTH:
 				triggerRepeatedHapticPulse(controller,  LEFT, durationMicroSec, offMicroSec, repeat, flags);
 				triggerRepeatedHapticPulse(controller, RIGHT, durationMicroSec, offMicroSec, repeat, flags);
@@ -380,7 +358,7 @@ class Controller
 		if (leftSpeed > 65535) leftSpeed = 65535;
 		if (rightSpeed < 0) rightSpeed = 0;
 		if (rightSpeed > 65535) rightSpeed = 65535;
-		SteamWrap_TriggerVibration(controller, leftSpeed, rightSpeed);
+		_TriggerVibration(controller, leftSpeed, rightSpeed);
 		
 	}
 	
@@ -395,12 +373,12 @@ class Controller
 		var r = (rgb >> 16) & 0xFF;
 		var g = (rgb >> 8) & 0xFF;
 		var b = rgb & 0xFF;
-		SteamWrap_SetLEDColor(controller, r, g, b, flags);
+		_SetLEDColor(controller, r, g, b, flags);
 		
 	}
 	
 	public function resetLEDColor(controller:Int) {
-		SteamWrap_SetLEDColor(controller, 0, 0, 0, ESteamControllerLEDFlags.RESTORE_USER_DEFAULT);
+		_SetLEDColor(controller, 0, 0, 0, ESteamControllerLEDFlags.RESTORE_USER_DEFAULT);
 	}
 	
 	
@@ -429,7 +407,7 @@ class Controller
 		
 		if (!active) return data;
 		
-		SteamWrap_GetMotionData.call(controller, data);
+		_GetMotionData(controller, data);
 		
 		
 		return data;
@@ -446,7 +424,7 @@ class Controller
 	 */
 	public function showDigitalActionOrigins(controller:Int, digitalActionHandle:Int, scale:Float, xPosition:Float, yPosition:Float) {
 		
-		SteamWrap_ShowDigitalActionOrigins.call(controller, digitalActionHandle, scale, xPosition, yPosition);
+		_ShowDigitalActionOrigins(controller, digitalActionHandle, scale, xPosition, yPosition);
 		
 	}
 	
@@ -461,7 +439,7 @@ class Controller
 	 */
 	public function showAnalogActionOrigins(controller:Int, analogActionHandle:Int, scale:Float, xPosition:Float, yPosition:Float) {
 		
-		SteamWrap_ShowAnalogActionOrigins.call(controller, analogActionHandle, scale, xPosition, yPosition);
+		_ShowAnalogActionOrigins(controller, analogActionHandle, scale, xPosition, yPosition);
 		
 	}
 	
@@ -469,40 +447,36 @@ class Controller
 	
 	private var customTrace:String->Void;
 	
-	//Old-school CFFI calls:
-	private var SteamWrap_InitControllers:Dynamic;
-	private var SteamWrap_ShutdownControllers:Dynamic;
-	private var SteamWrap_GetConnectedControllers:Dynamic;
-	private var SteamWrap_GetDigitalActionOrigins:Dynamic;
-	private var SteamWrap_GetEnteredGamepadTextInput:Dynamic;
-	private var SteamWrap_GetAnalogActionOrigins:Dynamic;
-	private var SteamWrap_ShowBindingPanel:Dynamic;
-	private var SteamWrap_GetStringForActionOrigin:Dynamic;
-	private var SteamWrap_GetGlyphForActionOrigin:Dynamic;
-	
-	private static var SteamWrap_GetControllerMaxCount:Dynamic;
-	private static var SteamWrap_GetControllerMaxAnalogActions:Dynamic;
-	private static var SteamWrap_GetControllerMaxDigitalActions:Dynamic;
-	private static var SteamWrap_GetControllerMaxOrigins:Dynamic;
-	private static var SteamWrap_GetControllerMaxAnalogActionData:Dynamic;
-	private static var SteamWrap_GetControllerMinAnalogActionData:Dynamic;
-	
-	//CFFI PRIME calls
-	private var SteamWrap_ActivateActionSet:Dynamic;
-	private var SteamWrap_GetCurrentActionSet:Dynamic;
-	private var SteamWrap_GetActionSetHandle:Dynamic;
-	private var SteamWrap_GetAnalogActionData:Dynamic;
-	private var SteamWrap_GetAnalogActionHandle:Dynamic;
-	private var SteamWrap_GetDigitalActionData:Dynamic;
-	private var SteamWrap_GetDigitalActionHandle:Dynamic;
-	private var SteamWrap_ShowGamepadTextInput:Dynamic;
-	private var SteamWrap_TriggerHapticPulse:Dynamic;
-	private var SteamWrap_TriggerRepeatedHapticPulse:Dynamic;
-	private var SteamWrap_TriggerVibration:Dynamic;
-	private var SteamWrap_SetLEDColor:Dynamic;
-	private var SteamWrap_GetMotionData:Dynamic;
-	private var SteamWrap_ShowDigitalActionOrigins:Dynamic;
-	private var SteamWrap_ShowAnalogActionOrigins:Dynamic;
+	@:hlNative("steam","init_controllers") private static function _InitControllers() : Bool { return false; }
+	@:hlNative("steam","shutdown_controllers") private static function _ShutdownControllers() : Bool { return false; }
+	@:hlNative("steam","get_connected_controllers") private static function _GetConnectedControllers( arr : hl.NativeArray<Int> ) : hl.NativeArray<Int>  { return null; }
+	@:hlNative("steam","get_digital_action_origins") private static function _GetDigitalActionOrigins( controller : Int, action : Int, digitalAction : Int ) : hl.NativeArray<Int> { return null; }
+	@:hlNative("steam","get_entered_gamepad_text_input") private static function _GetEnteredGamepadTextInput() : hl.Bytes { return null; }
+	@:hlNative("steam","get_analog_action_origins") private static function _GetAnalogActionOrigins( controller : Int, action : Int, analogAction : Int ) : hl.NativeArray<Int> { return null; }
+	@:hlNative("steam","show_binding_panel") private static function _ShowBindingPanel( controller : Int ) : Bool { return false; }
+	@:hlNative("steam","get_string_for_action_origin") private static function _GetStringForActionOrigin( origin : Int ) : hl.Bytes { return null; }
+	@:hlNative("steam","get_glyph_for_action_origin") private static function _GetGlyphForActionOrigin( origin : Int ) : hl.Bytes { return null; }
+	@:hlNative("steam","get_controller_max_count") private static function _GetControllerMaxCount() : Int { return 0; }
+	@:hlNative("steam","get_controller_max_analog_actions") private static function _GetControllerMaxAnalogActions() : Int { return 0; }
+	@:hlNative("steam","get_controller_max_digital_actions") private static function _GetControllerMaxDigitalActions() : Int { return 0; }
+	@:hlNative("steam","get_controller_max_origins") private static function _GetControllerMaxOrigins() : Int { return 0; }
+	@:hlNative("steam","get_controller_max_analog_action_data") private static function _GetControllerMaxAnalogActionData() : Int { return 0; }
+	@:hlNative("steam","get_controller_min_analog_action_data") private static function _GetControllerMinAnalogActionData() : Int { return 0; }
+	@:hlNative("steam","activate_action_set") private static function _ActivateActionSet( controller : Int, action : Int ): Void{};
+	@:hlNative("steam","get_current_action_set") private static function _GetCurrentActionSet( controller : Int ) : Int { return 0; }
+	@:hlNative("steam","get_action_set_handle") private static function _GetActionSetHandle( name : hl.Bytes ) : Int { return 0; }
+	@:hlNative("steam","get_analog_action_data") private static function _GetAnalogActionData( controller : Int, action : Int, data : ControllerAnalogActionData ): Void{};
+	@:hlNative("steam","get_analog_action_handle") private static function _GetAnalogActionHandle( name : hl.Bytes ) : Int { return 0; }
+	@:hlNative("steam","get_digital_action_data") private static function _GetDigitalActionData( controller : Int, action : Int ) : Int { return 0; }
+	@:hlNative("steam","get_digital_action_handle") private static function _GetDigitalActionHandle( name : hl.Bytes ) : Int { return 0; }
+	@:hlNative("steam","show_gamepad_text_input") private static function _ShowGamepadTextInput( inputMode : Int, lineMode : Int, description : hl.Bytes, charMax : Int, existingText : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","trigger_haptic_pulse") private static function _TriggerHapticPulse( controller : Int, targetPad : Int, duration : Int ): Void{};
+	@:hlNative("steam","trigger_repeated_haptic_pulse") private static function _TriggerRepeatedHapticPulse( controller : Int, targetPad : Int, duration : Int, off : Int, repeat : Int, flags : Int ): Void{};
+	@:hlNative("steam","trigger_vibration") private static function _TriggerVibration( controller : Int, leftSpeed : Int, rightSpeed : Int ): Void{};
+	@:hlNative("steam","set_led_color") private static function _SetLEDColor( controller : Int, r : Int, g : Int, b : Int, flags : Int ): Void{};
+	@:hlNative("steam","get_motion_data") private static function _GetMotionData( controller : Int, data : ControllerMotionData ): Void{};
+	@:hlNative("steam","show_digital_action_origins") private static function _ShowDigitalActionOrigins( controller : Int, digitalAction : Int, scale : Float, xPos : Float, yPos : Float ) : Bool { return false; }
+	@:hlNative("steam","show_analog_action_origins") private static function _ShowAnalogActionOrigins( controller : Int, analogAction : Int, scale : Float, xPos : Float, yPos : Float ) : Bool { return false; }
 	
 	
 	private function new(CustomTrace:String->Void)
@@ -517,14 +491,14 @@ class Controller
 		
 		// if we get this far, the dlls loaded ok and we need Steam controllers to init.
 		// otherwise, we're trying to run the Steam version without the Steam client
-		active = SteamWrap_InitControllers();
+		active = _InitControllers();
 	}
 	
 	private var max_controllers:Int = -1;
 	private function get_MAX_CONTROLLERS():Int
 	{
 		if(max_controllers == -1)
-			max_controllers = SteamWrap_GetControllerMaxCount();
+			max_controllers = _GetControllerMaxCount();
 		return max_controllers;
 	}
 	
@@ -532,7 +506,7 @@ class Controller
 	private function get_MAX_ANALOG_ACTIONS():Int
 	{
 		if(max_analog_actions == -1)
-			max_analog_actions = SteamWrap_GetControllerMaxAnalogActions();
+			max_analog_actions = _GetControllerMaxAnalogActions();
 		return max_analog_actions;
 	}
 	
@@ -540,7 +514,7 @@ class Controller
 	private function get_MAX_DIGITAL_ACTIONS():Int
 	{
 		if (max_digital_actions == -1)
-			max_digital_actions = SteamWrap_GetControllerMaxDigitalActions();
+			max_digital_actions = _GetControllerMaxDigitalActions();
 		return max_digital_actions;
 	}
 	
@@ -548,7 +522,7 @@ class Controller
 	private function get_MAX_ORIGINS():Int
 	{
 		if(max_origins == -1)
-			max_origins = SteamWrap_GetControllerMaxOrigins();
+			max_origins = _GetControllerMaxOrigins();
 		return max_origins;
 	}
 	
@@ -556,7 +530,7 @@ class Controller
 	private function get_MAX_ANALOG_VALUE():Float
 	{
 		if(max_analog_value == -1)
-			max_analog_value = SteamWrap_GetControllerMaxAnalogActionData();
+			max_analog_value = _GetControllerMaxAnalogActionData();
 		return max_analog_value;
 	}
 	
@@ -564,7 +538,7 @@ class Controller
 	private function get_MIN_ANALOG_VALUE():Float
 	{
 		if(min_analog_value == -1)
-			min_analog_value = SteamWrap_GetControllerMinAnalogActionData();
+			min_analog_value = _GetControllerMinAnalogActionData();
 		return min_analog_value;
 	}
 }
@@ -626,7 +600,7 @@ class ESteamControllerLEDFlags {
 	
 }
 
-@:enum abstract EControllerActionOrigin(Int) {
+@:enum abstract EControllerActionOrigin(Int) to Int {
 	
 	public static var fromStringMap(default, null):Map<String, EControllerActionOrigin>
 		= MacroHelper.buildMap("steamwrap.api.EControllerActionOrigin");
@@ -991,13 +965,13 @@ class ESteamControllerLEDFlags {
 	
 }
 
-@:enum abstract ESteamControllerPad(Int) {
+@:enum abstract ESteamControllerPad(Int) to Int {
 	public var LEFT = 0;
 	public var RIGHT = 1;
 	public var BOTH = 2;
 }
 
-@:enum abstract EControllerSource(Int) {
+@:enum abstract EControllerSource(Int) to Int {
 	public var NONE = 0;
 	public var LEFTTRACKPAD = 1;
 	public var RIGHTTRACKPAD = 2;
@@ -1010,7 +984,7 @@ class ESteamControllerLEDFlags {
 	public var COUNT = 9;
 }
 
-@:enum abstract EControllerSourceMode(Int) {
+@:enum abstract EControllerSourceMode(Int) to Int {
 	public var NONE = 0;
 	public var DPAD = 1;
 	public var BUTTONS = 2;
@@ -1026,12 +1000,12 @@ class ESteamControllerLEDFlags {
 	public var MOUSEREGION = 12;
 }
 
-@:enum abstract EGamepadTextInputLineMode(Int) {
+@:enum abstract EGamepadTextInputLineMode(Int) to Int {
 	public var SINGLE_LINE = 0;
 	public var MULTIPLE_LINES = 1;
 }
 
-@:enum abstract EGamepadTextInputMode(Int) {
+@:enum abstract EGamepadTextInputMode(Int) to Int {
 	public var NORMAL = 0;
 	public var PASSWORD = 1;
 }

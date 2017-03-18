@@ -24,6 +24,30 @@ typedef ControllerActionSetHandle = Int;
 typedef ControllerDigitalActionHandle = Int;
 typedef ControllerAnalogActionHandle = Int;
 
+@:enum abstract EventType(Int) {
+	var None                              = 0;
+	var GamepadTextInputDismissed         = 1;
+	var UserStatsReceived                 = 2;
+	var UserStatsStored                   = 3;
+	var UserAchievementStored             = 4;
+	var LeaderboardFound                  = 5;
+	var ScoreUploaded                     = 6;
+	var ScoreDownloaded                   = 7;
+	var GlobalStatsReceived               = 8;
+	var UGCLegalAgreementStatus           = 9;
+	var UGCItemCreated                    = 10;
+	var UGCItemUpdateSubmitted            = 11;
+	var RemoteStorageFileShared           = 12;
+	var UserSharedWorkshopFilesEnumerated = 13;
+	var UserPublishedFilesEnumerated      = 14;
+	var UserSubscribedFilesEnumerated     = 15;
+	var UGCDownloaded                     = 16;
+	var PublishedFileDetailsGotten        = 17;
+	var ItemDownloaded                    = 18;
+	var ItemInstalled                     = 19;
+	var UGCQueryCompleted                 = 20;
+}
+
 class Steam
 {
 	/*************PUBLIC***************/
@@ -94,12 +118,12 @@ class Steam
 		
 		// if we get this far, the dlls loaded ok and we need Steam to init.
 		// otherwise, we're trying to run the Steam version without the Steam client
-		active = SteamWrap_Init(steamWrap_onEvent, notificationPosition);
+		active = _Init(steamWrap_onEvent, notificationPosition);
 		
 		if (active) {
 			customTrace("Steam active");
-			SteamWrap_RequestStats();
-			SteamWrap_RequestGlobalStats();
+			_RequestStats();
+			_RequestGlobalStats();
 			
 			//initialize other API's:
 			ugc = new UGC(appId, customTrace);
@@ -124,7 +148,7 @@ class Steam
 	 * @return
 	 */
 	public static function clearAchievement(id:String):Bool {
-		return active && report("clearAchievement", [id], SteamWrap_ClearAchievement(id));
+		return active && report("clearAchievement", [id], _ClearAchievement(@:privateAccess id.toUtf8()));
 	}
 	
 	public static function downloadLeaderboardScore(id:String):Bool {
@@ -149,7 +173,7 @@ class Steam
 	 * @return true, if achievement already achieved, false otherwise.
 	 */
 	public static function getAchievement(id:String):Bool {
-		return active && SteamWrap_GetAchievement(id);
+		return active && _GetAchievement(@:privateAccess id.toUtf8());
 	}
 	
 	/**
@@ -159,7 +183,7 @@ class Steam
 	 */
 	public static function getAchievementDescription(id:String):String {
 		if (!active) return null;
-		return SteamWrap_GetAchievementDisplayAttribute(id, "desc");
+		return @:privateAccess String.fromUTF8(_GetAchievementDisplayAttribute(@:privateAccess id.toUtf8(), @:privateAccess "desc".toUtf8()));
 	}
 	
 	/**
@@ -169,11 +193,11 @@ class Steam
 	 */
 	public static function getAchievementName(id:String):String {
 		if (!active) return null;
-		return SteamWrap_GetAchievementDisplayAttribute(id, "name");
+		return @:privateAccess String.fromUTF8(_GetAchievementDisplayAttribute(@:privateAccess id.toUtf8(), @:privateAccess "name".toUtf8()));
 	}
 	
 	public static function getCurrentGameLanguage() {
-		return SteamWrap_GetCurrentGameLanguage();
+		return _GetCurrentGameLanguage();
 	}
 	
 	
@@ -181,7 +205,7 @@ class Steam
 	public static function getPersonaName():String {
 		if (!active)
 			return "unknown";
-		return SteamWrap_GetPersonaName();
+		return @:privateAccess String.fromUTF8(_GetPersonaName());
 	}
 	
 	/**
@@ -193,7 +217,7 @@ class Steam
 	public static function getStatFloat(id:String):Float {
 		if (!active)
 			return 0;
-		var val = SteamWrap_GetStatFloat(id);
+		var val = _GetStatFloat(@:privateAccess id.toUtf8());
 		report("getStat", [id], val != 0);
 		return val;
 	}
@@ -207,7 +231,7 @@ class Steam
 	public static function getStatInt(id:String):Int {
 		if (!active)
 			return 0;
-		var val = SteamWrap_GetStatInt(id);
+		var val = _GetStatInt(@:privateAccess id.toUtf8());
 		report("getStat", [id], val != 0);
 		return val;
 	}
@@ -223,7 +247,7 @@ class Steam
 	public static function getStat(id:String):Int {
 		if (!active)
 			return 0;
-		var val = SteamWrap_GetStat(id);
+		var val = _GetStatInt(@:privateAccess id.toUtf8());
 		report("getStat", [id], val != 0);
 		return val;
 	}
@@ -231,36 +255,36 @@ class Steam
 	public static function getSteamID():String {
 		if (!active)
 			return "0";
-		return SteamWrap_GetSteamID();
+		return @:privateAccess String.fromUTF8(_GetSteamID());
 	}
 	
 	public static function indicateAchievementProgress(id:String, curProgress:Int, maxProgress:Int):Bool {
-		return active && report("indicateAchivevementProgress", [id, Std.string(curProgress), Std.string(maxProgress)], SteamWrap_IndicateAchievementProgress(id, curProgress, maxProgress));
+		return active && report("indicateAchivevementProgress", [id, Std.string(curProgress), Std.string(maxProgress)], _IndicateAchievementProgress(@:privateAccess id.toUtf8(), curProgress, maxProgress));
 	}
 	
 	public static function isOverlayEnabled():Bool {
 		if (!active)
 			return false;
-		return SteamWrap_IsOverlayEnabled();
+		return _IsOverlayEnabled();
 	}
 	
 	public static function BOverlayNeedsPresent() {
 		if (!active)
 			return false;
-		return SteamWrap_BOverlayNeedsPresent();
+		return _BOverlayNeedsPresent();
 	}
 	
 	public static function isSteamInBigPictureMode() {
 		if (!active)
 			return false;
-		return SteamWrap_IsSteamInBigPictureMode();
+		return _IsSteamInBigPictureMode();
 	}
 	
 	public static function isSteamRunning() {
 		if (!active)
 			return false;
 		try{
-			return SteamWrap_IsSteamRunning();
+			return _IsSteamRunning();
 		}
 		catch (msg:Dynamic)
 		{
@@ -271,31 +295,31 @@ class Steam
 	
 	public static function onEnterFrame() {
 		if (!active) return;
-		SteamWrap_RunCallbacks();
+		_RunCallbacks();
 
 		if (wantStoreStats) {
 			wantStoreStats = false;
-			SteamWrap_StoreStats();
+			_StoreStats();
 		}
 	}
 	
 	public static function openOverlay(url:String) {
 		if (!active) return;
-		SteamWrap_OpenOverlay(url);
+		_OpenOverlay(@:privateAccess url.toUtf8());
 	}
 	
 	public static function restartAppInSteam():Bool {
 		if (!active) return false;
-		return SteamWrap_RestartAppIfNecessary(appId);
+		return _RestartAppIfNecessary(appId);
 	}
 	
 	public static function shutdown() {
 		if (!active) return;
-		SteamWrap_Shutdown();
+		_Shutdown();
 	}
 	
 	public static function setAchievement(id:String):Bool {
-		return active && report("setAchievement", [id], SteamWrap_SetAchievement(id));
+		return active && report("setAchievement", [id], _SetAchievement(@:privateAccess id.toUtf8()));
 	}
 	
 	/**
@@ -304,7 +328,7 @@ class Steam
 	 * @return true, if achievement is flagged as hidden, false otherwise.
 	 */
 	public static function isAchievementHidden(id:String):Bool {
-		return active && SteamWrap_GetAchievementDisplayAttribute(id, "hidden") == "1";
+		return active && @:privateAccess String.fromUTF8(_GetAchievementDisplayAttribute(@:privateAccess id.toUtf8(), @:privateAccess "hidden".toUtf8())) == "1";
 	}
 	
 	/**
@@ -314,7 +338,7 @@ class Steam
 	 */
 	public static function getNumAchievements():Int {
 		if (!active) return 0;
-		return SteamWrap_GetNumAchievements();
+		return _GetNumAchievements();
 	}
 	
 	/**
@@ -324,7 +348,7 @@ class Steam
 	 */
 	public static function getAchievementAPIName(index:Int):String {
 		if (!active) return null;
-		return SteamWrap_GetAchievementName(index);
+		return @:privateAccess String.fromUTF8(_GetAchievementName(index));
 	}
 	
 	/**
@@ -336,7 +360,7 @@ class Steam
 	 * @return
 	 */
 	public static function setStat(id:String, val:Int):Bool {
-		return active && report("setStat", [id, Std.string(val)], SteamWrap_SetStat(id, val));
+		return setStatInt(id,val);
 	}
 	
 	/**
@@ -346,7 +370,7 @@ class Steam
 	 * @return
 	 */
 	public static function setStatFloat(id:String, val:Float):Bool {
-		return active && report("setStatFloat", [id, Std.string(val)], SteamWrap_SetStatFloat(id, val));
+		return active && report("setStatFloat", [id, Std.string(val)], _SetStatFloat(@:privateAccess id.toUtf8(), val));
 	}
 	
 	/**
@@ -356,11 +380,11 @@ class Steam
 	 * @return
 	 */
 	public static function setStatInt(id:String, val:Int):Bool {
-		return active && report("setStatInt", [id, Std.string(val)], SteamWrap_SetStatInt(id, val));
+		return active && report("setStatInt", [id, Std.string(val)], _SetStatInt(@:privateAccess id.toUtf8(), val));
 	}
 	
 	public static function storeStats():Bool {
-		return active && report("storeStats", [], SteamWrap_StoreStats());
+		return active && report("storeStats", [], _StoreStats());
 	}
 	
 	public static function uploadLeaderboardScore(score:LeaderboardScore):Bool {
@@ -395,13 +419,13 @@ class Steam
 		
 		switch (op) {
 			case FIND(id):
-				if (!report("Leaderboard.FIND", [id], SteamWrap_FindLeaderboard(id)))
+				if (!report("Leaderboard.FIND", [id], _FindLeaderboard(@:privateAccess id.toUtf8())))
 					processNextLeaderboardOp();
 			case UPLOAD(score):
-				if (!report("Leaderboard.UPLOAD", [score.toString()], SteamWrap_UploadScore(score.leaderboardId, score.score, score.detail)))
+				if (!report("Leaderboard.UPLOAD", [score.toString()], _UploadScore(@:privateAccess score.leaderboardId.toUtf8(), score.score, score.detail)))
 					processNextLeaderboardOp();
 			case DOWNLOAD(id):
-				if (!report("Leaderboard.DOWNLOAD", [id], SteamWrap_DownloadScores(id, 0, 0)))
+				if (!report("Leaderboard.DOWNLOAD", [id], _DownloadScores(@:privateAccess id.toUtf8(), 0, 0)))
 					processNextLeaderboardOp();
 		}
 	}
@@ -412,25 +436,23 @@ class Steam
 		return result;
 	}
 
-	private static function steamWrap_onEvent(e:Dynamic) {
-		var type:String = Std.string(Reflect.field(e, "type"));
-		var success:Bool = (Std.int(Reflect.field(e, "success")) != 0);
-		var data:String = Std.string(Reflect.field(e, "data"));
+	private static function steamWrap_onEvent( type : EventType, success : Bool, data : hl.Bytes ) : Void {
+		var data:String = data == null ? null : @:privateAccess String.fromUTF8(data);
 		
 		customTrace("[STEAM] " + type + (success ? " SUCCESS" : " FAIL") + " (" + data + ")");
 		
 		switch (type) {
-			case "UserStatsReceived":
+			case UserStatsReceived:
 				haveReceivedUserStats = success;
 				
-			case "UserStatsStored":
+			case UserStatsStored:
 				// retry next frame if failed
 				wantStoreStats = !success;
 				
-			case "UserAchievementStored":
+			case UserAchievementStored:
 				if (whenAchievementStored != null) whenAchievementStored(data);
 			
-			case "GamepadTextInputDismissed":
+			case GamepadTextInputDismissed:
 				if (whenGamepadTextInputDismissed != null) {
 					if (success) {
 						whenGamepadTextInputDismissed(controllers.getEnteredGamepadTextInput());
@@ -440,15 +462,15 @@ class Steam
 					}
 				}
 			
-			case "GlobalStatsReceived":
+			case GlobalStatsReceived:
 				haveGlobalStats = success;
 				
-			case "LeaderboardFound":
+			case LeaderboardFound:
 				if (success) {
 					leaderboardIds.push(data);
 				}
 				processNextLeaderboardOp();
-			case "ScoreDownloaded":
+			case ScoreDownloaded:
 				if (success) {
 					var scores = data.split(";");
 					for (score in scores) {
@@ -457,105 +479,104 @@ class Steam
 					}
 				}
 				processNextLeaderboardOp();
-			case "ScoreUploaded":
+			case ScoreUploaded:
 				if (success) {
 					var score = LeaderboardScore.fromString(data);
 					if (score != null && whenLeaderboardScoreUploaded != null) whenLeaderboardScoreUploaded(score);
 				}
 				processNextLeaderboardOp();
-			case "UGCItemCreated":
+			case UGCItemCreated:
 				if (success && whenUGCItemIdReceived != null) {
 					whenUGCItemIdReceived(data);
 				}
-			case "UGCItemUpdateSubmitted":
+			case UGCItemUpdateSubmitted:
 				if (whenUGCItemUpdateComplete != null) {
 					whenUGCItemUpdateComplete(success, data);
 				}
-			case "UGCLegalAgreementStatus":
-			case "RemoteStorageFileShared":
+			case UGCLegalAgreementStatus:
+			case RemoteStorageFileShared:
 				if (whenRemoteStorageFileShared != null) {
 					whenRemoteStorageFileShared(success, data);
 				}
-			case "UserSharedWorkshopFilesEnumerated":
+			case UserSharedWorkshopFilesEnumerated:
 				if (whenUserSharedWorkshopFilesEnumerated != null) {
 					var result = EnumerateUserPublishedFilesResult.fromString(data);
 					whenUserSharedWorkshopFilesEnumerated(success, result);
 				}
-			case "PublishedWorkshopFilesEnumerated":
+			/*case PublishedWorkshopFilesEnumerated:
 				if (whenPublishedWorkshopFilesEnumerated != null) {
 					var result = EnumerateWorkshopFilesResult.fromString(data);
 					whenPublishedWorkshopFilesEnumerated(success, result);
-				}
-			case "UserSubscribedFilesEnumerated":
+				}*/
+			case UserSubscribedFilesEnumerated:
 				if (whenUserSubscribedFilesEnumerated != null) {
 					var result = EnumerateUserSubscribedFilesResult.fromString(data);
 					whenUserSubscribedFilesEnumerated(success, result);
 				}
-			case "UserPublishedFilesEnumerated":
+			case UserPublishedFilesEnumerated:
 				if (whenUserPublishedFilesEnumerated != null) {
 					var result = EnumerateUserPublishedFilesResult.fromString(data);
 					whenUserPublishedFilesEnumerated(success, result);
 				}
-			case "UGCDownloaded":
+			case UGCDownloaded:
 				if (whenUGCDownloaded != null) {
 					var result = DownloadUGCResult.fromString(data);
 					whenUGCDownloaded(success, result);
 				}
-			case "PublishedFileDetailsGotten":
+			case PublishedFileDetailsGotten:
 				if (whenPublishedFileDetailsGotten != null) {
 					var result = GetPublishedFileDetailsResult.fromString(data);
 					whenPublishedFileDetailsGotten(success, result);
 				}
-			case "ItemInstalled":
+			case ItemInstalled:
 				if (whenItemInstalled != null) {
 					var result:String = cast data;
 					whenItemInstalled(result);
 				}
-			case "ItemDownloaded":
+			case ItemDownloaded:
 				if (whenItemDownloaded != null) {
 					var result:String = cast data;
 					whenItemDownloaded(success, result);
 				}
-			case "UGCQueryCompleted":
+			case UGCQueryCompleted:
 				if (whenQueryUGCRequestSent != null) {
 					var result = SteamUGCQueryCompleted.fromString(data);
 					whenQueryUGCRequestSent(result);
 				}
+			case None:
 		}
 	}
 	
-	private static var SteamWrap_Init:Dynamic;
-	private static var SteamWrap_Shutdown:Dynamic;
-	private static var SteamWrap_RunCallbacks:Dynamic;
-	private static var SteamWrap_RequestStats:Dynamic;
-	private static var SteamWrap_GetStat:Dynamic;
-	private static var SteamWrap_GetStatFloat:Dynamic;
-	private static var SteamWrap_GetStatInt:Dynamic;
-	private static var SteamWrap_SetStat:Dynamic;
-	private static var SteamWrap_SetStatFloat:Dynamic;
-	private static var SteamWrap_SetStatInt:Dynamic;
-	private static var SteamWrap_SetAchievement:Dynamic;
-	private static var SteamWrap_GetAchievement:String->Bool;
-	private static var SteamWrap_GetAchievementDisplayAttribute:String->String->String;
-	private static var SteamWrap_GetNumAchievements:Void->Int;
-	private static var SteamWrap_GetAchievementName:Int->String;
-	private static var SteamWrap_GetSteamID:Void->String;
-	private static var SteamWrap_GetPersonaName:Void->String;
-	private static var SteamWrap_ClearAchievement:Dynamic;
-	private static var SteamWrap_IndicateAchievementProgress:Dynamic;
-	private static var SteamWrap_StoreStats:Dynamic;
-	private static var SteamWrap_FindLeaderboard:Dynamic;
-	private static var SteamWrap_UploadScore:String->Int->Int->Bool;
-	private static var SteamWrap_DownloadScores:String->Int->Int->Bool;
-	private static var SteamWrap_RequestGlobalStats:Dynamic;
-	private static var SteamWrap_GetGlobalStat:Dynamic;
-	private static var SteamWrap_RestartAppIfNecessary:Dynamic;
-	private static var SteamWrap_IsOverlayEnabled:Dynamic;
-	private static var SteamWrap_BOverlayNeedsPresent:Dynamic;
-	private static var SteamWrap_IsSteamInBigPictureMode:Dynamic;
-	private static var SteamWrap_IsSteamRunning:Dynamic;
-	private static var SteamWrap_GetCurrentGameLanguage:Dynamic;
-	private static var SteamWrap_OpenOverlay:Dynamic;
+	@:hlNative("steam","init") private static function _Init( onEvent : EventType -> Bool -> hl.Bytes -> Void, notifPos : Int ) : Bool { return false; }
+	@:hlNative("steam","shutdown") private static function _Shutdown(): Void{};
+	@:hlNative("steam","run_callbacks") private static function _RunCallbacks(): Void{};
+	@:hlNative("steam","request_stats") private static function _RequestStats() : Bool { return false; }
+	@:hlNative("steam","get_stat_float") private static function _GetStatFloat( name : hl.Bytes ) : Float { return 0.; }
+	@:hlNative("steam","get_stat_int") private static function _GetStatInt( name : hl.Bytes ) : Int { return 0; }
+	@:hlNative("steam","set_stat_float") private static function _SetStatFloat( name : hl.Bytes, val : Float ) : Bool { return false; }
+	@:hlNative("steam","set_stat_int") private static function _SetStatInt( name : hl.Bytes, val : Int ) : Bool { return false; }
+	@:hlNative("steam","set_achievement") private static function _SetAchievement( name : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","get_achievement") private static function _GetAchievement( name : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","get_achievement_display_attribute") private static function _GetAchievementDisplayAttribute( name : hl.Bytes, key : hl.Bytes ) : hl.Bytes { return null; }
+	@:hlNative("steam","get_num_achievements") private static function _GetNumAchievements() : Int { return 0; }
+	@:hlNative("steam","get_achievement_name") private static function _GetAchievementName( index : Int ) : hl.Bytes { return null; }
+	@:hlNative("steam","get_steam_id") private static function _GetSteamID() : hl.Bytes { return null; }
+	@:hlNative("steam","get_persona_name") private static function _GetPersonaName() : hl.Bytes { return null; }
+	@:hlNative("steam","clear_achievement") private static function _ClearAchievement( name : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","indicate_achievement_progress") private static function _IndicateAchievementProgress( name : hl.Bytes, curProgress : Int, maxProgress : Int ) : Bool { return false; }
+	@:hlNative("steam","store_stats") private static function _StoreStats() : Bool { return false; }
+	@:hlNative("steam","find_leaderboard") private static function _FindLeaderboard( name : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","upload_score") private static function _UploadScore( name : hl.Bytes, score : Int, detail : Int ) : Bool { return false; }
+	@:hlNative("steam","download_scores") private static function _DownloadScores( name : hl.Bytes, before: Int, afeter : Int ) : Bool { return false; }
+	@:hlNative("steam","request_global_stats") private static function _RequestGlobalStats() : Bool { return false; }
+	@:hlNative("steam","get_global_stat") private static function _GetGlobalStat( name : hl.Bytes ) : Int { return 0; }
+	@:hlNative("steam","restart_app_if_necessary") private static function _RestartAppIfNecessary( appId : Int ) : Bool { return false; }
+	@:hlNative("steam","is_overlay_enabled") private static function _IsOverlayEnabled() : Bool { return false; }
+	@:hlNative("steam","b_overlay_needs_present") private static function _BOverlayNeedsPresent() : Bool { return false; }
+	@:hlNative("steam","is_steam_in_big_picture_mode") private static function _IsSteamInBigPictureMode() : Bool { return false; }
+	@:hlNative("steam","is_steam_running") private static function _IsSteamRunning() : Bool { return false; }
+	@:hlNative("steam","get_current_game_language") private static function _GetCurrentGameLanguage() : hl.Bytes { return null; }
+	@:hlNative("steam","open_overlay") private static function _OpenOverlay( url : hl.Bytes ) : Bool { return false; }
 }
 
 class LeaderboardScore {
@@ -934,7 +955,7 @@ class GetPublishedFileDetailsResult
 		var timeUpdated:Int = 0;
 		var visibility:EPublishedFileVisibility = Private;
 		var banned:Bool = false;
-		var tags:String = "";
+		//var tags:String = "";
 		var tagsTruncated:Bool = false;
 		var fileName:String = "";
 		var fileSize:Int = 0;

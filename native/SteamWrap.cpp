@@ -1333,20 +1333,12 @@ DEFINE_PRIM(_BYTES, get_query_ugc_result, _BYTES _I32);
 
 //OLD STEAM WORKSHOP---------------------------------------------------------------------------------------------
 
-HL_PRIM vbyte *HL_NAME(get_ugc_download_progress)(vbyte *contentHandle){
+HL_PRIM void HL_NAME(get_ugc_download_progress)(vbyte *contentHandle, int *downloaded, int *expected){
 	if (!CheckInit()) return (vbyte*)"";
 	
 	uint64 u64Handle = strtoll((char*)contentHandle, NULL, 10);
 	
-	int32 pnBytesDownloaded = 0;
-	int32 pnBytesExpected = 0;
-	
-	SteamRemoteStorage()->GetUGCDownloadProgress(u64Handle, &pnBytesDownloaded, &pnBytesExpected);
-	
-	std::ostringstream data;
-	data << pnBytesDownloaded << "," << pnBytesExpected;
-	
-	return (vbyte*)data.str().c_str();
+	SteamRemoteStorage()->GetUGCDownloadProgress(u64Handle, downloaded, expected);
 }
 DEFINE_PRIM(_BYTES, get_ugc_download_progress, _BYTES);
 
@@ -1478,15 +1470,14 @@ HL_PRIM void HL_NAME(set_cloud_enabled_for_app)(bool enabled){
 }
 DEFINE_PRIM(_VOID, set_cloud_enabled_for_app, _BOOL);
 
-HL_PRIM vbyte *HL_NAME(get_quota)(){
-	uint64 total = 0;
-	uint64 available = 0;
-	
-	//convert uint64 handle to string
-	std::ostringstream data;
-	data << total << "," << available;
-	
-	return (vbyte*)data.str().c_str();
+HL_PRIM void HL_NAME(get_quota)( double *total, double *available ){
+	uint64 iTotal = 0;
+	uint64 iAvailable = 0;
+
+	SteamRemoteStorage()->GetQuota(&iTotal, &iAvailable);
+
+	*total = (double)iTotal;
+	*available = (double)iAvailable;
 }
 DEFINE_PRIM(_BYTES, get_quota, _NO_ARG);
 
@@ -1778,17 +1769,17 @@ HL_PRIM void HL_NAME(get_motion_data)(int controllerHandle, motion_data *data){
 }
 DEFINE_PRIM(_VOID, get_motion_data, _I32 _OBJ(_F64 _F64 _F64 _F64 _F64 _F64 _F64 _F64 _F64 _F64));
 
-HL_PRIM int HL_NAME(show_digital_action_origins)(int controllerHandle, int digitalActionHandle, double scale, double xPosition, double yPosition){
+HL_PRIM bool HL_NAME(show_digital_action_origins)(int controllerHandle, int digitalActionHandle, double scale, double xPosition, double yPosition){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	return SteamController()->ShowDigitalActionOrigins(c_handle, digitalActionHandle, (float)scale, (float)xPosition, (float)yPosition);
 }
-DEFINE_PRIM(_I32, show_digital_action_origins, _I32 _I32 _F64 _F64 _F64);
+DEFINE_PRIM(_BOOL, show_digital_action_origins, _I32 _I32 _F64 _F64 _F64);
 
-HL_PRIM int HL_NAME(show_analog_action_origins)(int controllerHandle, int analogActionHandle, double scale, double xPosition, double yPosition){
+HL_PRIM bool HL_NAME(show_analog_action_origins)(int controllerHandle, int analogActionHandle, double scale, double xPosition, double yPosition){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	return SteamController()->ShowAnalogActionOrigins(c_handle, analogActionHandle, (float)scale, (float)xPosition, (float)yPosition);
 }
-DEFINE_PRIM(_I32, show_analog_action_origins, _I32 _I32 _F64 _F64 _F64);
+DEFINE_PRIM(_BOOL, show_analog_action_origins, _I32 _I32 _F64 _F64 _F64);
 
 
 //-----------------------------------------------------------------------------------------------------------

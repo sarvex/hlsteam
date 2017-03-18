@@ -20,62 +20,54 @@ class Cloud
 	//TODO: these all need documentation headers
 	
 	public function GetFileCount():Int {
-		return SteamWrap_GetFileCount.call(0);
+		return _GetFileCount();
 	}
 	
 	public function FileExists(name:String):Bool {
-		return SteamWrap_FileExists.call(name) == 1;
+		return _FileExists(@:privateAccess name.toUtf8());
 	}
 	
 	public function GetFileSize(name:String):Int {
-		return SteamWrap_GetFileSize.call(name);
+		return _GetFileSize(@:privateAccess name.toUtf8());
 	}
 	
-	public function GetQuota():{total:Int, available:Int}
+	public function GetQuota():{total:Float, available:Float}
 	{
-		var str:String = SteamWrap_GetQuota();
-		var arr = str.split(",");
-		if (arr != null && arr.length == 2)
-		{
-			var total = Std.parseInt(arr[0]);
-			if (total == null) total = 0;
-			var available = Std.parseInt(arr[1]);
-			if (available == null) available = 0;
-			return {total:total, available:available};
-		}
-		return {total:0, available:0};
+		var total = 0., available = 0.;
+		_GetQuota(total, available);
+		return {total:total, available:available};
 	}
 	
-	public function FileRead(name:String):String
+	public function FileRead(name:String):haxe.io.Bytes
 	{
 		if (!FileExists(name))
 		{
 			return null;
 		}
-		var fileData:String = SteamWrap_FileRead(name);
-		return fileData;
+		var len = 0;
+		var fileData:hl.Bytes = _FileRead(@:privateAccess name.toUtf8(), len);
+		return @:privateAccess new haxe.io.Bytes(fileData, len);
 	}
 	
 	public function FileShare(name:String) {
-		SteamWrap_FileShare.call(name);
+		_FileShare(@:privateAccess name.toUtf8());
 	}
 	
 	public function FileWrite(name:String, data:Bytes):Void
 	{
-		SteamWrap_FileWrite(name, data);
+		_FileWrite(@:privateAccess name.toUtf8(), data.getData(), data.length);
 	}
 	
 	public function FileDelete(name:String):Bool {
-		return SteamWrap_FileDelete.call(name) == 1;
+		return _FileDelete(@:privateAccess name.toUtf8());
 	}
 	
 	public function IsCloudEnabledForApp():Bool {
-		return SteamWrap_IsCloudEnabledForApp.call(0) == 1;
+		return _IsCloudEnabledForApp();
 	}
 	
 	public function SetCloudEnabledForApp(b:Bool):Void {
-		var i = b ? 1 : 0;
-		SteamWrap_SetCloudEnabledForApp.call(i);
+		_SetCloudEnabledForApp(b);
 	}
 	
 	/*************PRIVATE***************/
@@ -83,19 +75,16 @@ class Cloud
 	private var customTrace:String->Void;
 	private var appId:Int;
 	
-	//Old-school CFFI calls:
-	private var SteamWrap_FileRead:Dynamic;
-	private var SteamWrap_FileWrite:Dynamic;
-	private var SteamWrap_GetQuota:Dynamic;
-	
-	//CFFI PRIME calls:
-	private var SteamWrap_GetFileCount:Dynamic;
-	private var SteamWrap_FileExists:Dynamic;
-	private var SteamWrap_FileDelete:Dynamic;
-	private var SteamWrap_GetFileSize:Dynamic;
-	private var SteamWrap_FileShare:Dynamic;
-	private var SteamWrap_IsCloudEnabledForApp:Dynamic;
-	private var SteamWrap_SetCloudEnabledForApp:Dynamic;
+	@:hlNative("steam","file_read") private static function _FileRead( name : hl.Bytes, len : hl.Ref<Int> ) : hl.Bytes { return null; }
+	@:hlNative("steam","file_write") private static function _FileWrite( name : hl.Bytes, bytes : hl.Bytes, len : Int ) : Bool { return false; }
+	@:hlNative("steam","get_quota") private static function _GetQuota( total : hl.Ref<Float>, available : hl.Ref<Float> ): Void{};
+	@:hlNative("steam","get_file_count") private static function _GetFileCount() : Int { return 0; }
+	@:hlNative("steam","file_exists") private static function _FileExists( name : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","file_delete") private static function _FileDelete( name : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","get_file_size") private static function _GetFileSize( name : hl.Bytes ) : Int { return 0; }
+	@:hlNative("steam","file_share") private static function _FileShare( name : hl.Bytes ): Void{};
+	@:hlNative("steam","is_cloud_enabled_for_app") private static function _IsCloudEnabledForApp() : Bool { return false; }
+	@:hlNative("steam","set_cloud_enabled_for_app") private static function _SetCloudEnabledForApp( enabled : Bool ) : Bool { return false; }
 	
 	private function new(appId_:Int, CustomTrace:String->Void) {
 		if (active) return;

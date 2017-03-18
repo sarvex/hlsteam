@@ -1,6 +1,5 @@
 package steamwrap.api;
 import haxe.io.Bytes;
-import haxe.io.BytesData;
 import steamwrap.api.Steam;
 
 /**
@@ -31,7 +30,7 @@ class Workshop
 	 * @return	whether the call succeeded or not
 	 */
 	public function enumerateUserSharedWorkshopFiles(steamID:String, startIndex:Int, requiredTags:String, excludedTags:String):Void{
-		SteamWrap_EnumerateUserSharedWorkshopFiles.call(steamID, startIndex, requiredTags, excludedTags);
+		@:privateAccess _EnumerateUserSharedWorkshopFiles(steamID.toUtf8(), startIndex, requiredTags.toUtf8(), excludedTags.toUtf8());
 	}
 	
 	/**
@@ -40,7 +39,7 @@ class Workshop
 	 * @return	whether the call succeeded or not
 	 */
 	public function enumerateUserSubscribedFiles(startIndex:Int):Void{
-		SteamWrap_EnumerateUserSubscribedFiles.call(startIndex);
+		_EnumerateUserSubscribedFiles(startIndex);
 	}
 	
 	/**
@@ -49,7 +48,7 @@ class Workshop
 	 * @return	whether the call succeeded or not
 	 */
 	public function enumerateUserPublishedFiles(startIndex:Int):Void{
-		SteamWrap_EnumerateUserPublishedFiles.call(startIndex);
+		_EnumerateUserPublishedFiles(startIndex);
 	}
 	
 	/**
@@ -58,16 +57,9 @@ class Workshop
 	 * @return	an array with two values, index 0 is bytes downloaded, index 1 is total bytes expected (can be zero if the call fails or hasn't started yet, be careful before dividing for a percentage!)
 	 */
 	public function getUGCDownloadProgress(handle:String):Array<Int>{
-		var data:String = SteamWrap_GetUGCDownloadProgress(handle);
-		var arr:Array<String> = data.split(",");
-		if (arr != null && arr.length == 2)
-		{
-			return [
-				Std.parseInt(arr[0]),
-				Std.parseInt(arr[1])
-			];
-		}
-		return [0, 0];
+		var downloaded = 0, expected = 0;
+		_GetUGCDownloadProgress(@:privateAccess handle.toUtf8(), downloaded, expected);
+		return [downloaded, expected];
 	}
 	
 	/**
@@ -91,7 +83,7 @@ class Workshop
 	 * @param	priority
 	 */
 	public function UGCDownload(handle:String, priority:Int):Void{
-		SteamWrap_UGCDownload.call(handle, priority);
+		_UGCDownload(@:privateAccess handle.toUtf8(), priority);
 	}
 	
 	/**
@@ -109,8 +101,9 @@ class Workshop
 	 */
 	public function UGCRead(handle:String, bytesToRead:Int, offset:Int, action:EUGCReadAction):Bytes
 	{
-		var bytes:BytesData = SteamWrap_UGCRead(handle, bytesToRead, offset, action);
-		return Bytes.ofData(bytes);
+		var bytes = haxe.io.Bytes.alloc( bytesToRead );
+		var l = _UGCRead(@:privateAccess handle.toUtf8(), bytes.getData(), bytesToRead, offset, action);
+		return l == bytesToRead ? bytes : bytes.sub(0,l);
 	}
 	
 	/**
@@ -133,6 +126,7 @@ class Workshop
 		var bytes:Bytes = Bytes.alloc(totalSizeInBytes);
 		var bytesLeft = totalSizeInBytes;
 		var offset = 0;
+		var chunk = Bytes.alloc(chunkSize);
 		
 		for (i in 0...chunks)
 		{
@@ -141,27 +135,27 @@ class Workshop
 				chunkSize = bytesLeft;
 			}
 			
-			var result:BytesData = SteamWrap_UGCRead(handle, chunkSize, offset, EUGCReadAction.ContinueReadingUntilFinished);
+			var result:Int = _UGCRead(@:privateAccess handle.toUtf8(), chunk.getData(), chunkSize, offset, EUGCReadAction.ContinueReadingUntilFinished);
 			
-			if (result != null)
+			if (result > 0)
 			{
-				bytes.blit(offset, Bytes.ofData(result), 0, chunkSize);
+				bytes.blit(offset, chunk, 0, result);
 			}
 			
-			bytesLeft -= chunkSize;
-			offset += chunkSize;
+			bytesLeft -= result;
+			offset += result;
 			
-			if (bytesLeft <= 0)
+			if (bytesLeft <= 0 || result < chunkSize)
 			{
 				break;
 			}
 		}
 		
-		return bytes;
+		return offset == totalSizeInBytes ? bytes : bytes.sub(0,offset);
 	}
 	
 	public function getPublishedFileDetails(fileId:String, maxSecondsOld:Int):Void{
-		SteamWrap_GetPublishedFileDetails.call(fileId, maxSecondsOld);
+		_GetPublishedFileDetails(@:privateAccess fileId.toUtf8(), maxSecondsOld);
 	}
 	
 	/*************PRIVATE***************/
@@ -169,16 +163,13 @@ class Workshop
 	private var customTrace:String->Void;
 	private var appId:Int;
 	
-	//Old-school CFFI calls:
-	private var SteamWrap_GetUGCDownloadProgress:Dynamic;
-	private var SteamWrap_UGCRead:Dynamic;
-	
-	//CFFI PRIME calls:
-	private var SteamWrap_GetPublishedFileDetails:Dynamic;
-	private var SteamWrap_EnumerateUserSharedWorkshopFiles:Dynamic;
-	private var SteamWrap_EnumerateUserSubscribedFiles:Dynamic;
-	private var SteamWrap_EnumerateUserPublishedFiles:Dynamic;
-	private var SteamWrap_UGCDownload:Dynamic;
+	@:hlNative("steam","get_ugc_download_progress") private static function _GetUGCDownloadProgress( h : hl.Bytes, downloaded : hl.Ref<Int>, expected : hl.Ref<Int> ) : Void{};
+	@:hlNative("steam","ugc_read") private static function _UGCRead( h : hl.Bytes, data : hl.Bytes, bytesToRead : Int, offset : Int, readAction : Int ) : Int { return 0; }
+	@:hlNative("steam","get_published_file_details") private static function _GetPublishedFileDetails( file : hl.Bytes, maxSecondsOld : Int ): Void{};
+	@:hlNative("steam","enumerate_user_shared_workshop_files") private static function _EnumerateUserSharedWorkshopFiles( steamId : hl.Bytes, startIndex : Int, requiredTags : hl.Bytes, excludedTags : hl.Bytes ): Void{};
+	@:hlNative("steam","enumerate_user_subscribed_files") private static function _EnumerateUserSubscribedFiles( startIndex : Int ): Void{};
+	@:hlNative("steam","enumerate_user_published_files") private static function _EnumerateUserPublishedFiles( startIndex : Int ): Void{};
+	@:hlNative("steam","ugc_download") private static function _UGCDownload( h : hl.Bytes, priority : Int ): Void{};
 	
 	private function new(appId_:Int, CustomTrace:String->Void) {
 		#if sys		//TODO: figure out what targets this will & won't work with and upate this guard
@@ -190,7 +181,7 @@ class Workshop
 		
 		// if we get this far, the dlls loaded ok and we need Steam controllers to init.
 		// otherwise, we're trying to run the Steam version without the Steam client
-		active = true;//SteamWrap_InitControllers();
+		active = true;//_InitControllers();
 		
 		#end
 	}
