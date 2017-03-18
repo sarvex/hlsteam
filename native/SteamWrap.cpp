@@ -777,7 +777,7 @@ DEFINE_PRIM(_BOOL, store_stats, _NO_ARG);
 
 //-----------------------------------------------------------------------------------------------------------
 
-HL_PRIM bool HL_NAME(submit_ugcitem_update)(vbyte *updateHandle, vbyte *changeNotes){
+HL_PRIM bool HL_NAME(submit_ugc_item_update)(vbyte *updateHandle, vbyte *changeNotes){
 	if (!CheckInit()) return false;
 
 	// Create uint64 from the string.
@@ -789,9 +789,9 @@ HL_PRIM bool HL_NAME(submit_ugcitem_update)(vbyte *updateHandle, vbyte *changeNo
 	s_callbackHandler->SubmitUGCItemUpdate(updateHandle64, (char*)changeNotes);
  	return true;
 }
-DEFINE_PRIM(_BOOL, submit_ugcitem_update, _BYTES _BYTES);
+DEFINE_PRIM(_BOOL, submit_ugc_item_update, _BYTES _BYTES);
 
-HL_PRIM vbyte *HL_NAME(start_update_ugcitem)(int id, int itemID) {
+HL_PRIM vbyte *HL_NAME(start_update_ugc_item)(int id, int itemID) {
 	if (!CheckInit()) return (vbyte*)"0";
 
 	UGCUpdateHandle_t ugcUpdateHandle = SteamUGC()->StartItemUpdate(id, itemID);
@@ -802,9 +802,9 @@ HL_PRIM vbyte *HL_NAME(start_update_ugcitem)(int id, int itemID) {
 
  	return (vbyte*)updateHandleStream.str().c_str();
 }
-DEFINE_PRIM(_BYTES, start_update_ugcitem, _I32 _I32);
+DEFINE_PRIM(_BYTES, start_update_ugc_item, _I32 _I32);
 
-HL_PRIM bool HL_NAME(set_ugcitem_title)(vbyte *updateHandle, vbyte *title) {
+HL_PRIM bool HL_NAME(set_ugc_item_title)(vbyte *updateHandle, vbyte *title) {
 	if (!CheckInit()) return false;
 
 	// Create uint64 from the string.
@@ -814,9 +814,9 @@ HL_PRIM bool HL_NAME(set_ugcitem_title)(vbyte *updateHandle, vbyte *title) {
 		return false;
 	return SteamUGC()->SetItemTitle(updateHandle64, (char*)title);
 }
-DEFINE_PRIM(_BOOL, set_ugcitem_title, _BYTES _BYTES);
+DEFINE_PRIM(_BOOL, set_ugc_item_title, _BYTES _BYTES);
 
-HL_PRIM bool HL_NAME(set_ugcitem_description)(vbyte *updateHandle, vbyte *description){
+HL_PRIM bool HL_NAME(set_ugc_item_description)(vbyte *updateHandle, vbyte *description){
 	if(!CheckInit()) return false;
 
 	// Create uint64 from the string.
@@ -827,9 +827,9 @@ HL_PRIM bool HL_NAME(set_ugcitem_description)(vbyte *updateHandle, vbyte *descri
 
 	return SteamUGC()->SetItemDescription(updateHandle64, (char*)description);
 }
-DEFINE_PRIM(_BOOL, set_ugcitem_description, _BYTES _BYTES);
+DEFINE_PRIM(_BOOL, set_ugc_item_description, _BYTES _BYTES);
 
-HL_PRIM bool HL_NAME(set_ugcitem_tags)(vbyte *updateHandle, vbyte *tags){
+HL_PRIM bool HL_NAME(set_ugc_item_tags)(vbyte *updateHandle, vbyte *tags){
 	if (!CheckInit()) return false;
 
 	// Create uint64 from the string.
@@ -845,9 +845,9 @@ HL_PRIM bool HL_NAME(set_ugcitem_tags)(vbyte *updateHandle, vbyte *tags){
 	deleteSteamParamStringArray(pTags);
 	return result;
 }
-DEFINE_PRIM(_BOOL, set_ugcitem_tags, _BYTES _BYTES);
+DEFINE_PRIM(_BOOL, set_ugc_item_tags, _BYTES _BYTES);
 
-HL_PRIM bool HL_NAME(add_ugcitem_key_value_tag)(vbyte *updateHandle, vbyte *keyStr, vbyte *valueStr){
+HL_PRIM bool HL_NAME(add_ugc_item_key_value_tag)(vbyte *updateHandle, vbyte *keyStr, vbyte *valueStr){
 	if (!CheckInit()) return false;
 	
 	// Create uint64 from the string.
@@ -858,9 +858,9 @@ HL_PRIM bool HL_NAME(add_ugcitem_key_value_tag)(vbyte *updateHandle, vbyte *keyS
 	
 	return SteamUGC()->AddItemKeyValueTag(updateHandle64, (char*)keyStr, (char*)valueStr);
 }
-DEFINE_PRIM(_BOOL, add_ugcitem_key_value_tag, _BYTES _BYTES _BYTES);
+DEFINE_PRIM(_BOOL, add_ugc_item_key_value_tag, _BYTES _BYTES _BYTES);
 
-HL_PRIM bool HL_NAME(remove_ugcitem_key_value_tags)(vbyte *updateHandle, vbyte *keyStr) {
+HL_PRIM bool HL_NAME(remove_ugc_item_key_value_tags)(vbyte *updateHandle, vbyte *keyStr) {
 	if (!CheckInit()) return false;
 	
 	// Create uint64 from the string.
@@ -871,9 +871,9 @@ HL_PRIM bool HL_NAME(remove_ugcitem_key_value_tags)(vbyte *updateHandle, vbyte *
 	
 	return SteamUGC()->RemoveItemKeyValueTags(updateHandle64, (char*)keyStr);
 }
-DEFINE_PRIM(_BOOL, remove_ugcitem_key_value_tags, _BYTES _BYTES);
+DEFINE_PRIM(_BOOL, remove_ugc_item_key_value_tags, _BYTES _BYTES);
 
-HL_PRIM bool HL_NAME(set_ugcitem_visibility)(vbyte *updateHandle, int visibility) {
+HL_PRIM bool HL_NAME(set_ugc_item_visibility)(vbyte *updateHandle, int visibility) {
 	if (!CheckInit()) return false;
 
 	// Create uint64 from the string.
@@ -886,9 +886,9 @@ HL_PRIM bool HL_NAME(set_ugcitem_visibility)(vbyte *updateHandle, int visibility
 
 	return SteamUGC()->SetItemVisibility(updateHandle64, visibilityEnum);
 }
-DEFINE_PRIM(_BOOL, set_ugcitem_visibility, _BYTES _I32);
+DEFINE_PRIM(_BOOL, set_ugc_item_visibility, _BYTES _I32);
 
-HL_PRIM bool HL_NAME(set_ugcitem_content)(vbyte *updateHandle, vbyte *path){
+HL_PRIM bool HL_NAME(set_ugc_item_content)(vbyte *updateHandle, vbyte *path){
 	if (!CheckInit()) return false;
 
 	// Create uint64 from the string.
@@ -899,9 +899,9 @@ HL_PRIM bool HL_NAME(set_ugcitem_content)(vbyte *updateHandle, vbyte *path){
 
 	return SteamUGC()->SetItemContent(updateHandle64, (char*)path);
 }
-DEFINE_PRIM(_BOOL, set_ugcitem_content, _BYTES _BYTES);
+DEFINE_PRIM(_BOOL, set_ugc_item_content, _BYTES _BYTES);
 
-HL_PRIM bool HL_NAME(set_ugcitem_preview_image)(vbyte *updateHandle, vbyte *path){
+HL_PRIM bool HL_NAME(set_ugc_item_preview_image)(vbyte *updateHandle, vbyte *path){
 	if (!CheckInit()) return false;
 
 	// Create uint64 from the string.
@@ -912,334 +912,228 @@ HL_PRIM bool HL_NAME(set_ugcitem_preview_image)(vbyte *updateHandle, vbyte *path
 
 	return SteamUGC()->SetItemPreview(updateHandle64, (char*)path);
 }
-DEFINE_PRIM(_BOOL, set_ugcitem_preview_image, _BYTES _BYTES);
+DEFINE_PRIM(_BOOL, set_ugc_item_preview_image, _BYTES _BYTES);
 
-HL_PRIM bool HL_NAME(create_ugcitem)(int id) {
+HL_PRIM bool HL_NAME(create_ugc_item)(int id) {
 	if (!CheckInit()) return false;
 
 	s_callbackHandler->CreateUGCItem(id, k_EWorkshopFileTypeCommunity);
  	return true;
 }
-DEFINE_PRIM(_BOOL, create_ugcitem, _I32);
+DEFINE_PRIM(_BOOL, create_ugc_item, _I32);
 
 //-----------------------------------------------------------------------------------------------------------
-int SteamWrap_AddRequiredTag(const char * handle, const char * tagName)
-{
-	if (!CheckInit()) return 0;
-	
-	UGCQueryHandle_t u64Handle = strtoull(handle, NULL, 0);
-	
-	bool result = SteamUGC()->AddRequiredTag(u64Handle, tagName);
-	return result;
+HL_PRIM bool HL_NAME(add_required_tag)(vbyte* handle, vbyte *tagName){
+	if (!CheckInit()) return false;
+	UGCQueryHandle_t u64Handle = strtoull((char*)handle, NULL, 0);
+	return SteamUGC()->AddRequiredTag(u64Handle, (char*)tagName);
 }
-DEFINE_PRIME2(SteamWrap_AddRequiredTag);
+DEFINE_PRIM(_BOOL, add_required_tag, _BYTES _BYTES);
 
-//-----------------------------------------------------------------------------------------------------------
-int SteamWrap_AddRequiredKeyValueTag(const char * handle, const char * pKey, const char * pValue)
-{
-	if (!CheckInit()) return 0;
-	
-	UGCQueryHandle_t u64Handle = strtoull(handle, NULL, 0);
-	
-	bool result = SteamUGC()->AddRequiredKeyValueTag(u64Handle, pKey, pValue);
-	return result;
+HL_PRIM bool HL_NAME(add_required_key_value_tag)(vbyte *handle, vbyte *pKey, vbyte *pValue){
+	if (!CheckInit()) return false;
+	UGCQueryHandle_t u64Handle = strtoull((char*)handle, NULL, 0);
+	return SteamUGC()->AddRequiredKeyValueTag(u64Handle, (char*)pKey, (char*)pValue);
 }
-DEFINE_PRIME3(SteamWrap_AddRequiredKeyValueTag);
+DEFINE_PRIM(_BOOL, add_required_key_value_tag, _BYTES _BYTES _BYTES);
 
-//-----------------------------------------------------------------------------------------------------------
-int SteamWrap_AddExcludedTag(const char * handle, const char * tagName)
-{
-	if (!CheckInit()) return 0;
-	
-	UGCQueryHandle_t u64Handle = strtoull(handle, NULL, 0);
-	
-	bool result = SteamUGC()->AddExcludedTag(u64Handle, tagName);
-	return result;
+HL_PRIM bool HL_NAME(add_excluded_tag)(vbyte *handle, vbyte *tagName){
+	if (!CheckInit()) return false;
+	UGCQueryHandle_t u64Handle = strtoull((char*)handle, NULL, 0);
+	return SteamUGC()->AddExcludedTag(u64Handle, (char*)tagName);
 }
-DEFINE_PRIME2(SteamWrap_AddExcludedTag);
+DEFINE_PRIM(_BOOL, add_excluded_tag, _BYTES _BYTES);
 
-//-----------------------------------------------------------------------------------------------------------
-int SteamWrap_SetReturnMetadata(const char * handle, int returnMetadata)
-{
-	if (!CheckInit()) return 0;
-	
-	UGCQueryHandle_t u64Handle = strtoull(handle, NULL, 0);
-	
-	bool result = SteamUGC()->SetReturnMetadata(u64Handle, returnMetadata == 1);
-	return result;
+HL_PRIM bool HL_NAME(set_return_metadata)(vbyte *handle, bool returnMetadata){
+	if (!CheckInit()) return false;
+	UGCQueryHandle_t u64Handle = strtoull((char*)handle, NULL, 0);
+	return SteamUGC()->SetReturnMetadata(u64Handle, returnMetadata);
 }
-DEFINE_PRIME2(SteamWrap_SetReturnMetadata);
+DEFINE_PRIM(_BOOL, set_return_metadata, _BYTES _BOOL);
 
-//-----------------------------------------------------------------------------------------------------------
-int SteamWrap_SetReturnKeyValueTags(const char * handle, int returnKeyValueTags)
-{
-	if (!CheckInit()) return 0;
-	
-	UGCQueryHandle_t u64Handle = strtoull(handle, NULL, 0);
-	bool setValue = returnKeyValueTags == 1;
-	
-	bool result = SteamUGC()->SetReturnKeyValueTags(u64Handle, setValue);
-	return result;
+HL_PRIM bool HL_NAME(set_return_key_value_tags)(vbyte *handle, bool returnKeyValueTags){
+	if (!CheckInit()) return false;
+	UGCQueryHandle_t u64Handle = strtoull((char*)handle, NULL, 0);
+	return SteamUGC()->SetReturnKeyValueTags(u64Handle, returnKeyValueTags);
 }
-DEFINE_PRIME2(SteamWrap_SetReturnKeyValueTags);
+DEFINE_PRIM(_BOOL, set_return_key_value_tags, _BYTES _BOOL);
 
 //-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(SetAchievement)(value name)
-{
-	if (!val_is_string(name) || !CheckInit())
-		return false;
+
+HL_PRIM bool HL_NAME(set_achievement)(vbyte *name){
+	if (!CheckInit()) return false;
 
 	SteamUserStats()->SetAchievement((char*)name);
-	bool result = SteamUserStats()->StoreStats();
-
-	return alloc_bool(result);
+	return SteamUserStats()->StoreStats();
 }
-DEFINE_PRIM(SteamWrap_SetAchievement, 1);
+DEFINE_PRIM(_BOOL, set_achievement, _BYTES);
 
-HL_PRIM value HL_NAME(GetAchievement)(value name)
-{
-  if (!val_is_string(name) || !CheckInit()) return false;
+HL_PRIM bool HL_NAME(get_achievement)(vbyte *name) {
+  if (!CheckInit()) return false;
   bool achieved = false;
   SteamUserStats()->GetAchievement((char*)name, &achieved);
-  return alloc_bool(achieved);
+  return achieved;
 }
-DEFINE_PRIM(SteamWrap_GetAchievement, 1);
+DEFINE_PRIM(_BOOL, get_achievement, _BYTES);
 
-HL_PRIM value HL_NAME(GetAchievementDisplayAttribute)(value name, value key)
-{
-  if (!val_is_string(name) || !val_is_string(key) || !CheckInit()) return alloc_string("");
-  
-  const char* result = SteamUserStats()->GetAchievementDisplayAttribute((char*)name, (char*)key);
-  return alloc_string(result);
+HL_PRIM vbyte *HL_NAME(get_achievement_display_attribute)(vbyte *name, vbyte *key){
+  if (!CheckInit()) return (vbyte*)"";
+  return (vbyte*)SteamUserStats()->GetAchievementDisplayAttribute((char*)name, (char*)key);
 }
-DEFINE_PRIM(SteamWrap_GetAchievementDisplayAttribute, 2);
+DEFINE_PRIM(_BYTES, get_achievement_display_attribute, _BYTES _BYTES);
 
-HL_PRIM value HL_NAME(GetNumAchievements)()
-{
-  if (!CheckInit()) return alloc_int(0);
-  
-  uint32 count = SteamUserStats()->GetNumAchievements();
-  return alloc_int((int)count);
+HL_PRIM int HL_NAME(get_num_achievements)(){
+  if (!CheckInit()) return 0;
+  return (int)SteamUserStats()->GetNumAchievements();
 }
-DEFINE_PRIM(SteamWrap_GetNumAchievements, 0);
+DEFINE_PRIM(_I32, get_num_achievements, _NO_ARG);
 
-HL_PRIM value HL_NAME(GetAchievementName)(value index)
-{
-  if (!val_is_int(index) && !CheckInit()) return alloc_string("");
-  const char* name = SteamUserStats()->GetAchievementName(val_int(index));
-  return alloc_string(name);
+HL_PRIM vbyte *HL_NAME(get_achievement_name)(int index){
+  if (!CheckInit()) return (vbyte*)"";
+  return (vbyte*)SteamUserStats()->GetAchievementName(index);
 }
-DEFINE_PRIM(SteamWrap_GetAchievementName, 1);
+DEFINE_PRIM(_BYTES, get_achievement_name, _I32);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(ClearAchievement)(value name)
-{
-	if (!val_is_string(name) || !CheckInit())
-		return false;
-
+HL_PRIM bool HL_NAME(clear_achievement)(vbyte *name){
+	if (!CheckInit()) return false;
 	SteamUserStats()->ClearAchievement((char*)name);
-	bool result = SteamUserStats()->StoreStats();
-
-	return alloc_bool(result);
+	return SteamUserStats()->StoreStats();
 }
-DEFINE_PRIM(SteamWrap_ClearAchievement, 1);
+DEFINE_PRIM(_BOOL, clear_achievement, _BYTES);
+
+HL_PRIM bool HL_NAME(indicate_achievement_progress)(vbyte *name, int numCurProgres, int numMaxProgress){
+	if (!CheckInit()) return false;
+	return SteamUserStats()->IndicateAchievementProgress((char*)name, numCurProgres, numMaxProgress);
+}
+DEFINE_PRIM(_BOOL, indicate_achievement_progress, _BYTES _I32 _I32);
 
 //-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(IndicateAchievementProgress)(value name, value numCurProgres, value numMaxProgress)
-{
-	if (!val_is_string(name) || !val_is_int(numCurProgres) || !val_is_int(numMaxProgress) || !CheckInit())
-		return false;
 
-	bool result = SteamUserStats()->IndicateAchievementProgress((char*)name, val_int(numCurProgres), val_int(numMaxProgress));
-
-	return alloc_bool(result);
-}
-DEFINE_PRIM(SteamWrap_IndicateAchievementProgress, 3);
-
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(FindLeaderboard)(value name)
-{
-	if (!val_is_string(name) || !CheckInit())
-		return false;
-
+HL_PRIM bool HL_NAME(find_leaderboard)(vbyte *name) {
+	if (!CheckInit()) return false;
 	s_callbackHandler->FindLeaderboard((char*)name);
-
- 	return alloc_bool(true);
+ 	return true;
 }
-DEFINE_PRIM(SteamWrap_FindLeaderboard, 1);
+DEFINE_PRIM(_BOOL, find_leaderboard, _BYTES);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(UploadScore)(value name, value score, value detail)
-{
-	if (!val_is_string(name) || !val_is_int(score) || !val_is_int(detail) || !CheckInit())
-		return false;
-
-	bool result = s_callbackHandler->UploadScore((char*)name, val_int(score), val_int(detail));
-	return alloc_bool(result);
+HL_PRIM bool HL_NAME(upload_score)(vbyte *name, int score, int detail){
+	if (!CheckInit()) return false;
+	return s_callbackHandler->UploadScore((char*)name, score, detail);
 }
-DEFINE_PRIM(SteamWrap_UploadScore, 3);
+DEFINE_PRIM(_BOOL, upload_score, _BYTES _I32 _I32);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(DownloadScores)(value name, value numBefore, value numAfter)
-{
-	if (!val_is_string(name) || !val_is_int(numBefore) || !val_is_int(numAfter) || !CheckInit())
-		return false;
-
-	bool result = s_callbackHandler->DownloadScores((char*)name, val_int(numBefore), val_int(numAfter));
-	return alloc_bool(result);
+HL_PRIM bool HL_NAME(download_scores)(vbyte *name, int numBefore, int numAfter) {
+	if (!CheckInit()) return false;
+	return s_callbackHandler->DownloadScores((char*)name, numBefore, numAfter);
 }
-DEFINE_PRIM(SteamWrap_DownloadScores, 3);
+DEFINE_PRIM(_BOOL, download_scores, _BYTES _I32 _I32);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(RequestGlobalStats)()
-{
-	if (!CheckInit())
-		return false;
-
+HL_PRIM bool HL_NAME(request_global_stats)() {
+	if (!CheckInit()) return false;
 	s_callbackHandler->RequestGlobalStats();
-	return alloc_bool(true);
+	return true;
 }
-DEFINE_PRIM(SteamWrap_RequestGlobalStats, 0);
+DEFINE_PRIM(_BOOL, request_global_stats, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetGlobalStat)(value name)
-{
-	if (!val_is_string(name) || !CheckInit())
-		return alloc_int(0);
+HL_PRIM int HL_NAME(get_global_stat)(vbyte *name){
+	if (!CheckInit()) return 0;
 
 	int64 val;
 	SteamUserStats()->GetGlobalStat((char*)name, &val);
-
-	return alloc_int((int)val);
+	return (int)val;
 }
-DEFINE_PRIM(SteamWrap_GetGlobalStat, 1);
+DEFINE_PRIM(_I32, get_global_stat, _BYTES);
 
 //-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetPersonaName)()
-{
-	if(!CheckInit())
-		return alloc_string("unknown");
-	
-	const char * persona = SteamFriends()->GetPersonaName();
-	
-	return alloc_string(persona);
+
+HL_PRIM vbyte *HL_NAME(get_persona_name)(){
+	if(!CheckInit()) return (vbyte*)"Unknown";
+	return (vbyte*)SteamFriends()->GetPersonaName();
 }
-DEFINE_PRIM(SteamWrap_GetPersonaName, 0);
+DEFINE_PRIM(_BYTES, get_persona_name, _NO_ARG);
 
-
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetSteamID)()
-{
-	if(!CheckInit())
-		return alloc_string("0");
+HL_PRIM vbyte *HL_NAME(get_steam_id)(){
+	if(!CheckInit()) return (vbyte*)"0";
 	
 	CSteamID userId = SteamUser()->GetSteamID();
 	
 	std::ostringstream returnData;
 	returnData << userId.ConvertToUint64();
 	
-	return alloc_string(returnData.str().c_str());
+	return (vbyte*)returnData.str().c_str();
 }
-DEFINE_PRIM(SteamWrap_GetSteamID, 0);
+DEFINE_PRIM(_BYTES, get_steam_id, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(RestartAppIfNecessary)(value appId)
-{
-	if (!val_is_int(appId))
-		return false;
-
-	bool result = SteamAPI_RestartAppIfNecessary(val_int(appId));
-	return alloc_bool(result);
+HL_PRIM bool HL_NAME(restart_app_if_necessary)(int appId){
+	return SteamAPI_RestartAppIfNecessary(appId);
 }
-DEFINE_PRIM(SteamWrap_RestartAppIfNecessary, 1);
+DEFINE_PRIM(_BOOL, restart_app_if_necessary, _I32);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(IsOverlayEnabled)()
-{
-	bool result = SteamUtils()->IsOverlayEnabled();
-	return alloc_bool(result);
+HL_PRIM bool HL_NAME(is_overlay_enabled)(){
+	return SteamUtils()->IsOverlayEnabled();
 }
-DEFINE_PRIM(SteamWrap_IsOverlayEnabled, 0);
+DEFINE_PRIM(_BOOL, is_overlay_enabled, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(BOverlayNeedsPresent)()
-{
-	bool result = SteamUtils()->BOverlayNeedsPresent();
-	return alloc_bool(result);
+HL_PRIM bool HL_NAME(boverlay_needs_present)(){
+	return SteamUtils()->BOverlayNeedsPresent();
 }
-DEFINE_PRIM(SteamWrap_BOverlayNeedsPresent, 0);
+DEFINE_PRIM(_BOOL, boverlay_needs_present, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(IsSteamInBigPictureMode)()
-{
-	bool result = SteamUtils()->IsSteamInBigPictureMode();
-	return alloc_bool(result);
+HL_PRIM bool HL_NAME(is_steam_in_big_picture_mode)(){
+	return SteamUtils()->IsSteamInBigPictureMode();
 }
-DEFINE_PRIM(SteamWrap_IsSteamInBigPictureMode, 0);
+DEFINE_PRIM(_BOOL, is_steam_in_big_picture_mode, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(IsSteamRunning)()
-{
-	bool result = SteamAPI_IsSteamRunning();
-	return alloc_bool(result);
+HL_PRIM bool HL_NAME(is_steam_running)(){
+	return SteamAPI_IsSteamRunning();
 }
-DEFINE_PRIM(SteamWrap_IsSteamRunning, 0);
+DEFINE_PRIM(_BOOL, is_steam_running, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetCurrentGameLanguage)()
-{
-	const char* result = SteamApps()->GetCurrentGameLanguage();
-	return alloc_string(result);
+HL_PRIM vbyte *HL_NAME(get_current_game_language)(){
+	return (vbyte*)SteamApps()->GetCurrentGameLanguage();
 }
-DEFINE_PRIM(SteamWrap_GetCurrentGameLanguage, 0);
+DEFINE_PRIM(_BYTES, get_current_game_language, _NO_ARG);
 
 //-----------------------------------------------------------------------------------------------------------
 
 //NEW STEAM WORKSHOP---------------------------------------------------------------------------------------------
 
-int SteamWrap_GetNumSubscribedItems(int dummy)
-{
+HL_PRIM int HL_NAME(get_num_subscribed_items)() {
 	if (!CheckInit()) return 0;
-	int numItems = SteamUGC()->GetNumSubscribedItems();
-	return numItems;
+	return SteamUGC()->GetNumSubscribedItems();
 }
-DEFINE_PRIME1(SteamWrap_GetNumSubscribedItems);
+DEFINE_PRIM(_I32, get_num_subscribed_items, _NO_ARG);
 
-HL_PRIM value HL_NAME(GetSubscribedItems)()
-{
-	if (!CheckInit()) return alloc_string("");
+HL_PRIM vbyte *HL_NAME(get_subscribed_items)(){
+	if (!CheckInit()) return (vbyte*)"";
 	
 	int numSubscribed = SteamUGC()->GetNumSubscribedItems();
-	if(numSubscribed <= 0) return alloc_string("");
+	if(numSubscribed <= 0) return (vbyte*)"";
 	PublishedFileId_t* pvecPublishedFileID = new PublishedFileId_t[numSubscribed];
 	
 	int result = SteamUGC()->GetSubscribedItems(pvecPublishedFileID, numSubscribed);
 	
 	std::ostringstream data;
 	for(int i = 0; i < result; i++){
-		if(i != 0){
+		if(i != 0)
 			data << ",";
-		}
 		data << pvecPublishedFileID[i];
 	}
 	delete pvecPublishedFileID;
 	
-	return alloc_string(data.str().c_str());
+	return (vbyte*)data.str().c_str();
 }
-DEFINE_PRIM(SteamWrap_GetSubscribedItems, 0);
+DEFINE_PRIM(_BYTES, get_subscribed_items, _NO_ARG);
 
-int SteamWrap_GetItemState(const char * publishedFileID)
-{
+HL_PRIM int HL_NAME(get_item_state)(vbyte *publishedFileID){
 	if (!CheckInit()) return 0;
-	PublishedFileId_t nPublishedFileID = (PublishedFileId_t) strtoll(publishedFileID, NULL, 10);
+	PublishedFileId_t nPublishedFileID = (PublishedFileId_t) strtoll((char*)publishedFileID, NULL, 10);
 	return SteamUGC()->GetItemState(nPublishedFileID);
 }
-DEFINE_PRIME1(SteamWrap_GetItemState);
+DEFINE_PRIM(_I32, get_item_state, _BYTES);
 
-HL_PRIM value HL_NAME(GetItemDownloadInfo)(value publishedFileID)
-{
-	if (!CheckInit()) return alloc_string("");
-	if (!val_is_string(publishedFileID)) return alloc_string("");
+HL_PRIM vbyte *HL_NAME(get_item_download_info)(vbyte *publishedFileID){
+	if (!CheckInit()) return (vbyte*)"";
 	
 	PublishedFileId_t nPublishedFileID = (PublishedFileId_t) strtoll((char*)publishedFileID, NULL, 10);
 	
@@ -1253,35 +1147,29 @@ HL_PRIM value HL_NAME(GetItemDownloadInfo)(value publishedFileID)
 		data << punBytesDownloaded;
 		data << ",";
 		data << punBytesTotal;
-		return alloc_string(data.str().c_str());
+		return (vbyte*)data.str().c_str();
 	}
 	
-	return alloc_string("0,0");
+	return (vbyte*)"0,0";
 }
-DEFINE_PRIM(SteamWrap_GetItemDownloadInfo, 1);
+DEFINE_PRIM(_BYTES, get_item_download_info, _BYTES);
 
-int SteamWrap_DownloadItem(const char * publishedFileID, int highPriority)
-{
+HL_PRIM bool HL_NAME(download_item)(vbyte *publishedFileID, bool highPriority){
 	if (!CheckInit()) return false;
-	PublishedFileId_t nPublishedFileID = (PublishedFileId_t) strtoll(publishedFileID, NULL, 10);
+	PublishedFileId_t nPublishedFileID = (PublishedFileId_t) strtoll((char*)publishedFileID, NULL, 10);
 	
-	bool bHighPriority = highPriority == 1;
-	bool result = SteamUGC()->DownloadItem(nPublishedFileID, bHighPriority);
-	return result;
+	return SteamUGC()->DownloadItem(nPublishedFileID, highPriority);
 }
-DEFINE_PRIME2(SteamWrap_DownloadItem);
+DEFINE_PRIM(_BOOL, download_item, _BYTES _BOOL);
 
-HL_PRIM value HL_NAME(GetItemInstallInfo)(value publishedFileID, value maxFolderPathLength)
-{
-	if (!CheckInit()) return alloc_string("");
-	if (!val_is_string(publishedFileID)) return alloc_string("");
-	if (!val_is_int(maxFolderPathLength)) return alloc_string("");
+HL_PRIM vbyte *HL_NAME(get_item_install_info)(vbyte *publishedFileID, int maxFolderPathLength){
+	if (!CheckInit()) return (vbyte*)"";
 	
 	PublishedFileId_t nPublishedFileID = (PublishedFileId_t) strtoll((char*)publishedFileID, NULL, 10);
 	
 	uint64 punSizeOnDisk;
 	uint32 punTimeStamp;
-	uint32 cchFolderSize = (uint32) val_int(maxFolderPathLength);
+	uint32 cchFolderSize = (uint32) maxFolderPathLength;
 	char * pchFolder = new char[cchFolderSize];
 	
 	bool result = SteamUGC()->GetItemInstallInfo(nPublishedFileID, &punSizeOnDisk, pchFolder, cchFolderSize, &punTimeStamp);
@@ -1295,69 +1183,32 @@ HL_PRIM value HL_NAME(GetItemInstallInfo)(value publishedFileID, value maxFolder
 		data << cchFolderSize;
 		data << "|";
 		data << punTimeStamp;
-		return alloc_string(data.str().c_str());
+		return (vbyte*)data.str().c_str();
 	}
 	
-	return alloc_string("0||0|");
+	return (vbyte*)"0||0|";
 }
-DEFINE_PRIM(SteamWrap_GetItemInstallInfo, 2);
+DEFINE_PRIM(_BYTES, get_item_install_info, _BYTES _I32);
 
-/*
-HL_PRIM value HL_NAME(CreateQueryUserUGCRequest)(value accountID, value listType, value matchingUGCType, value sortOrder, value creatorAppID, value consumerAppID, value page)
-{
-	if (!CheckInit()) return alloc_string("");
-	if (!val_is_int(accountID)) return alloc_string("");
-	if (!val_is_int(listType)) return alloc_string("");
-	if (!val_is_int(matchingUGCType)) return alloc_string("");
-	if (!val_is_int(sortOrder)) return alloc_string("");
-	if (!val_is_int(creatorAppID)) return alloc_string("");
-	if (!val_is_int(consumerAppID)) return alloc_string("");
-	if (!val_is_int(page)) return alloc_string("");
+HL_PRIM vbyte *HL_NAME(create_query_all_ugc_request)(int queryType, int matchingUGCType, int creatorAppID, int consumerAppID, int page){
+	if (!CheckInit()) return (vbyte*)"";
 	
-	AccountID_t unAccountID = val_int(accountID);
-	EUserUGCList eListType = val_int(listType);
-	EUGCMatchingUGCType eMatchingUGCType = val_int(matchingUGCType);
-	EUserUGCListSortOrder eSortOrder = val_int(sortOrder);
-	AppID_t nCreatorAppID = val_int(creatorAppID);
-	AppId_t nConsumerAppID = val_int(consumerAppID);
-	uint32 page = val_int(page);
-	
-	UGCQueryHandle_t result = SteamUGC()->SteamWrap_CreateQueryUserUGCRequest(unAccountID, eListType, eMatchingUGCType, eSortOrder, nCreatorAppID, nConsumerAppId, unPage);
-	
-	std:ostringstream data;
-	data << result;
-	return alloc_string(data.str().c_str());
-}
-DEFINE_PRIM(SteamWrap_CreateQueryUserUGCRequest, 7);
-*/
-
-HL_PRIM value HL_NAME(CreateQueryAllUGCRequest)(value queryType, value matchingUGCType, value creatorAppID, value consumerAppID, value page)
-{
-	if (!CheckInit()) return alloc_string("");
-	if (!val_is_int(queryType)) return alloc_string("");
-	if (!val_is_int(matchingUGCType)) return alloc_string("");
-	if (!val_is_int(creatorAppID)) return alloc_string("");
-	if (!val_is_int(consumerAppID)) return alloc_string("");
-	if (!val_is_int(page)) return alloc_string("");
-	
-	EUGCQuery eQueryType = (EUGCQuery) val_int(queryType);
-	EUGCMatchingUGCType eMatchingUGCType = (EUGCMatchingUGCType) val_int(matchingUGCType);
-	AppId_t nCreatorAppID = val_int(creatorAppID);
-	AppId_t nConsumerAppID = val_int(consumerAppID);
-	uint32 unPage = val_int(page);
+	EUGCQuery eQueryType = (EUGCQuery) queryType;
+	EUGCMatchingUGCType eMatchingUGCType = (EUGCMatchingUGCType) matchingUGCType;
+	AppId_t nCreatorAppID = creatorAppID;
+	AppId_t nConsumerAppID = consumerAppID;
+	uint32 unPage = page;
 	
 	UGCQueryHandle_t result = SteamUGC()->CreateQueryAllUGCRequest(eQueryType, eMatchingUGCType, nCreatorAppID, nConsumerAppID, unPage);
 	
 	std::ostringstream data;
 	data << result;
-	return alloc_string(data.str().c_str());
+	return (vbyte*)data.str().c_str();
 }
-DEFINE_PRIM(SteamWrap_CreateQueryAllUGCRequest, 5);
+DEFINE_PRIM(_BYTES, create_query_all_ugc_request, _I32 _I32 _I32 _I32 _I32);
 
-HL_PRIM value HL_NAME(CreateQueryUGCDetailsRequest)(value fileIDs)
-{
-	if (!CheckInit()) return alloc_string("");
-	if (!val_is_string(fileIDs)) return alloc_string("");
+HL_PRIM vbyte *HL_NAME(create_query_ugc_details_request)(vbyte *fileIDs){
+	if (!CheckInit()) return (vbyte*)"";
 	uint32 unNumPublishedFileIDs = 0;
 	PublishedFileId_t * pvecPublishedFileID = getUint64Array((char*)fileIDs, &unNumPublishedFileIDs);
 	
@@ -1365,55 +1216,41 @@ HL_PRIM value HL_NAME(CreateQueryUGCDetailsRequest)(value fileIDs)
 	
 	std::ostringstream data;
 	data << result;
-	return alloc_string(data.str().c_str());
+	return (vbyte*)data.str().c_str();
 }
-DEFINE_PRIM(SteamWrap_CreateQueryUGCDetailsRequest, 1);
+DEFINE_PRIM(_BYTES, create_query_ugc_details_request, _BYTES);
 
-
-void SteamWrap_SendQueryUGCRequest(const char * cHandle)
-{
+HL_PRIM void HL_NAME(send_query_ugc_request)(vbyte *cHandle){
 	if (!CheckInit()) return;
-	
-	UGCQueryHandle_t handle = strtoull(cHandle, NULL, 0);
-	
+	UGCQueryHandle_t handle = strtoull((char*)cHandle, NULL, 0);
 	s_callbackHandler->SendQueryUGCRequest(handle);
 }
-DEFINE_PRIME1v(SteamWrap_SendQueryUGCRequest);
+DEFINE_PRIM(_VOID, send_query_ugc_request, _BYTES);
 
 
-int SteamWrap_GetQueryUGCNumKeyValueTags(const char * cHandle, int iIndex)
-{
+HL_PRIM int HL_NAME(get_query_ugc_num_key_value_tags)(vbyte *cHandle, int iIndex){
 	if (!CheckInit()) return 0;
-	
-	UGCQueryHandle_t handle = strtoull(cHandle, NULL, 0);
+	UGCQueryHandle_t handle = strtoull((char*)cHandle, NULL, 0);
 	uint32 index = iIndex;
-	
 	return SteamUGC()->GetQueryUGCNumKeyValueTags(handle, index);
 }
-DEFINE_PRIME2(SteamWrap_GetQueryUGCNumKeyValueTags);
+DEFINE_PRIM(_I32, get_query_ugc_num_key_value_tags, _BYTES _I32);
 
-int SteamWrap_ReleaseQueryUGCRequest(const char * cHandle)
-{
+HL_PRIM bool HL_NAME(release_query_ugc_request)(vbyte *cHandle){
 	if (!CheckInit()) return false;
-	UGCQueryHandle_t handle = strtoull(cHandle, NULL, 0);
+	UGCQueryHandle_t handle = strtoull((char*)cHandle, NULL, 0);
 	return SteamUGC()->ReleaseQueryUGCRequest(handle);
 }
-DEFINE_PRIME1v(SteamWrap_ReleaseQueryUGCRequest);
+DEFINE_PRIM(_BOOL, release_query_ugc_request, _BYTES);
 
-HL_PRIM value HL_NAME(GetQueryUGCKeyValueTag)(value cHandle, value iIndex, value iKeyValueTagIndex, value keySize, value valueSize)
-{
-	if (!CheckInit()) return alloc_string("");
-	if (!val_is_string(cHandle)) return alloc_string("");
-	if (!val_is_int(iIndex)) return alloc_string("");
-	if (!val_is_int(iKeyValueTagIndex)) return alloc_string("");
-	if (!val_is_int(keySize)) return alloc_string("");
-	if (!val_is_int(valueSize)) return alloc_string("");
+HL_PRIM vbyte *HL_NAME(get_query_ugc_key_value_tag)(vbyte *cHandle, int iIndex, int iKeyValueTagIndex, int keySize, int valueSize){
+	if (!CheckInit()) return (vbyte*)"";
 	
 	UGCQueryHandle_t handle = strtoull((char*)cHandle, NULL, 0);
-	uint32 index = val_int(iIndex);
-	uint32 keyValueTagIndex = val_int(iKeyValueTagIndex);
-	uint32 cchKeySize = val_int(keySize);
-	uint32 cchValueSize = val_int(valueSize);
+	uint32 index = iIndex;
+	uint32 keyValueTagIndex = iKeyValueTagIndex;
+	uint32 cchKeySize = keySize;
+	uint32 cchValueSize = valueSize;
 	
 	char *pchKey = new char[cchKeySize];
 	char *pchValue = new char[cchValueSize];
@@ -1426,24 +1263,18 @@ HL_PRIM value HL_NAME(GetQueryUGCKeyValueTag)(value cHandle, value iIndex, value
 	delete pchKey;
 	delete pchValue;
 	
-	return alloc_string(data.str().c_str());
+	return (vbyte*)data.str().c_str();
 }
-DEFINE_PRIM(SteamWrap_GetQueryUGCKeyValueTag, 5);
+DEFINE_PRIM(_BYTES, get_query_ugc_key_value_tag, _BYTES _I32 _I32 _I32 _I32);
 
-HL_PRIM value HL_NAME(GetQueryUGCMetadata)(value sHandle, value iIndex, value iMetaDataSize)
-{
-	if (!CheckInit()) return alloc_string("");
-	if (!val_is_string(sHandle)) return alloc_string("");
-	if (!val_is_int(iIndex)) return alloc_string("");
-	if (!val_is_int(iMetaDataSize)) return alloc_string("");
+HL_PRIM vbyte *HL_NAME(get_query_ugc_metadata)(vbyte *sHandle, int iIndex, int iMetaDataSize){
+	if (!CheckInit()) return (vbyte*)("");
 	
 	UGCQueryHandle_t handle = strtoull((char*)sHandle, NULL, 0);
 	
-	
-	uint32 cchMetadatasize = val_int(iMetaDataSize);
+	uint32 cchMetadatasize = iMetaDataSize;
 	char * pchMetadata = new char[cchMetadatasize];
-	
-	uint32 index = val_int(iIndex);
+	uint32 index = iIndex;
 	
 	SteamUGC()->GetQueryUGCMetadata(handle, index, pchMetadata, cchMetadatasize);
 	
@@ -1452,19 +1283,16 @@ HL_PRIM value HL_NAME(GetQueryUGCMetadata)(value sHandle, value iIndex, value iM
 	
 	delete pchMetadata;
 	
-	return alloc_string(data.str().c_str());
+	return (vbyte*)data.str().c_str();
 }
-DEFINE_PRIM(SteamWrap_GetQueryUGCMetadata, 3);
+DEFINE_PRIM(_BYTES, get_query_ugc_metadata, _BYTES _I32 _I32);
 
-HL_PRIM value HL_NAME(GetQueryUGCResult)(value sHandle, value iIndex)
-{
-	if (!CheckInit()) return alloc_string("");
-	if (!val_is_string(sHandle)) return alloc_string("");
-	if (!val_is_int(iIndex)) return alloc_string("");
+HL_PRIM vbyte *HL_NAME(get_query_ugc_result)(vbyte *sHandle, int iIndex){
+	if (!CheckInit()) return (vbyte*)"";
 	
 	UGCQueryHandle_t handle = strtoull((char*)sHandle, NULL, 0);
 	
-	uint32 index = val_int(iIndex);
+	uint32 index = iIndex;
 	
 	SteamUGCDetails_t * d = new SteamUGCDetails_t;
 	
@@ -1501,16 +1329,14 @@ HL_PRIM value HL_NAME(GetQueryUGCResult)(value sHandle, value iIndex)
 	
 	delete d;
 	
-	return alloc_string(data.str().c_str());
+	return (vbyte*)data.str().c_str();
 }
-DEFINE_PRIM(SteamWrap_GetQueryUGCResult, 2);
+DEFINE_PRIM(_BYTES, get_query_ugc_result, _BYTES _I32);
 
 //OLD STEAM WORKSHOP---------------------------------------------------------------------------------------------
 
-HL_PRIM value HL_NAME(GetUGCDownloadProgress)(value contentHandle)
-{
-	if (!CheckInit()) return alloc_string("");
-	if (!val_is_string(contentHandle)) return alloc_string("");
+HL_PRIM vbyte *HL_NAME(get_ugc_download_progress)(vbyte *contentHandle){
+	if (!CheckInit()) return (vbyte*)"";
 	
 	uint64 u64Handle = strtoll((char*)contentHandle, NULL, 10);
 	
@@ -1522,23 +1348,20 @@ HL_PRIM value HL_NAME(GetUGCDownloadProgress)(value contentHandle)
 	std::ostringstream data;
 	data << pnBytesDownloaded << "," << pnBytesExpected;
 	
-	return alloc_string(data.str().c_str());
+	return (vbyte*)data.str().c_str();
 }
-DEFINE_PRIM(SteamWrap_GetUGCDownloadProgress,1);
+DEFINE_PRIM(_BYTES, get_ugc_download_progress, _BYTES);
 
-void SteamWrap_EnumerateUserSharedWorkshopFiles(const char * steamIDStr, int startIndex, const char * requiredTagsStr, const char * excludedTagsStr)
-{
+HL_PRIM void HL_NAME(enumerate_user_shared_workshop_files)(vbyte *steamIDStr, int startIndex, vbyte *requiredTagsStr, vbyte *excludedTagsStr){
 	if(!CheckInit()) return;
 	
 	//Reconstruct the steamID from the string representation
-	uint64 u64SteamID = strtoll(steamIDStr, NULL, 10);
+	uint64 u64SteamID = strtoll((char*)steamIDStr, NULL, 10);
 	CSteamID steamID = u64SteamID;
 	
-	uint32 unStartIndex = (uint32) startIndex;
-	
 	//Construct the string arrays from the comma-delimited strings
-	SteamParamStringArray_t * requiredTags = getSteamParamStringArray(requiredTagsStr);
-	SteamParamStringArray_t * excludedTags = getSteamParamStringArray(excludedTagsStr);
+	SteamParamStringArray_t * requiredTags = getSteamParamStringArray((char*)requiredTagsStr);
+	SteamParamStringArray_t * excludedTags = getSteamParamStringArray((char*)excludedTagsStr);
 	
 	//make the actual call
 	s_callbackHandler->EnumerateUserSharedWorkshopFiles(steamID, startIndex, requiredTags, excludedTags);
@@ -1547,172 +1370,119 @@ void SteamWrap_EnumerateUserSharedWorkshopFiles(const char * steamIDStr, int sta
 	deleteSteamParamStringArray(requiredTags);
 	deleteSteamParamStringArray(excludedTags);
 }
-DEFINE_PRIME4v(SteamWrap_EnumerateUserSharedWorkshopFiles);
+DEFINE_PRIM(_VOID, enumerate_user_shared_workshop_files, _BYTES _I32 _BYTES _BYTES);
 
-void SteamWrap_EnumerateUserPublishedFiles(int startIndex)
-{
+HL_PRIM void HL_NAME(enumerate_user_published_files)(int startIndex){
 	if(!CheckInit()) return;
 	uint32 unStartIndex = (uint32) startIndex;
 	s_callbackHandler->EnumerateUserPublishedFiles(unStartIndex);
 }
-DEFINE_PRIME1v(SteamWrap_EnumerateUserPublishedFiles);
+DEFINE_PRIM(_VOID, enumerate_user_published_files, _I32);
 
-void SteamWrap_EnumerateUserSubscribedFiles(int startIndex)
-{
+HL_PRIM void HL_NAME(enumerate_user_subscribed_files)(int startIndex){
 	if(!CheckInit());
 	uint32 unStartIndex = (uint32) startIndex;
 	s_callbackHandler->EnumerateUserSubscribedFiles(unStartIndex);
 }
-DEFINE_PRIME1v(SteamWrap_EnumerateUserSubscribedFiles);
+DEFINE_PRIM(_VOID, enumerate_user_subscribed_files, _I32);
 
-void SteamWrap_GetPublishedFileDetails(const char * fileId, int maxSecondsOld)
-{
+HL_PRIM void HL_NAME(get_published_file_details)(vbyte *fileId, int maxSecondsOld){
 	if(!CheckInit());
 	
-	uint64 u64FileID = strtoull(fileId, NULL, 0);
+	uint64 u64FileID = strtoull((char*)fileId, NULL, 0);
 	uint32 u32MaxSecondsOld = maxSecondsOld;
 	
 	s_callbackHandler->GetPublishedFileDetails(u64FileID, u32MaxSecondsOld);
 }
-DEFINE_PRIME2v(SteamWrap_GetPublishedFileDetails);
+DEFINE_PRIM(_VOID, get_published_file_details, _BYTES _I32);
 
-void SteamWrap_UGCDownload(const char * handle, int priority)
-{
+HL_PRIM void HL_NAME(ugc_download)(vbyte *handle, int priority){
 	if(!CheckInit());
 	
-	uint64 u64Handle = strtoull(handle, NULL, 0);
+	uint64 u64Handle = strtoull((char*)handle, NULL, 0);
 	uint32 u32Priority = (uint32) priority;
 	
 	s_callbackHandler->UGCDownload(u64Handle, u32Priority);
 }
-DEFINE_PRIME2v(SteamWrap_UGCDownload);
+DEFINE_PRIM(_VOID, ugc_download, _BYTES _I32);
 
-HL_PRIM value HL_NAME(UGCRead)(value handle, value bytesToRead, value offset, value readAction)
-{
-	if(!CheckInit()             ||
-	   !val_is_string(handle)   ||
-	   !val_is_int(bytesToRead) ||
-	   !val_is_int(offset)      ||
-	   !val_is_int(readAction)) return alloc_string("");
+HL_PRIM int HL_NAME(ugc_read)(vbyte *handle, vbyte *data, int bytesToRead, int offset, int readAction){
+	if (!CheckInit()) return 0;
 	
 	uint64 u64Handle = strtoull((char*)handle, NULL, 0);
-	int32 cubDataToRead = (int32) val_int(bytesToRead);
-	uint32 cOffset = (uint32) val_int(offset);
-	EUGCReadAction eAction = (EUGCReadAction) val_int(readAction);
 	
-	if(u64Handle == 0 || cubDataToRead == 0) return alloc_string("");
-	
-	unsigned char *data = (unsigned char *)malloc(cubDataToRead);
-	int result = SteamRemoteStorage()->UGCRead(u64Handle, data, cubDataToRead, cOffset, eAction);
-	
-	value returnValue = bytes_to_hx(data,result);
-	
-	free(data);
-	
-	return returnValue;
+	if(u64Handle == 0 || bytesToRead == 0) return 0;
+	return SteamRemoteStorage()->UGCRead(u64Handle, data, bytesToRead, offset, (EUGCReadAction)readAction);
 }
-DEFINE_PRIM(SteamWrap_UGCRead,4);
+DEFINE_PRIM(_I32, ugc_read, _BYTES _BYTES _I32 _I32 _I32);
 
-//-----------------------------------------------------------------------------------------------------------
 
 //STEAM CLOUD------------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------------
-int SteamWrap_GetFileCount(int dummy)
-{
+HL_PRIM int HL_NAME(get_file_count)(){
 	int fileCount = SteamRemoteStorage()->GetFileCount();
 	return fileCount;
 }
-DEFINE_PRIME1(SteamWrap_GetFileCount);
+DEFINE_PRIM(_I32, get_file_count, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
-int SteamWrap_GetFileSize(const char * fileName)
-{
-	int fileSize = SteamRemoteStorage()->GetFileSize(fileName);
+HL_PRIM int HL_NAME(get_file_size)(vbyte *fileName){
+	int fileSize = SteamRemoteStorage()->GetFileSize((char*)fileName);
 	return fileSize;
 }
-DEFINE_PRIME1(SteamWrap_GetFileSize);
+DEFINE_PRIM(_I32, get_file_size, _BYTES);
 
-//-----------------------------------------------------------------------------------------------------------
-int SteamWrap_FileExists(const char * fileName)
-{
-	bool exists = SteamRemoteStorage()->FileExists(fileName);
-	return exists;
+HL_PRIM bool HL_NAME(file_exists)(vbyte *fileName){
+	return SteamRemoteStorage()->FileExists((char*)fileName);
 }
-DEFINE_PRIME1(SteamWrap_FileExists);
+DEFINE_PRIM(_BOOL, file_exists, _BYTES);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(FileRead)(value fileName)
-{
-	if (!val_is_string(fileName) || !CheckInit())
-		return alloc_int(0);
+HL_PRIM vbyte *HL_NAME(file_read)(vbyte *fileName, int *len){
+	if (!CheckInit()) return NULL;
 	
 	const char * fName = (char*)fileName;
 	
 	bool exists = SteamRemoteStorage()->FileExists(fName);
-	if(!exists) return alloc_int(0);
+	if(!exists) return NULL;
 	
 	int length = SteamRemoteStorage()->GetFileSize(fName);
 	
-	char *bytesData = (char *)malloc(length);
+	char *bytesData = (char *)hl_gc_alloc_noptr(length);
 	int32 result = SteamRemoteStorage()->FileRead(fName, bytesData, length);
-	
-	value returnValue = alloc_string(bytesData);
-	
-	free(bytesData);
-	return returnValue;
-}
-DEFINE_PRIM(SteamWrap_FileRead, 1);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(FileWrite)(value fileName, value haxeBytes)
-{
-	if (!val_is_string(fileName) || !CheckInit())
-		return false;
-	
-	CffiBytes bytes = getByteData(haxeBytes);
-	if(bytes.data == 0)
-		return false;
-	
-	bool result = SteamRemoteStorage()->FileWrite((char*)fileName, bytes.data, bytes.length);
-	
-	return alloc_bool(result);
+	*len = length;
+	return (vbyte*)bytesData;
 }
-DEFINE_PRIM(SteamWrap_FileWrite, 2);
+DEFINE_PRIM(_BYTES, file_read, _BYTES _REF(_I32));
 
-//-----------------------------------------------------------------------------------------------------------
-int SteamWrap_FileDelete(const char * fileName)
-{
-	bool result = SteamRemoteStorage()->FileDelete(fileName);
-	return result;
+HL_PRIM bool HL_NAME(file_write)(vbyte *fileName, vbyte *bytes, int length){
+	if (!CheckInit()) return false;
+	if (length <= 0) return false;
+	return SteamRemoteStorage()->FileWrite((char*)fileName, (char*)bytes, length);
 }
-DEFINE_PRIME1(SteamWrap_FileDelete);
+DEFINE_PRIM(_BOOL, file_write, _BYTES _BYTES _I32);
 
-//-----------------------------------------------------------------------------------------------------------
-void SteamWrap_FileShare(const char * fileName)
-{
-	s_callbackHandler->FileShare(fileName);
+HL_PRIM bool HL_NAME(file_delete)(vbyte *fileName){
+	return SteamRemoteStorage()->FileDelete((char*)fileName);
 }
-DEFINE_PRIME1v(SteamWrap_FileShare);
+DEFINE_PRIM(_BOOL, file_delete, _BYTES);
 
-//-----------------------------------------------------------------------------------------------------------
-int SteamWrap_IsCloudEnabledForApp(int dummy)
-{
+HL_PRIM void HL_NAME(file_share)(vbyte *fileName){
+	s_callbackHandler->FileShare((char*)fileName);
+}
+DEFINE_PRIM(_VOID, file_share, _BYTES);
+
+HL_PRIM int HL_NAME(is_cloud_enabled_for_app)(){
 	int result = SteamRemoteStorage()->IsCloudEnabledForApp();
 	return result;
 }
-DEFINE_PRIME1(SteamWrap_IsCloudEnabledForApp);
+DEFINE_PRIM(_I32, is_cloud_enabled_for_app, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
-void SteamWrap_SetCloudEnabledForApp(int enabled)
-{
+HL_PRIM void HL_NAME(set_cloud_enabled_for_app)(bool enabled){
 	SteamRemoteStorage()->SetCloudEnabledForApp(enabled);
 }
-DEFINE_PRIME1v(SteamWrap_SetCloudEnabledForApp);
+DEFINE_PRIM(_VOID, set_cloud_enabled_for_app, _BOOL);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetQuota)()
-{
+HL_PRIM vbyte *HL_NAME(get_quota)(){
 	uint64 total = 0;
 	uint64 available = 0;
 	
@@ -1720,23 +1490,19 @@ HL_PRIM value HL_NAME(GetQuota)()
 	std::ostringstream data;
 	data << total << "," << available;
 	
-	return alloc_string(data.str().c_str());
+	return (vbyte*)data.str().c_str();
 }
-DEFINE_PRIM(SteamWrap_GetQuota,0);
+DEFINE_PRIM(_BYTES, get_quota, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
 
 //STEAM CONTROLLER-------------------------------------------------------------------------------------------
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(InitControllers)()
-{
+HL_PRIM bool HL_NAME(init_controllers)(){
 	if (!SteamController()) return false;
 
 	bool result = SteamController()->Init();
 	
-	if (result)
-	{
+	if (result)	{
 		mapControllers.init();
 		
 		analogActionData.eMode = k_EControllerSourceMode_None;
@@ -1745,41 +1511,30 @@ HL_PRIM value HL_NAME(InitControllers)()
 		analogActionData.bActive = false;
 	}
 	
-	return alloc_bool(result);
+	return result;
 }
-DEFINE_PRIM(SteamWrap_InitControllers,0);
+DEFINE_PRIM(_BOOL, init_controllers, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(ShutdownControllers)()
-{
+HL_PRIM bool HL_NAME(shutdown_controllers)(){
 	bool result = SteamController()->Shutdown();
 	if (result)
-	{
 		mapControllers.init();
-	}
-	return alloc_bool(result);
+	return result;
 }
-DEFINE_PRIM(SteamWrap_ShutdownControllers,0);
+DEFINE_PRIM(_BOOL, shutdown_controllers, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(ShowBindingPanel)(value controllerHandle)
-{
-	if(!val_is_int(controllerHandle)) 
-		return false;
-	
-	int i_handle = val_int(controllerHandle);
+HL_PRIM value HL_NAME(show_binding_panel)(value controllerHandle){
+	int i_handle = controllerHandle;
 	
 	ControllerHandle_t c_handle = i_handle != -1 ? mapControllers.get(i_handle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	
 	bool result = SteamController()->ShowBindingPanel(c_handle);
 	
-	return alloc_bool(result);
+	return result;
 }
-DEFINE_PRIM(SteamWrap_ShowBindingPanel, 1);
+DEFINE_PRIM(show_binding_panel, 1);
 
-//-----------------------------------------------------------------------------------------------------------
-int SteamWrap_ShowGamepadTextInput(int inputMode, int lineMode, const char * description, int charMax, const char * existingText)
-{
+HL_PRIM int SteamWrap_ShowGamepadTextInput(int inputMode, int lineMode, const char * description, int charMax, const char * existingText){
 	uint32 u_charMax = charMax;
 	
 	EGamepadTextInputMode eInputMode = static_cast<EGamepadTextInputMode>(inputMode);
@@ -1789,29 +1544,25 @@ int SteamWrap_ShowGamepadTextInput(int inputMode, int lineMode, const char * des
 	return result;
 
 }
-DEFINE_PRIME5(SteamWrap_ShowGamepadTextInput);
+DEFINE_PRIM(SteamWrap_ShowGamepadTextInput);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetEnteredGamepadTextInput)()
-{
+HL_PRIM value HL_NAME(GetEnteredGamepadTextInput)(){
 	uint32 length = SteamUtils()->GetEnteredGamepadTextLength();
 	char *pchText = (char *)malloc(length);
 	bool result = SteamUtils()->GetEnteredGamepadTextInput(pchText, length);
 	if(result)
 	{
-		value returnValue = alloc_string(pchText);
+		value returnValue = (vbyte*)(pchText);
 		free(pchText);
 		return returnValue;
 	}
 	free(pchText);
-	return alloc_string("");
+	return (vbyte*)("");
 
 }
 DEFINE_PRIM(SteamWrap_GetEnteredGamepadTextInput, 0);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetConnectedControllers)()
-{
+HL_PRIM value HL_NAME(GetConnectedControllers)(){
 	SteamController()->RunFrame();
 	
 	ControllerHandle_t handles[STEAM_CONTROLLER_MAX_COUNT];
@@ -1821,62 +1572,44 @@ HL_PRIM value HL_NAME(GetConnectedControllers)()
 	
 	//store the handles locally and pass back a string representing an int array of unique index lookup values
 	
-	for(int i = 0; i < result; i++)
-	{
+	for(int i = 0; i < result; i++)	{
 		int index = -1;
 		
 		if(false == mapControllers.exists(handles[i]))
-		{
 			index = mapControllers.add(handles[i]);
-		}
 		else
-		{
 			index = mapControllers.get(handles[i]);
-		}
 		
-		if(index != -1)
-		{
+		if(index != -1)	{
 			returnData << index;
 			if(i != result-1)
-			{
 				returnData << ",";
-			}
 		}
 	}
 	
-	return alloc_string(returnData.str().c_str());
+	return (vbyte*)(returnData.str().c_str());
 }
 DEFINE_PRIM(SteamWrap_GetConnectedControllers,0);
 
-//-----------------------------------------------------------------------------------------------------------
-int SteamWrap_GetActionSetHandle(const char * actionSetName)
-{
-
+HL_PRIM int SteamWrap_GetActionSetHandle(const char * actionSetName){
 	ControllerActionSetHandle_t handle = SteamController()->GetActionSetHandle(actionSetName);
 	return handle;
 }
-DEFINE_PRIME1(SteamWrap_GetActionSetHandle);
+DEFINE_PRIM(SteamWrap_GetActionSetHandle);
 
-//-----------------------------------------------------------------------------------------------------------
-int SteamWrap_GetDigitalActionHandle(const char * actionName)
-{
-
+HL_PRIM int SteamWrap_GetDigitalActionHandle(const char * actionName){
 	return SteamController()->GetDigitalActionHandle(actionName);
 }
-DEFINE_PRIME1(SteamWrap_GetDigitalActionHandle);
+DEFINE_PRIM(SteamWrap_GetDigitalActionHandle);
 
-//-----------------------------------------------------------------------------------------------------------
-int SteamWrap_GetAnalogActionHandle(const char * actionName)
-{
-
+HL_PRIM int SteamWrap_GetAnalogActionHandle(const char * actionName){
 	ControllerAnalogActionHandle_t handle = SteamController()->GetAnalogActionHandle(actionName);
 	return handle;
 }
-DEFINE_PRIME1(SteamWrap_GetAnalogActionHandle);
+DEFINE_PRIM(SteamWrap_GetAnalogActionHandle);
 
 //-----------------------------------------------------------------------------------------------------------
-int SteamWrap_GetDigitalActionData(int controllerHandle, int actionHandle)
-{
+HL_PRIM int SteamWrap_GetDigitalActionData(int controllerHandle, int actionHandle){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	ControllerDigitalActionHandle_t a_handle = actionHandle;
 	
@@ -1886,25 +1619,22 @@ int SteamWrap_GetDigitalActionData(int controllerHandle, int actionHandle)
 	
 	//Take both bools and pack them into an int
 	
-	if(data.bState) {
+	if(data.bState) 
 		result |= 0x1;
-	}
 	
-	if(data.bActive) {
+	if(data.bActive) 
 		result |= 0x10;
-	}
 	
 	return result;
 }
-DEFINE_PRIME2(SteamWrap_GetDigitalActionData);
+DEFINE_PRIM(SteamWrap_GetDigitalActionData);
 
 
 //-----------------------------------------------------------------------------------------------------------
 //stashes the requested analog action data in local state and returns the bActive member value
 //you need to immediately call _eMode(), _x(), and _y() to get the rest
 
-int SteamWrap_GetAnalogActionData(int controllerHandle, int actionHandle)
-{
+HL_PRIM int SteamWrap_GetAnalogActionData(int controllerHandle, int actionHandle){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	ControllerAnalogActionHandle_t a_handle = actionHandle;
 	
@@ -1912,32 +1642,28 @@ int SteamWrap_GetAnalogActionData(int controllerHandle, int actionHandle)
 	
 	return analogActionData.bActive;
 }
-DEFINE_PRIME2(SteamWrap_GetAnalogActionData);
+DEFINE_PRIM(SteamWrap_GetAnalogActionData);
 
-int SteamWrap_GetAnalogActionData_eMode(int dummy)
-{
+HL_PRIM int SteamWrap_GetAnalogActionData_eMode(){
 	return analogActionData.eMode;
 }
-DEFINE_PRIME1(SteamWrap_GetAnalogActionData_eMode);
+DEFINE_PRIM(SteamWrap_GetAnalogActionData_eMode);
 
-float SteamWrap_GetAnalogActionData_x(int dummy)
-{
+HL_PRIM float SteamWrap_GetAnalogActionData_x(){
 	return analogActionData.x;
 }
-DEFINE_PRIME1(SteamWrap_GetAnalogActionData_x);
+DEFINE_PRIM(SteamWrap_GetAnalogActionData_x);
 
-float SteamWrap_GetAnalogActionData_y(int dummy)
-{
+HL_PRIM float SteamWrap_GetAnalogActionData_y(){
 	return analogActionData.y;
 }
-DEFINE_PRIME1(SteamWrap_GetAnalogActionData_y);
+DEFINE_PRIM(SteamWrap_GetAnalogActionData_y);
 
 //-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetDigitalActionOrigins)(value controllerHandle, value actionSetHandle, value digitalActionHandle)
-{
-	ControllerHandle_t c_handle              = mapControllers.get(val_int(controllerHandle));
-	ControllerActionSetHandle_t s_handle     = val_int(actionSetHandle);
-	ControllerDigitalActionHandle_t a_handle = val_int(digitalActionHandle);
+HL_PRIM value HL_NAME(GetDigitalActionOrigins)(value controllerHandle, value actionSetHandle, value digitalActionHandle){
+	ControllerHandle_t c_handle              = mapControllers.get(controllerHandle);
+	ControllerActionSetHandle_t s_handle     = actionSetHandle;
+	ControllerDigitalActionHandle_t a_handle = digitalActionHandle;
 	
 	EControllerActionOrigin origins[STEAM_CONTROLLER_MAX_ORIGINS];
 	
@@ -1959,16 +1685,15 @@ HL_PRIM value HL_NAME(GetDigitalActionOrigins)(value controllerHandle, value act
 		}
 	}
 	
-	return alloc_string(data.str().c_str());
+	return (vbyte*)(data.str().c_str());
 }
 DEFINE_PRIM(SteamWrap_GetDigitalActionOrigins,3);
 
 //-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetAnalogActionOrigins)(value controllerHandle, value actionSetHandle, value analogActionHandle)
-{
-	ControllerHandle_t c_handle              = mapControllers.get(val_int(controllerHandle));
-	ControllerActionSetHandle_t s_handle     = val_int(actionSetHandle);
-	ControllerAnalogActionHandle_t a_handle  = val_int(analogActionHandle);
+HL_PRIM value HL_NAME(GetAnalogActionOrigins)(value controllerHandle, value actionSetHandle, value analogActionHandle){
+	ControllerHandle_t c_handle              = mapControllers.get(controllerHandle);
+	ControllerActionSetHandle_t s_handle     = actionSetHandle;
+	ControllerAnalogActionHandle_t a_handle  = analogActionHandle;
 	
 	EControllerActionOrigin origins[STEAM_CONTROLLER_MAX_ORIGINS];
 	
@@ -1990,55 +1715,52 @@ HL_PRIM value HL_NAME(GetAnalogActionOrigins)(value controllerHandle, value acti
 		}
 	}
 	
-	return alloc_string(data.str().c_str());
+	return (vbyte*)(data.str().c_str());
 }
 DEFINE_PRIM(SteamWrap_GetAnalogActionOrigins,3);
 
 //-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetGlyphForActionOrigin)(value origin)
-{
+HL_PRIM value HL_NAME(GetGlyphForActionOrigin)(value origin){
 	if (!val_is_int(origin) || !CheckInit())
 	{
-		return alloc_string("none");
+		return (vbyte*)("none");
 	}
 	
-	int iOrigin = val_int(origin);
+	int iOrigin = origin;
 	if (iOrigin >= k_EControllerActionOrigin_Count)
 	{
-		return alloc_string("none");
+		return (vbyte*)("none");
 	}
 	
 	EControllerActionOrigin eOrigin = static_cast<EControllerActionOrigin>(iOrigin);
 	
 	const char * result = SteamController()->GetGlyphForActionOrigin(eOrigin);
-	return alloc_string(result);
+	return (vbyte*)(result);
 }
 DEFINE_PRIM(SteamWrap_GetGlyphForActionOrigin,1);
 
 //-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetStringForActionOrigin)(value origin)
-{
+HL_PRIM value HL_NAME(GetStringForActionOrigin)(value origin){
 	if (!val_is_int(origin) || !CheckInit())
 	{
-		return alloc_string("unknown");
+		return (vbyte*)("unknown");
 	}
 	
-	int iOrigin = val_int(origin);
+	int iOrigin = origin;
 	if (iOrigin >= k_EControllerActionOrigin_Count)
 	{
-		return alloc_string("unknown");
+		return (vbyte*)("unknown");
 	}
 	
 	EControllerActionOrigin eOrigin = static_cast<EControllerActionOrigin>(iOrigin);
 	
 	const char * result = SteamController()->GetStringForActionOrigin(eOrigin);
-	return alloc_string(result);
+	return (vbyte*)(result);
 }
 DEFINE_PRIM(SteamWrap_GetStringForActionOrigin,1);
 
 //-----------------------------------------------------------------------------------------------------------
-int SteamWrap_ActivateActionSet(int controllerHandle, int actionSetHandle)
-{
+HL_PRIM int SteamWrap_ActivateActionSet(int controllerHandle, int actionSetHandle){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	ControllerActionSetHandle_t a_handle = actionSetHandle;
 	
@@ -2046,24 +1768,21 @@ int SteamWrap_ActivateActionSet(int controllerHandle, int actionSetHandle)
 	
 	return true;
 }
-DEFINE_PRIME2(SteamWrap_ActivateActionSet);
+DEFINE_PRIM(SteamWrap_ActivateActionSet);
 
 //-----------------------------------------------------------------------------------------------------------
-int SteamWrap_GetCurrentActionSet(int controllerHandle)
-{
+HL_PRIM int SteamWrap_GetCurrentActionSet(int controllerHandle){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	ControllerActionSetHandle_t a_handle = SteamController()->GetCurrentActionSet(c_handle);
 	
 	return a_handle;
 }
-DEFINE_PRIME1(SteamWrap_GetCurrentActionSet);
+DEFINE_PRIM(SteamWrap_GetCurrentActionSet);
 
-void SteamWrap_TriggerHapticPulse(int controllerHandle, int targetPad, int durationMicroSec)
-{
+HL_PRIM void SteamWrap_TriggerHapticPulse(int controllerHandle, int targetPad, int durationMicroSec){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	ESteamControllerPad eTargetPad;
-	switch(targetPad)
-	{
+	switch(targetPad)	{
 		case 0:  eTargetPad = k_ESteamControllerPad_Left;
 		case 1:  eTargetPad = k_ESteamControllerPad_Right;
 		default: eTargetPad = k_ESteamControllerPad_Left;
@@ -2072,14 +1791,12 @@ void SteamWrap_TriggerHapticPulse(int controllerHandle, int targetPad, int durat
 	
 	SteamController()->TriggerHapticPulse(c_handle, eTargetPad, usDurationMicroSec);
 }
-DEFINE_PRIME3v(SteamWrap_TriggerHapticPulse);
+DEFINE_PRIM(SteamWrap_TriggerHapticPulse);
 
-void SteamWrap_TriggerRepeatedHapticPulse(int controllerHandle, int targetPad, int durationMicroSec, int offMicroSec, int repeat, int flags)
-{
+HL_PRIM void SteamWrap_TriggerRepeatedHapticPulse(int controllerHandle, int targetPad, int durationMicroSec, int offMicroSec, int repeat, int flags){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	ESteamControllerPad eTargetPad;
-	switch(targetPad)
-	{
+	switch(targetPad)	{
 		case 0:  eTargetPad = k_ESteamControllerPad_Left;
 		case 1:  eTargetPad = k_ESteamControllerPad_Right;
 		default: eTargetPad = k_ESteamControllerPad_Left;
@@ -2091,159 +1808,124 @@ void SteamWrap_TriggerRepeatedHapticPulse(int controllerHandle, int targetPad, i
 	
 	SteamController()->TriggerRepeatedHapticPulse(c_handle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, nFlags);
 }
-DEFINE_PRIME6v(SteamWrap_TriggerRepeatedHapticPulse);
+DEFINE_PRIM(SteamWrap_TriggerRepeatedHapticPulse);
 
-void SteamWrap_TriggerVibration(int controllerHandle, int leftSpeed, int rightSpeed)
-{
+HL_PRIM void SteamWrap_TriggerVibration(int controllerHandle, int leftSpeed, int rightSpeed){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	SteamController()->TriggerVibration(c_handle, (unsigned short)leftSpeed, (unsigned short)rightSpeed);
 }
-DEFINE_PRIME3v(SteamWrap_TriggerVibration);
+DEFINE_PRIM(SteamWrap_TriggerVibration);
 
-void SteamWrap_SetLEDColor(int controllerHandle, int r, int g, int b, int flags)
-{
+HL_PRIM void SteamWrap_SetLEDColor(int controllerHandle, int r, int g, int b, int flags){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	SteamController()->SetLEDColor(c_handle, (uint8)r, (uint8)g, (uint8)b, (unsigned int) flags);
 }
-DEFINE_PRIME5v(SteamWrap_SetLEDColor);
+DEFINE_PRIM(SteamWrap_SetLEDColor);
 
 //-----------------------------------------------------------------------------------------------------------
 //stashes the requested motion data in local state
 //you need to immediately call _rotQuatX/Y/Z/W, _posAccelX/Y/Z, _rotVelX/Y/Z to get the rest
 
-void SteamWrap_GetMotionData(int controllerHandle)
-{
+HL_PRIM void HL_NAME(get_motion_data)(int controllerHandle){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	motionData = SteamController()->GetMotionData(c_handle);
 }
-DEFINE_PRIME1v(SteamWrap_GetMotionData);
+DEFINE_PRIM(_VOID, get_motion_data, _I32);
 
-int SteamWrap_GetMotionData_rotQuatX(int dummy)
-{
+HL_PRIM int HL_NAME(get_motion_data_rot_quat_x)(){
 	return motionData.rotQuatX;
 }
-DEFINE_PRIME1(SteamWrap_GetMotionData_rotQuatX);
+DEFINE_PRIM(_I32, get_motion_data_rot_quat_x, _NO_ARG);
 
-int SteamWrap_GetMotionData_rotQuatY(int dummy)
-{
+HL_PRIM int HL_NAME(get_motion_data_rot_quat_y)(){
 	return motionData.rotQuatY;
 }
-DEFINE_PRIME1(SteamWrap_GetMotionData_rotQuatY);
+DEFINE_PRIM(_I32, get_motion_data_rot_quat_y, _NO_ARG);
 
-int SteamWrap_GetMotionData_rotQuatZ(int dummy)
-{
+HL_PRIM int HL_NAME(get_motion_data_rot_quat_z)(){
 	return motionData.rotQuatZ;
 }
-DEFINE_PRIME1(SteamWrap_GetMotionData_rotQuatZ);
+DEFINE_PRIM(_I32, get_motion_data_rot_quat_z, _NO_ARG);
 
-int SteamWrap_GetMotionData_rotQuatW(int dummy)
-{
+HL_PRIM int HL_NAME(get_motion_data_rot_quat_w)(){
 	return motionData.rotQuatW;
 }
-DEFINE_PRIME1(SteamWrap_GetMotionData_rotQuatW);
+DEFINE_PRIM(_I32, get_motion_data_rot_quat_w, _NO_ARG);
 
-int SteamWrap_GetMotionData_posAccelX(int dummy)
-{
+HL_PRIM int HL_NAME(get_motion_data_pos_accel_x)(){
 	return motionData.posAccelX;
 }
-DEFINE_PRIME1(SteamWrap_GetMotionData_posAccelX);
+DEFINE_PRIM(_I32, get_motion_data_pos_accel_x, _NO_ARG);
 
-int SteamWrap_GetMotionData_posAccelY(int dummy)
-{
+HL_PRIM int HL_NAME(get_motion_data_pos_accel_y)(){
 	return motionData.posAccelY;
 }
-DEFINE_PRIME1(SteamWrap_GetMotionData_posAccelY);
+DEFINE_PRIM(_I32, get_motion_data_pos_accel_y, _NO_ARG);
 
-int SteamWrap_GetMotionData_posAccelZ(int dummy)
-{
+HL_PRIM int HL_NAME(get_motion_data_pos_accel_z)(){
 	return motionData.posAccelZ;
 }
-DEFINE_PRIME1(SteamWrap_GetMotionData_posAccelZ);
+DEFINE_PRIM(_I32, get_motion_data_pos_accel_z, _NO_ARG);
 
-int SteamWrap_GetMotionData_rotVelX(int dummy)
-{
+HL_PRIM int HL_NAME(get_motion_data_rot_vel_x)(){
 	return motionData.rotVelX;
 }
-DEFINE_PRIME1(SteamWrap_GetMotionData_rotVelX);
+DEFINE_PRIM(_I32, get_motion_data_rot_vel_x, _NO_ARG);
 
-int SteamWrap_GetMotionData_rotVelY(int dummy)
-{
+HL_PRIM int HL_NAME(get_motion_data_rot_vel_y)(){
 	return motionData.rotVelY;
 }
-DEFINE_PRIME1(SteamWrap_GetMotionData_rotVelY);
+DEFINE_PRIM(_I32, get_motion_data_rot_vel_y, _NO_ARG);
 
-int SteamWrap_GetMotionData_rotVelZ(int dummy)
-{
+HL_PRIM int HL_NAME(get_motion_data_rot_vel_z)(){
 	return motionData.rotVelZ;
 }
-DEFINE_PRIME1(SteamWrap_GetMotionData_rotVelZ);
+DEFINE_PRIM(_I32, get_motion_data_rot_vel_z, _NO_ARG);
 
-int SteamWrap_ShowDigitalActionOrigins(int controllerHandle, int digitalActionHandle, float scale, float xPosition, float yPosition)
-{
+HL_PRIM int HL_NAME(show_digital_action_origins)(int controllerHandle, int digitalActionHandle, double scale, double xPosition, double yPosition){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
-	return SteamController()->ShowDigitalActionOrigins(c_handle, digitalActionHandle, scale, xPosition, yPosition);
+	return SteamController()->ShowDigitalActionOrigins(c_handle, digitalActionHandle, (float)scale, (float)xPosition, (float)yPosition);
 }
-DEFINE_PRIME5(SteamWrap_ShowDigitalActionOrigins);
+DEFINE_PRIM(_I32, show_digital_action_origins, _I32 _I32 _F64 _F64 _F64);
 
-int SteamWrap_ShowAnalogActionOrigins(int controllerHandle, int analogActionHandle, float scale, float xPosition, float yPosition)
-{
+HL_PRIM int HL_NAME(show_analog_action_origins)(int controllerHandle, int analogActionHandle, double scale, double xPosition, double yPosition){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
-	return SteamController()->ShowAnalogActionOrigins(c_handle, analogActionHandle, scale, xPosition, yPosition);
+	return SteamController()->ShowAnalogActionOrigins(c_handle, analogActionHandle, (float)scale, (float)xPosition, (float)yPosition);
 }
-DEFINE_PRIME5(SteamWrap_ShowAnalogActionOrigins);
+DEFINE_PRIM(_I32, show_analog_action_origins, _I32 _I32 _F64 _F64 _F64);
 
-
-
-//---getters for constants----------------------------------------------------------------------------------
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetControllerMaxCount)()
-{
-	return alloc_int(STEAM_CONTROLLER_MAX_COUNT);
-}
-DEFINE_PRIM(SteamWrap_GetControllerMaxCount,0);
 
 //-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetControllerMaxAnalogActions)()
-{
-	return alloc_int(STEAM_CONTROLLER_MAX_ANALOG_ACTIONS);
+HL_PRIM int HL_NAME(get_controller_max_count)(){
+	return STEAM_CONTROLLER_MAX_COUNT;
 }
-DEFINE_PRIM(SteamWrap_GetControllerMaxAnalogActions,0);
+DEFINE_PRIM(_I32, get_controller_max_count, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetControllerMaxDigitalActions)()
-{
-	return alloc_int(STEAM_CONTROLLER_MAX_DIGITAL_ACTIONS);
+HL_PRIM int HL_NAME(get_controller_max_analog_actions)(){
+	return STEAM_CONTROLLER_MAX_ANALOG_ACTIONS;
 }
-DEFINE_PRIM(SteamWrap_GetControllerMaxDigitalActions,0);
+DEFINE_PRIM(_I32, get_controller_max_analog_actions, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetControllerMaxOrigins)()
-{
-	return alloc_int(STEAM_CONTROLLER_MAX_ORIGINS);
+HL_PRIM int HL_NAME(get_controller_max_digital_actions)(){
+	return STEAM_CONTROLLER_MAX_DIGITAL_ACTIONS;
 }
-DEFINE_PRIM(SteamWrap_GetControllerMaxOrigins,0);
+DEFINE_PRIM(_I32, get_controller_max_digital_actions, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetControllerMinAnalogActionData)()
-{
-	return alloc_float(STEAM_CONTROLLER_MIN_ANALOG_ACTION_DATA);
+HL_PRIM int HL_NAME(get_controller_max_origins)(){
+	return STEAM_CONTROLLER_MAX_ORIGINS;
 }
-DEFINE_PRIM(SteamWrap_GetControllerMinAnalogActionData,0);
+DEFINE_PRIM(_I32, get_controller_max_origins, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetControllerMaxAnalogActionData)()
-{
-	return alloc_float(STEAM_CONTROLLER_MAX_ANALOG_ACTION_DATA);
+HL_PRIM double HL_NAME(get_controller_min_analog_action_data)(){
+	return STEAM_CONTROLLER_MIN_ANALOG_ACTION_DATA;
 }
-DEFINE_PRIM(SteamWrap_GetControllerMaxAnalogActionData,0);
+DEFINE_PRIM(_F64, get_controller_min_analog_action_data, _NO_ARG);
 
-//-----------------------------------------------------------------------------------------------------------
-
-void mylib_main()
-{
-    // Initialization code goes here
+HL_PRIM double HL_NAME(get_controller_max_analog_action_data)(){
+	return STEAM_CONTROLLER_MAX_ANALOG_ACTION_DATA;
 }
-DEFINE_ENTRY_POINT(mylib_main);
+DEFINE_PRIM(_F64, get_controller_max_analog_action_data, _NO_ARG);
+
 
 
 } // extern "C"
