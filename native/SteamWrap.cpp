@@ -159,9 +159,6 @@ class steamHandleMap{
 };
 
 static steamHandleMap mapControllers;
-static ControllerAnalogActionData_t analogActionData;
-static ControllerMotionData_t motionData;
-
 static void SendEvent(event_type type, bool success, const char *data) {
 	if (!g_eventHandler) return;
 	if (g_eventHandler->hasValue)
@@ -684,6 +681,7 @@ HL_PRIM bool HL_NAME(init)(vclosure *onEvent, int notificationPosition){
 	bool result = SteamAPI_Init();
 	if (result)	{
 		g_eventHandler = onEvent;
+		// TODO gc_root
 		s_callbackHandler = new CallbackHandler();
 
 		switch (notificationPosition){
@@ -710,7 +708,7 @@ DEFINE_PRIM(_BOOL, init, _FUN(_VOID, _I32 _BOOL _BYTES) _I32);
 
 HL_PRIM void HL_NAME(shutdown)(){
 	SteamAPI_Shutdown();
-	delete g_eventHandler;
+	// TODO gc_root
 	g_eventHandler = NULL;
 	delete s_callbackHandler;
 	s_callbackHandler = NULL;
@@ -1380,14 +1378,14 @@ HL_PRIM void HL_NAME(enumerate_user_published_files)(int startIndex){
 DEFINE_PRIM(_VOID, enumerate_user_published_files, _I32);
 
 HL_PRIM void HL_NAME(enumerate_user_subscribed_files)(int startIndex){
-	if(!CheckInit());
+	if(!CheckInit()) return;
 	uint32 unStartIndex = (uint32) startIndex;
 	s_callbackHandler->EnumerateUserSubscribedFiles(unStartIndex);
 }
 DEFINE_PRIM(_VOID, enumerate_user_subscribed_files, _I32);
 
 HL_PRIM void HL_NAME(get_published_file_details)(vbyte *fileId, int maxSecondsOld){
-	if(!CheckInit());
+	if(!CheckInit()) return;
 	
 	uint64 u64FileID = strtoull((char*)fileId, NULL, 0);
 	uint32 u32MaxSecondsOld = maxSecondsOld;
@@ -1397,11 +1395,9 @@ HL_PRIM void HL_NAME(get_published_file_details)(vbyte *fileId, int maxSecondsOl
 DEFINE_PRIM(_VOID, get_published_file_details, _BYTES _I32);
 
 HL_PRIM void HL_NAME(ugc_download)(vbyte *handle, int priority){
-	if(!CheckInit());
-	
+	if(!CheckInit()) return;
 	uint64 u64Handle = strtoull((char*)handle, NULL, 0);
 	uint32 u32Priority = (uint32) priority;
-	
 	s_callbackHandler->UGCDownload(u64Handle, u32Priority);
 }
 DEFINE_PRIM(_VOID, ugc_download, _BYTES _I32);
@@ -1501,16 +1497,8 @@ HL_PRIM bool HL_NAME(init_controllers)(){
 	if (!SteamController()) return false;
 
 	bool result = SteamController()->Init();
-	
-	if (result)	{
+	if( result )
 		mapControllers.init();
-		
-		analogActionData.eMode = k_EControllerSourceMode_None;
-		analogActionData.x = 0.0;
-		analogActionData.y = 0.0;
-		analogActionData.bActive = false;
-	}
-	
 	return result;
 }
 DEFINE_PRIM(_BOOL, init_controllers, _NO_ARG);
@@ -1523,93 +1511,72 @@ HL_PRIM bool HL_NAME(shutdown_controllers)(){
 }
 DEFINE_PRIM(_BOOL, shutdown_controllers, _NO_ARG);
 
-HL_PRIM value HL_NAME(show_binding_panel)(value controllerHandle){
-	int i_handle = controllerHandle;
+HL_PRIM bool HL_NAME(show_binding_panel)(int controller){
+	ControllerHandle_t c_handle = controller != -1 ? mapControllers.get(controller) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	
-	ControllerHandle_t c_handle = i_handle != -1 ? mapControllers.get(i_handle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
-	
-	bool result = SteamController()->ShowBindingPanel(c_handle);
-	
-	return result;
+	return SteamController()->ShowBindingPanel(c_handle);
 }
-DEFINE_PRIM(show_binding_panel, 1);
+DEFINE_PRIM(_BOOL, show_binding_panel, _I32);
 
-HL_PRIM int SteamWrap_ShowGamepadTextInput(int inputMode, int lineMode, const char * description, int charMax, const char * existingText){
-	uint32 u_charMax = charMax;
+HL_PRIM bool HL_NAME(show_gamepad_text_input)(int inputMode, int lineMode, vbyte *description, int charMax, vbyte *existingText){
 	
 	EGamepadTextInputMode eInputMode = static_cast<EGamepadTextInputMode>(inputMode);
 	EGamepadTextInputLineMode eLineInputMode = static_cast<EGamepadTextInputLineMode>(lineMode);
 	
-	int result = SteamUtils()->ShowGamepadTextInput(eInputMode, eLineInputMode, description, u_charMax, existingText);
-	return result;
-
+	return SteamUtils()->ShowGamepadTextInput(eInputMode, eLineInputMode, (char*)description, (uint32)charMax, (char*)existingText);
 }
-DEFINE_PRIM(SteamWrap_ShowGamepadTextInput);
+DEFINE_PRIM(_BOOL, show_gamepad_text_input, _I32 _I32 _BYTES _I32 _BYTES);
 
-HL_PRIM value HL_NAME(GetEnteredGamepadTextInput)(){
+HL_PRIM vbyte *HL_NAME(get_entered_gamepad_text_input)(){
 	uint32 length = SteamUtils()->GetEnteredGamepadTextLength();
-	char *pchText = (char *)malloc(length);
-	bool result = SteamUtils()->GetEnteredGamepadTextInput(pchText, length);
-	if(result)
-	{
-		value returnValue = (vbyte*)(pchText);
-		free(pchText);
-		return returnValue;
-	}
-	free(pchText);
-	return (vbyte*)("");
+	char *pchText = (char *)hl_gc_alloc_noptr(length);
+	if( SteamUtils()->GetEnteredGamepadTextInput(pchText, length) )	
+		return (vbyte*)pchText;
+	return (vbyte*)"";
 
 }
-DEFINE_PRIM(SteamWrap_GetEnteredGamepadTextInput, 0);
+DEFINE_PRIM(_BYTES, get_entered_gamepad_text_input, _NO_ARG);
 
-HL_PRIM value HL_NAME(GetConnectedControllers)(){
+HL_PRIM varray *HL_NAME(get_connected_controllers)(varray *arr){
 	SteamController()->RunFrame();
 	
 	ControllerHandle_t handles[STEAM_CONTROLLER_MAX_COUNT];
 	int result = SteamController()->GetConnectedControllers(handles);
 	
-	std::ostringstream returnData;
-	
-	//store the handles locally and pass back a string representing an int array of unique index lookup values
-	
+	if( !arr )
+		arr = hl_alloc_array(&hlt_i32, STEAM_CONTROLLER_MAX_COUNT);
+	int *cur = hl_aptr(arr, int);
 	for(int i = 0; i < result; i++)	{
-		int index = -1;
-		
-		if(false == mapControllers.exists(handles[i]))
+		int index = mapControllers.find(handles[i]);
+		if( index < 0 )
 			index = mapControllers.add(handles[i]);
-		else
-			index = mapControllers.get(handles[i]);
-		
-		if(index != -1)	{
-			returnData << index;
-			if(i != result-1)
-				returnData << ",";
-		}
+		cur[i] = index;
 	}
-	
-	return (vbyte*)(returnData.str().c_str());
-}
-DEFINE_PRIM(SteamWrap_GetConnectedControllers,0);
 
-HL_PRIM int SteamWrap_GetActionSetHandle(const char * actionSetName){
-	ControllerActionSetHandle_t handle = SteamController()->GetActionSetHandle(actionSetName);
-	return handle;
-}
-DEFINE_PRIM(SteamWrap_GetActionSetHandle);
+	for (int i = result; i < STEAM_CONTROLLER_MAX_COUNT; i++) 
+		cur[i] = -1;
 
-HL_PRIM int SteamWrap_GetDigitalActionHandle(const char * actionName){
-	return SteamController()->GetDigitalActionHandle(actionName);
+	return arr;
 }
-DEFINE_PRIM(SteamWrap_GetDigitalActionHandle);
+DEFINE_PRIM(_ARR, get_connected_controllers, _ARR);
 
-HL_PRIM int SteamWrap_GetAnalogActionHandle(const char * actionName){
-	ControllerAnalogActionHandle_t handle = SteamController()->GetAnalogActionHandle(actionName);
-	return handle;
+HL_PRIM int HL_NAME(get_action_set_handle)(vbyte *actionSetName){
+	return (int)SteamController()->GetActionSetHandle((char*)actionSetName);
 }
-DEFINE_PRIM(SteamWrap_GetAnalogActionHandle);
+DEFINE_PRIM(_I32, get_action_set_handle, _BYTES);
+
+HL_PRIM int HL_NAME(get_digital_action_handle)(vbyte *actionName){
+	return (int)SteamController()->GetDigitalActionHandle((char*)actionName);
+}
+DEFINE_PRIM(_I32, get_digital_action_handle, _BYTES);
+
+HL_PRIM int HL_NAME(get_analog_action_handle)(vbyte *actionName){
+	return (int)SteamController()->GetAnalogActionHandle((char*)actionName);
+}
+DEFINE_PRIM(_I32, get_analog_action_handle, _BYTES);
 
 //-----------------------------------------------------------------------------------------------------------
-HL_PRIM int SteamWrap_GetDigitalActionData(int controllerHandle, int actionHandle){
+HL_PRIM int HL_NAME(get_digital_action_data)(int controllerHandle, int actionHandle){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	ControllerDigitalActionHandle_t a_handle = actionHandle;
 	
@@ -1627,70 +1594,52 @@ HL_PRIM int SteamWrap_GetDigitalActionData(int controllerHandle, int actionHandl
 	
 	return result;
 }
-DEFINE_PRIM(SteamWrap_GetDigitalActionData);
+DEFINE_PRIM(_I32, get_digital_action_data, _I32 _I32);
 
 
 //-----------------------------------------------------------------------------------------------------------
-//stashes the requested analog action data in local state and returns the bActive member value
-//you need to immediately call _eMode(), _x(), and _y() to get the rest
 
-HL_PRIM int SteamWrap_GetAnalogActionData(int controllerHandle, int actionHandle){
+typedef struct {
+	hl_type *t;
+	bool bActive;
+	int eMode;
+	double x;
+	double y;
+} analog_action_data;
+
+HL_PRIM void HL_NAME(get_analog_action_data)(int controllerHandle, int actionHandle, analog_action_data *data){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	ControllerAnalogActionHandle_t a_handle = actionHandle;
 	
-	analogActionData = SteamController()->GetAnalogActionData(c_handle, a_handle);
+	ControllerAnalogActionData_t d = SteamController()->GetAnalogActionData(c_handle, a_handle);
 	
-	return analogActionData.bActive;
+	data->bActive = d.bActive;
+	data->eMode = d.eMode;
+	data->x = d.x;
+	data->y = d.y;
 }
-DEFINE_PRIM(SteamWrap_GetAnalogActionData);
+DEFINE_PRIM(_VOID, get_analog_action_data, _I32 _I32 _OBJ(_BOOL _I32 _F64 _F64));
 
-HL_PRIM int SteamWrap_GetAnalogActionData_eMode(){
-	return analogActionData.eMode;
-}
-DEFINE_PRIM(SteamWrap_GetAnalogActionData_eMode);
-
-HL_PRIM float SteamWrap_GetAnalogActionData_x(){
-	return analogActionData.x;
-}
-DEFINE_PRIM(SteamWrap_GetAnalogActionData_x);
-
-HL_PRIM float SteamWrap_GetAnalogActionData_y(){
-	return analogActionData.y;
-}
-DEFINE_PRIM(SteamWrap_GetAnalogActionData_y);
-
-//-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetDigitalActionOrigins)(value controllerHandle, value actionSetHandle, value digitalActionHandle){
+HL_PRIM varray *HL_NAME(get_digital_action_origins)(int controllerHandle, int actionSetHandle, int digitalActionHandle){
 	ControllerHandle_t c_handle              = mapControllers.get(controllerHandle);
 	ControllerActionSetHandle_t s_handle     = actionSetHandle;
 	ControllerDigitalActionHandle_t a_handle = digitalActionHandle;
 	
 	EControllerActionOrigin origins[STEAM_CONTROLLER_MAX_ORIGINS];
-	
-	//Initialize the whole thing to None to avoid garbage
-	for(int i = 0; i < STEAM_CONTROLLER_MAX_ORIGINS; i++) {
+	for(int i = 0; i < STEAM_CONTROLLER_MAX_ORIGINS; i++) 
 		origins[i] = k_EControllerActionOrigin_None;
-	}
 	
 	int result = SteamController()->GetDigitalActionOrigins(c_handle, s_handle, a_handle, origins);
-	
-	std::ostringstream data;
-	
-	data << result << ",";
-	
-	for(int i = 0; i < STEAM_CONTROLLER_MAX_ORIGINS; i++) {
-		data << origins[i];
-		if(i != STEAM_CONTROLLER_MAX_ORIGINS-1){
-			data << ",";
-		}
-	}
-	
-	return (vbyte*)(data.str().c_str());
+	varray *arr = hl_alloc_array(&hlt_i32, result);
+	int *cur = hl_aptr(arr, int);
+	for(int i = 0; i < STEAM_CONTROLLER_MAX_ORIGINS; i++) 
+		cur[i] = origins[i];
+	return arr;
 }
-DEFINE_PRIM(SteamWrap_GetDigitalActionOrigins,3);
+DEFINE_PRIM(_ARR, get_digital_action_origins, _I32 _I32 _I32);
 
 //-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetAnalogActionOrigins)(value controllerHandle, value actionSetHandle, value analogActionHandle){
+HL_PRIM varray *HL_NAME(get_analog_action_origins)(int controllerHandle, int actionSetHandle, int analogActionHandle){
 	ControllerHandle_t c_handle              = mapControllers.get(controllerHandle);
 	ControllerActionSetHandle_t s_handle     = actionSetHandle;
 	ControllerAnalogActionHandle_t a_handle  = analogActionHandle;
@@ -1698,88 +1647,63 @@ HL_PRIM value HL_NAME(GetAnalogActionOrigins)(value controllerHandle, value acti
 	EControllerActionOrigin origins[STEAM_CONTROLLER_MAX_ORIGINS];
 	
 	//Initialize the whole thing to None to avoid garbage
-	for(int i = 0; i < STEAM_CONTROLLER_MAX_ORIGINS; i++) {
+	for(int i = 0; i < STEAM_CONTROLLER_MAX_ORIGINS; i++)
 		origins[i] = k_EControllerActionOrigin_None;
-	}
 	
 	int result = SteamController()->GetAnalogActionOrigins(c_handle, s_handle, a_handle, origins);
-	
-	std::ostringstream data;
-	
-	data << result << ",";
-	
-	for(int i = 0; i < STEAM_CONTROLLER_MAX_ORIGINS; i++) {
-		data << origins[i];
-		if(i != STEAM_CONTROLLER_MAX_ORIGINS-1){
-			data << ",";
-		}
-	}
-	
-	return (vbyte*)(data.str().c_str());
+	varray *arr = hl_alloc_array(&hlt_i32, result);
+	int *cur = hl_aptr(arr, int);
+	for(int i = 0; i < STEAM_CONTROLLER_MAX_ORIGINS; i++) 
+		cur[i] = origins[i];
+	return arr;
 }
-DEFINE_PRIM(SteamWrap_GetAnalogActionOrigins,3);
+DEFINE_PRIM(_ARR, get_analog_action_origins, _I32 _I32 _I32);
 
 //-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetGlyphForActionOrigin)(value origin){
-	if (!val_is_int(origin) || !CheckInit())
-	{
-		return (vbyte*)("none");
-	}
+HL_PRIM vbyte *HL_NAME(get_glyph_for_action_origin)(int origin){
+	if (!CheckInit()) return NULL;
 	
-	int iOrigin = origin;
-	if (iOrigin >= k_EControllerActionOrigin_Count)
-	{
-		return (vbyte*)("none");
-	}
+	if (origin >= k_EControllerActionOrigin_Count)
+		return NULL;
 	
-	EControllerActionOrigin eOrigin = static_cast<EControllerActionOrigin>(iOrigin);
+	EControllerActionOrigin eOrigin = static_cast<EControllerActionOrigin>(origin);
 	
 	const char * result = SteamController()->GetGlyphForActionOrigin(eOrigin);
-	return (vbyte*)(result);
+	return (vbyte*)result;
 }
-DEFINE_PRIM(SteamWrap_GetGlyphForActionOrigin,1);
+DEFINE_PRIM(_BYTES, get_glyph_for_action_origin, _I32);
 
 //-----------------------------------------------------------------------------------------------------------
-HL_PRIM value HL_NAME(GetStringForActionOrigin)(value origin){
-	if (!val_is_int(origin) || !CheckInit())
-	{
-		return (vbyte*)("unknown");
-	}
+HL_PRIM vbyte *HL_NAME(get_string_for_action_origin)(int origin){
+	if (!CheckInit()) return NULL;
+
+	if (origin >= k_EControllerActionOrigin_Count)
+		return NULL;
 	
-	int iOrigin = origin;
-	if (iOrigin >= k_EControllerActionOrigin_Count)
-	{
-		return (vbyte*)("unknown");
-	}
-	
-	EControllerActionOrigin eOrigin = static_cast<EControllerActionOrigin>(iOrigin);
+	EControllerActionOrigin eOrigin = static_cast<EControllerActionOrigin>(origin);
 	
 	const char * result = SteamController()->GetStringForActionOrigin(eOrigin);
-	return (vbyte*)(result);
+	return (vbyte*)result;
 }
-DEFINE_PRIM(SteamWrap_GetStringForActionOrigin,1);
+DEFINE_PRIM(_BYTES, get_string_for_action_origin, _I32);
 
 //-----------------------------------------------------------------------------------------------------------
-HL_PRIM int SteamWrap_ActivateActionSet(int controllerHandle, int actionSetHandle){
+HL_PRIM void HL_NAME(activate_action_set)(int controllerHandle, int actionSetHandle){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	ControllerActionSetHandle_t a_handle = actionSetHandle;
 	
 	SteamController()->ActivateActionSet(c_handle, a_handle);
-	
-	return true;
 }
-DEFINE_PRIM(SteamWrap_ActivateActionSet);
+DEFINE_PRIM(_VOID, activate_action_set, _I32 _I32);
 
 //-----------------------------------------------------------------------------------------------------------
-HL_PRIM int SteamWrap_GetCurrentActionSet(int controllerHandle){
+HL_PRIM int HL_NAME(get_current_action_set)(int controllerHandle){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
-	ControllerActionSetHandle_t a_handle = SteamController()->GetCurrentActionSet(c_handle);
-	
-	return a_handle;
+	return (int)SteamController()->GetCurrentActionSet(c_handle);
 }
-DEFINE_PRIM(SteamWrap_GetCurrentActionSet);
+DEFINE_PRIM(_I32, get_current_action_set, _I32);
 
-HL_PRIM void SteamWrap_TriggerHapticPulse(int controllerHandle, int targetPad, int durationMicroSec){
+HL_PRIM void HL_NAME(trigger_haptic_pulse)(int controllerHandle, int targetPad, int durationMicroSec){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	ESteamControllerPad eTargetPad;
 	switch(targetPad)	{
@@ -1791,9 +1715,9 @@ HL_PRIM void SteamWrap_TriggerHapticPulse(int controllerHandle, int targetPad, i
 	
 	SteamController()->TriggerHapticPulse(c_handle, eTargetPad, usDurationMicroSec);
 }
-DEFINE_PRIM(SteamWrap_TriggerHapticPulse);
+DEFINE_PRIM(_VOID, trigger_haptic_pulse, _I32 _I32 _I32);
 
-HL_PRIM void SteamWrap_TriggerRepeatedHapticPulse(int controllerHandle, int targetPad, int durationMicroSec, int offMicroSec, int repeat, int flags){
+HL_PRIM void HL_NAME(trigger_repeated_haptic_pulse)(int controllerHandle, int targetPad, int durationMicroSec, int offMicroSec, int repeat, int flags){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	ESteamControllerPad eTargetPad;
 	switch(targetPad)	{
@@ -1808,79 +1732,51 @@ HL_PRIM void SteamWrap_TriggerRepeatedHapticPulse(int controllerHandle, int targ
 	
 	SteamController()->TriggerRepeatedHapticPulse(c_handle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, nFlags);
 }
-DEFINE_PRIM(SteamWrap_TriggerRepeatedHapticPulse);
+DEFINE_PRIM(_VOID, trigger_repeated_haptic_pulse, _I32 _I32 _I32 _I32 _I32 _I32);
 
-HL_PRIM void SteamWrap_TriggerVibration(int controllerHandle, int leftSpeed, int rightSpeed){
+HL_PRIM void HL_NAME(trigger_vibration)(int controllerHandle, int leftSpeed, int rightSpeed){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	SteamController()->TriggerVibration(c_handle, (unsigned short)leftSpeed, (unsigned short)rightSpeed);
 }
-DEFINE_PRIM(SteamWrap_TriggerVibration);
+DEFINE_PRIM(_VOID, trigger_vibration, _I32 _I32 _I32);
 
-HL_PRIM void SteamWrap_SetLEDColor(int controllerHandle, int r, int g, int b, int flags){
+HL_PRIM void HL_NAME(set_led_color)(int controllerHandle, int r, int g, int b, int flags){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	SteamController()->SetLEDColor(c_handle, (uint8)r, (uint8)g, (uint8)b, (unsigned int) flags);
 }
-DEFINE_PRIM(SteamWrap_SetLEDColor);
+DEFINE_PRIM(_VOID, set_led_color, _I32 _I32 _I32 _I32 _I32);
 
 //-----------------------------------------------------------------------------------------------------------
-//stashes the requested motion data in local state
-//you need to immediately call _rotQuatX/Y/Z/W, _posAccelX/Y/Z, _rotVelX/Y/Z to get the rest
+typedef struct {
+	hl_type *t;
+	double rotQuatX;
+	double rotQuatY;
+	double rotQuatZ;
+	double rotQuatW;
+	double posAccelX;
+	double posAccelY;
+	double posAccelZ;
+	double rotVelX;
+	double rotVelY;
+	double rotVelZ;
+} motion_data;
 
-HL_PRIM void HL_NAME(get_motion_data)(int controllerHandle){
+HL_PRIM void HL_NAME(get_motion_data)(int controllerHandle, motion_data *data){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
-	motionData = SteamController()->GetMotionData(c_handle);
-}
-DEFINE_PRIM(_VOID, get_motion_data, _I32);
+	ControllerMotionData_t d = SteamController()->GetMotionData(c_handle);
 
-HL_PRIM int HL_NAME(get_motion_data_rot_quat_x)(){
-	return motionData.rotQuatX;
+	data->rotQuatX = d.rotQuatX;
+	data->rotQuatY = d.rotQuatY;
+	data->rotQuatZ = d.rotQuatZ;
+	data->rotQuatW = d.rotQuatW;
+	data->posAccelX = d.posAccelX;
+	data->posAccelY = d.posAccelY;
+	data->posAccelZ = d.posAccelZ;
+	data->rotVelX = d.rotVelX;
+	data->rotVelY = d.rotVelY;
+	data->rotVelZ = d.rotVelZ;
 }
-DEFINE_PRIM(_I32, get_motion_data_rot_quat_x, _NO_ARG);
-
-HL_PRIM int HL_NAME(get_motion_data_rot_quat_y)(){
-	return motionData.rotQuatY;
-}
-DEFINE_PRIM(_I32, get_motion_data_rot_quat_y, _NO_ARG);
-
-HL_PRIM int HL_NAME(get_motion_data_rot_quat_z)(){
-	return motionData.rotQuatZ;
-}
-DEFINE_PRIM(_I32, get_motion_data_rot_quat_z, _NO_ARG);
-
-HL_PRIM int HL_NAME(get_motion_data_rot_quat_w)(){
-	return motionData.rotQuatW;
-}
-DEFINE_PRIM(_I32, get_motion_data_rot_quat_w, _NO_ARG);
-
-HL_PRIM int HL_NAME(get_motion_data_pos_accel_x)(){
-	return motionData.posAccelX;
-}
-DEFINE_PRIM(_I32, get_motion_data_pos_accel_x, _NO_ARG);
-
-HL_PRIM int HL_NAME(get_motion_data_pos_accel_y)(){
-	return motionData.posAccelY;
-}
-DEFINE_PRIM(_I32, get_motion_data_pos_accel_y, _NO_ARG);
-
-HL_PRIM int HL_NAME(get_motion_data_pos_accel_z)(){
-	return motionData.posAccelZ;
-}
-DEFINE_PRIM(_I32, get_motion_data_pos_accel_z, _NO_ARG);
-
-HL_PRIM int HL_NAME(get_motion_data_rot_vel_x)(){
-	return motionData.rotVelX;
-}
-DEFINE_PRIM(_I32, get_motion_data_rot_vel_x, _NO_ARG);
-
-HL_PRIM int HL_NAME(get_motion_data_rot_vel_y)(){
-	return motionData.rotVelY;
-}
-DEFINE_PRIM(_I32, get_motion_data_rot_vel_y, _NO_ARG);
-
-HL_PRIM int HL_NAME(get_motion_data_rot_vel_z)(){
-	return motionData.rotVelZ;
-}
-DEFINE_PRIM(_I32, get_motion_data_rot_vel_z, _NO_ARG);
+DEFINE_PRIM(_VOID, get_motion_data, _I32 _OBJ(_F64 _F64 _F64 _F64 _F64 _F64 _F64 _F64 _F64 _F64));
 
 HL_PRIM int HL_NAME(show_digital_action_origins)(int controllerHandle, int digitalActionHandle, double scale, double xPosition, double yPosition){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
