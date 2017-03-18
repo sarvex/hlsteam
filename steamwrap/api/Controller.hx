@@ -212,7 +212,8 @@ class Controller
 	 * @return
 	 */
 	public function getGlyphForActionOrigin(origin:EControllerActionOrigin):String {
-		return @:privateAccess String.fromUTF8(_GetGlyphForActionOrigin(origin));
+		var g = _GetGlyphForActionOrigin(origin);
+		return g == null ? null : @:privateAccess String.fromUTF8(g);
 	}
 	
 	/**
@@ -221,9 +222,8 @@ class Controller
 	 * @return
 	 */
 	public function getStringForActionOrigin(origin:EControllerActionOrigin):String {
-		
-		return @:privateAccess String.fromUTF8(_GetStringForActionOrigin(origin));
-		
+		var s = _GetStringForActionOrigin(origin);
+		return s == null ? null : @:privateAccess String.fromUTF8(s);
 	}
 	
 	

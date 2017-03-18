@@ -41,11 +41,10 @@ class Cloud
 	public function FileRead(name:String):haxe.io.Bytes
 	{
 		if (!FileExists(name))
-		{
 			return null;
-		}
 		var len = 0;
 		var fileData:hl.Bytes = _FileRead(@:privateAccess name.toUtf8(), len);
+		if( fileData == null ) return null;
 		return @:privateAccess new haxe.io.Bytes(fileData, len);
 	}
 	

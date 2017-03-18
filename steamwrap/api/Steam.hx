@@ -196,16 +196,15 @@ class Steam
 		return @:privateAccess String.fromUTF8(_GetAchievementDisplayAttribute(@:privateAccess id.toUtf8(), @:privateAccess "name".toUtf8()));
 	}
 	
-	public static function getCurrentGameLanguage() {
-		return _GetCurrentGameLanguage();
+	public static function getCurrentGameLanguage():String {
+		var l = _GetCurrentGameLanguage();
+		return l==null ? null : @:privateAccess String.fromUTF8(l);
 	}
 	
-	
-	
 	public static function getPersonaName():String {
-		if (!active)
-			return "unknown";
-		return @:privateAccess String.fromUTF8(_GetPersonaName());
+		if (!active) return null;
+		var p = _GetPersonaName();
+		return p == null ? null : @:privateAccess String.fromUTF8(p);
 	}
 	
 	/**
@@ -253,9 +252,9 @@ class Steam
 	}
 	
 	public static function getSteamID():String {
-		if (!active)
-			return "0";
-		return @:privateAccess String.fromUTF8(_GetSteamID());
+		if (!active) return null;
+		var id = _GetSteamID();
+		return id == null ? null : @:privateAccess String.fromUTF8(id);
 	}
 	
 	public static function indicateAchievementProgress(id:String, curProgress:Int, maxProgress:Int):Bool {
@@ -283,14 +282,7 @@ class Steam
 	public static function isSteamRunning() {
 		if (!active)
 			return false;
-		try{
-			return _IsSteamRunning();
-		}
-		catch (msg:Dynamic)
-		{
-			trace("error running steam: " + msg);
-		}
-		return false;
+		return _IsSteamRunning();
 	}
 	
 	public static function onEnterFrame() {
