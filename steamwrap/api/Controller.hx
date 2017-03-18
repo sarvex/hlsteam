@@ -460,8 +460,8 @@ class Controller
 	@:hlNative("steam","get_controller_max_analog_actions") private static function _GetControllerMaxAnalogActions() : Int { return 0; }
 	@:hlNative("steam","get_controller_max_digital_actions") private static function _GetControllerMaxDigitalActions() : Int { return 0; }
 	@:hlNative("steam","get_controller_max_origins") private static function _GetControllerMaxOrigins() : Int { return 0; }
-	@:hlNative("steam","get_controller_max_analog_action_data") private static function _GetControllerMaxAnalogActionData() : Int { return 0; }
-	@:hlNative("steam","get_controller_min_analog_action_data") private static function _GetControllerMinAnalogActionData() : Int { return 0; }
+	@:hlNative("steam","get_controller_max_analog_action_data") private static function _GetControllerMaxAnalogActionData() : Float { return 0.; }
+	@:hlNative("steam","get_controller_min_analog_action_data") private static function _GetControllerMinAnalogActionData() : Float { return 0.; }
 	@:hlNative("steam","activate_action_set") private static function _ActivateActionSet( controller : Int, action : Int ): Void{};
 	@:hlNative("steam","get_current_action_set") private static function _GetCurrentActionSet( controller : Int ) : Int { return 0; }
 	@:hlNative("steam","get_action_set_handle") private static function _GetActionSetHandle( name : hl.Bytes ) : Int { return 0; }
@@ -526,18 +526,18 @@ class Controller
 		return max_origins;
 	}
 	
-	private var max_analog_value = -1;
+	private var max_analog_value = Math.NaN;
 	private function get_MAX_ANALOG_VALUE():Float
 	{
-		if(max_analog_value == -1)
+		if(Math.isNaN(max_analog_value))
 			max_analog_value = _GetControllerMaxAnalogActionData();
 		return max_analog_value;
 	}
 	
-	private var min_analog_value = -1;
+	private var min_analog_value = Math.NaN;
 	private function get_MIN_ANALOG_VALUE():Float
 	{
-		if(min_analog_value == -1)
+		if(Math.isNaN(min_analog_value))
 			min_analog_value = _GetControllerMinAnalogActionData();
 		return min_analog_value;
 	}
@@ -558,7 +558,7 @@ abstract ControllerDigitalActionData(Int) from Int to Int{
 
 class ControllerAnalogActionData
 {
-	public var bActive:Int = 0;
+	public var bActive:Bool = false;
 	public var eMode:EControllerSourceMode = NONE;
 	public var x:Float = 0.0;
 	public var y:Float = 0.0;

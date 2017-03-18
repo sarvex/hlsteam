@@ -84,7 +84,7 @@ class Cloud
 	@:hlNative("steam","get_file_size") private static function _GetFileSize( name : hl.Bytes ) : Int { return 0; }
 	@:hlNative("steam","file_share") private static function _FileShare( name : hl.Bytes ): Void{};
 	@:hlNative("steam","is_cloud_enabled_for_app") private static function _IsCloudEnabledForApp() : Bool { return false; }
-	@:hlNative("steam","set_cloud_enabled_for_app") private static function _SetCloudEnabledForApp( enabled : Bool ) : Bool { return false; }
+	@:hlNative("steam","set_cloud_enabled_for_app") private static function _SetCloudEnabledForApp( enabled : Bool ) : Void {};
 	
 	private function new(appId_:Int, CustomTrace:String->Void) {
 		if (active) return;

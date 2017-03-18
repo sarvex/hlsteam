@@ -1130,7 +1130,7 @@ HL_PRIM int HL_NAME(get_item_state)(vbyte *publishedFileID){
 }
 DEFINE_PRIM(_I32, get_item_state, _BYTES);
 
-HL_PRIM vbyte *HL_NAME(get_item_download_info)(vbyte *publishedFileID){
+HL_PRIM bool HL_NAME(get_item_download_info)(vbyte *publishedFileID, double *downloaded, double *total ){
 	if (!CheckInit()) return (vbyte*)"";
 	
 	PublishedFileId_t nPublishedFileID = (PublishedFileId_t) strtoll((char*)publishedFileID, NULL, 10);
@@ -1140,17 +1140,15 @@ HL_PRIM vbyte *HL_NAME(get_item_download_info)(vbyte *publishedFileID){
 	
 	bool result = SteamUGC()->GetItemDownloadInfo(nPublishedFileID, &punBytesDownloaded, &punBytesTotal);
 	
-	if(result){
-		std::ostringstream data;
-		data << punBytesDownloaded;
-		data << ",";
-		data << punBytesTotal;
-		return (vbyte*)data.str().c_str();
-	}
+	if (!result)
+		return false;
+
+	*downloaded = (double)punBytesDownloaded;
+	*total = (double)punBytesTotal;
 	
-	return (vbyte*)"0,0";
+	return result;
 }
-DEFINE_PRIM(_BYTES, get_item_download_info, _BYTES);
+DEFINE_PRIM(_BOOL, get_item_download_info, _BYTES _REF(_F64) _REF(_F64));
 
 HL_PRIM bool HL_NAME(download_item)(vbyte *publishedFileID, bool highPriority){
 	if (!CheckInit()) return false;
@@ -1334,13 +1332,13 @@ DEFINE_PRIM(_BYTES, get_query_ugc_result, _BYTES _I32);
 //OLD STEAM WORKSHOP---------------------------------------------------------------------------------------------
 
 HL_PRIM void HL_NAME(get_ugc_download_progress)(vbyte *contentHandle, int *downloaded, int *expected){
-	if (!CheckInit()) return (vbyte*)"";
+	if (!CheckInit()) return;
 	
 	uint64 u64Handle = strtoll((char*)contentHandle, NULL, 10);
 	
 	SteamRemoteStorage()->GetUGCDownloadProgress(u64Handle, downloaded, expected);
 }
-DEFINE_PRIM(_BYTES, get_ugc_download_progress, _BYTES);
+DEFINE_PRIM(_VOID, get_ugc_download_progress, _BYTES _REF(_I32) _REF(_I32));
 
 HL_PRIM void HL_NAME(enumerate_user_shared_workshop_files)(vbyte *steamIDStr, int startIndex, vbyte *requiredTagsStr, vbyte *excludedTagsStr){
 	if(!CheckInit()) return;
@@ -1459,11 +1457,10 @@ HL_PRIM void HL_NAME(file_share)(vbyte *fileName){
 }
 DEFINE_PRIM(_VOID, file_share, _BYTES);
 
-HL_PRIM int HL_NAME(is_cloud_enabled_for_app)(){
-	int result = SteamRemoteStorage()->IsCloudEnabledForApp();
-	return result;
+HL_PRIM bool HL_NAME(is_cloud_enabled_for_app)(){
+	return SteamRemoteStorage()->IsCloudEnabledForApp();
 }
-DEFINE_PRIM(_I32, is_cloud_enabled_for_app, _NO_ARG);
+DEFINE_PRIM(_BOOL, is_cloud_enabled_for_app, _NO_ARG);
 
 HL_PRIM void HL_NAME(set_cloud_enabled_for_app)(bool enabled){
 	SteamRemoteStorage()->SetCloudEnabledForApp(enabled);
@@ -1479,7 +1476,7 @@ HL_PRIM void HL_NAME(get_quota)( double *total, double *available ){
 	*total = (double)iTotal;
 	*available = (double)iAvailable;
 }
-DEFINE_PRIM(_BYTES, get_quota, _NO_ARG);
+DEFINE_PRIM(_VOID, get_quota, _NO_ARG _REF(_F64) _REF(_F64));
 
 
 //STEAM CONTROLLER-------------------------------------------------------------------------------------------

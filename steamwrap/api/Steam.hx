@@ -572,7 +572,7 @@ class Steam
 	@:hlNative("steam","get_global_stat") private static function _GetGlobalStat( name : hl.Bytes ) : Int { return 0; }
 	@:hlNative("steam","restart_app_if_necessary") private static function _RestartAppIfNecessary( appId : Int ) : Bool { return false; }
 	@:hlNative("steam","is_overlay_enabled") private static function _IsOverlayEnabled() : Bool { return false; }
-	@:hlNative("steam","b_overlay_needs_present") private static function _BOverlayNeedsPresent() : Bool { return false; }
+	@:hlNative("steam","boverlay_needs_present") private static function _BOverlayNeedsPresent() : Bool { return false; }
 	@:hlNative("steam","is_steam_in_big_picture_mode") private static function _IsSteamInBigPictureMode() : Bool { return false; }
 	@:hlNative("steam","is_steam_running") private static function _IsSteamRunning() : Bool { return false; }
 	@:hlNative("steam","get_current_game_language") private static function _GetCurrentGameLanguage() : hl.Bytes { return null; }

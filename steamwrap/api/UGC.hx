@@ -276,7 +276,7 @@ class UGC
 	@:hlNative("steam","start_update_ugc_item") private static function _StartUpdateUGCItem( id : Int, item : Int ) : hl.Bytes { return null; }
 	@:hlNative("steam","submit_ugc_item_update") private static function _SubmitUGCItemUpdate( h : hl.Bytes, changeNotes : hl.Bytes ) : Bool { return false; }
 	@:hlNative("steam","get_subscribed_items") private static function _GetSubscribedItems() : hl.Bytes { return null; }
-	@:hlNative("steam","get_item_download_info") private static function _GetItemDownloadInfo( publishedFileID : hl.Bytes, downloaded : hl.Ref<Float>, total : hl.Ref<Float> ) : Void{};
+	@:hlNative("steam","get_item_download_info") private static function _GetItemDownloadInfo( publishedFileID : hl.Bytes, downloaded : hl.Ref<Float>, total : hl.Ref<Float> ) : Bool{ return false; }
 	@:hlNative("steam","get_item_install_info") private static function _GetItemInstallInfo( publishedFileID : hl.Bytes, maxFolderPathLength : Int ) : hl.Bytes { return null; }
 	@:hlNative("steam","create_query_all_ugc_request") private static function _CreateQueryAllUGCRequest( queryType : Int, matchingUGCType : Int, creatorAppID : Int, consumerAppID : Int, page : Int ) : hl.Bytes { return null; }
 	@:hlNative("steam","create_query_ugc_details_request") private static function _CreateQueryUGCDetailsRequest( fileIDs : hl.Bytes ) : hl.Bytes { return null; }
