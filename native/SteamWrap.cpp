@@ -77,11 +77,11 @@ void deleteSteamParamStringArray(SteamParamStringArray_t * params)
 }
 
 
-//AutoGCRoot *g_eventHandler = 0;
-
 //-----------------------------------------------------------------------------------------------------------
 // Event
 //-----------------------------------------------------------------------------------------------------------
+
+vclosure *g_eventHandler = 0;
 
 typedef enum {
 	None,
@@ -175,39 +175,14 @@ static steamHandleMap mapControllers;
 static ControllerAnalogActionData_t analogActionData;
 static ControllerMotionData_t motionData;
 
-struct Event {
-	hl_type *t;
-	event_type type;
-	int success;
-	char *data;
-};
-
-static void SendEvent(const Event& e)
-{
-	// http://code.google.com/p/nmex/source/browse/trunk/project/common/ExternalInterface.cpp
+static void SendEvent(event_type type, bool success, const char *data) {
 	if (!g_eventHandler) return;
-    value obj = alloc_empty_object();
-    alloc_field(obj, val_id("type"), alloc_string(e.m_type));
-    alloc_field(obj, val_id("success"), alloc_int(e.m_success ? 1 : 0));
-    alloc_field(obj, val_id("data"), alloc_string(e.m_data.c_str()));
-    val_call1(g_eventHandler->get(), obj);
+	if (g_eventHandler->hasValue)
+		((void(*)(void*, event_type, bool, vbyte*))g_eventHandler->fun)(g_eventHandler->value, type, success, (vbyte*)data);
+	else
+		((void(*)(event_type, bool, vbyte*))g_eventHandler->fun)(type, success, (vbyte*)data);
 }
 
-// This is not used and produces compilation error on Linux.
-
-// static value handleToValStr(uint64 handle)
-// {
-	// std::ostringstream data;
-	// data << handle;
-	// return alloc_string(data.str().c_str());
-// }
-
-// static uint64 valStrToHandle(value str)
-// {
-	// ControllerHandle_t c_handle;
-	// sscanf(val_string(str), "%I64x", &c_handle);
-	// return c_handle;
-// }
 
 //-----------------------------------------------------------------------------------------------------------
 // CallbackHandler
@@ -291,25 +266,25 @@ public:
 
 void CallbackHandler::OnGamepadTextInputDismissed( GamepadTextInputDismissed_t *pCallback )
 {
-	SendEvent(Event(kEventTypeOnGamepadTextInputDismissed, pCallback->m_bSubmitted));
+	SendEvent(GamepadTextInputDismissed, pCallback->m_bSubmitted, NULL);
 }
 
 void CallbackHandler::OnUserStatsReceived( UserStatsReceived_t *pCallback )
 {
  	if (pCallback->m_nGameID != SteamUtils()->GetAppID()) return;
-	SendEvent(Event(kEventTypeOnUserStatsReceived, pCallback->m_eResult == k_EResultOK));
+	SendEvent(UserStatsReceived, pCallback->m_eResult == k_EResultOK, NULL);
 }
 
 void CallbackHandler::OnUserStatsStored( UserStatsStored_t *pCallback )
 {
  	if (pCallback->m_nGameID != SteamUtils()->GetAppID()) return;
-	SendEvent(Event(kEventTypeOnUserStatsStored, pCallback->m_eResult == k_EResultOK));
+	SendEvent(UserStatsStored, pCallback->m_eResult == k_EResultOK, NULL);
 }
 
 void CallbackHandler::OnAchievementStored( UserAchievementStored_t *pCallback )
 {
  	if (pCallback->m_nGameID != SteamUtils()->GetAppID()) return;
-	SendEvent(Event(kEventTypeOnUserAchievementStored, true, pCallback->m_rgchAchievementName));
+	SendEvent(UserAchievementStored, true, pCallback->m_rgchAchievementName);
 }
 
 void CallbackHandler::SendQueryUGCRequest(UGCQueryHandle_t handle)
@@ -328,11 +303,11 @@ void CallbackHandler::OnUGCQueryCompleted(SteamUGCQueryCompleted_t *pCallback, b
 		data << pCallback->m_unTotalMatchingResults << ",";
 		data << pCallback->m_bCachedData;
 		
-		SendEvent(Event(kEventTypeOnUGCQueryCompleted, true, data.str().c_str()));
+		SendEvent(UGCQueryCompleted, true, data.str().c_str());
 	}
 	else
 	{
-		SendEvent(Event(kEventTypeOnUGCQueryCompleted, false));
+		SendEvent(UGCQueryCompleted, false, NULL);
 	}
 }
 
@@ -349,10 +324,10 @@ void CallbackHandler::OnItemUpdateSubmitted(SubmitItemUpdateResult_t *pCallback,
 		pCallback->m_eResult == k_EResultNotLoggedOn ||
 		bIOFailure)
 	{
-		SendEvent(Event(kEventTypeOnItemUpdateSubmitted, false));
+		SendEvent(UGCItemUpdateSubmitted, false, NULL);
 	}
 	else{
-		SendEvent(Event(kEventTypeOnItemUpdateSubmitted, true));
+		SendEvent(UGCItemUpdateSubmitted, true, NULL);
 	}
 }
 
@@ -366,7 +341,7 @@ void CallbackHandler::OnUGCItemCreated(CreateItemResult_t *pCallback, bool bIOFa
 {
 	if (bIOFailure)
 	{
-		SendEvent(Event(kEventTypeUGCItemCreated, false));
+		SendEvent(UGCItemCreated, false, NULL);
 		return;
 	}
 
@@ -381,15 +356,15 @@ void CallbackHandler::OnUGCItemCreated(CreateItemResult_t *pCallback, bool bIOFa
 		pCallback->m_eResult == k_EResultTimeout ||
 		pCallback->m_eResult == k_EResultNotLoggedOn)
 	{
-		SendEvent(Event(kEventTypeUGCItemCreated, false));
+		SendEvent(UGCItemCreated, false, NULL);
 	}
 	else{
 		std::ostringstream fileIDStream;
 		fileIDStream << m_ugcFileID;
-		SendEvent(Event(kEventTypeUGCItemCreated, true, fileIDStream.str().c_str()));
+		SendEvent(UGCItemCreated, true, fileIDStream.str().c_str());
 	}
 
-	SendEvent(Event(kEventTypeUGCLegalAgreement, !pCallback->m_bUserNeedsToAcceptWorkshopLegalAgreement));
+	SendEvent(UGCLegalAgreementStatus, !pCallback->m_bUserNeedsToAcceptWorkshopLegalAgreement, NULL);
 
 	if(pCallback->m_bUserNeedsToAcceptWorkshopLegalAgreement){
 		std::ostringstream urlStream;
@@ -414,11 +389,11 @@ void CallbackHandler::OnLeaderboardFound(LeaderboardFindResult_t *pCallback, boo
 	{
 		std::string leaderboardId = SteamUserStats()->GetLeaderboardName(pCallback->m_hSteamLeaderboard);
 		m_leaderboards[leaderboardId] = pCallback->m_hSteamLeaderboard;
-		SendEvent(Event(kEventTypeOnLeaderboardFound, true, leaderboardId));
+		SendEvent(LeaderboardFound, true, leaderboardId.c_str());
 	}
 	else
 	{
-		SendEvent(Event(kEventTypeOnLeaderboardFound, false));
+		SendEvent(LeaderboardFound, false, NULL);
 	}
 }
 
@@ -451,15 +426,15 @@ void CallbackHandler::OnScoreUploaded(LeaderboardScoreUploaded_t *pCallback, boo
 	{
 		std::string leaderboardName = SteamUserStats()->GetLeaderboardName(pCallback->m_hSteamLeaderboard);
 		std::string data = toLeaderboardScore(SteamUserStats()->GetLeaderboardName(pCallback->m_hSteamLeaderboard), pCallback->m_nScore, -1, pCallback->m_nGlobalRankNew);
-		SendEvent(Event(kEventTypeOnScoreUploaded, true, data));
+		SendEvent(ScoreUploaded, true, data.c_str());
 	}
 	else if (pCallback != NULL && pCallback->m_hSteamLeaderboard != 0)
 	{
-		SendEvent(Event(kEventTypeOnScoreUploaded, false, SteamUserStats()->GetLeaderboardName(pCallback->m_hSteamLeaderboard)));
+		SendEvent(ScoreUploaded, false, SteamUserStats()->GetLeaderboardName(pCallback->m_hSteamLeaderboard));
 	}
 	else
 	{
-		SendEvent(Event(kEventTypeOnScoreUploaded, false));
+		SendEvent(ScoreUploaded, false, NULL);
 	}
 }
 
@@ -473,11 +448,11 @@ void CallbackHandler::OnFileShared(RemoteStorageFileShareResult_t *pCallback, bo
 		std::ostringstream strHandle;
 		strHandle << rawHandle;
 		
-		SendEvent(Event(kEventTypeOnFileShared, true, strHandle.str()));
+		SendEvent(RemoteStorageFileShared, true, strHandle.str().c_str());
 	}
 	else
 	{
-		SendEvent(Event(kEventTypeOnFileShared, false));
+		SendEvent(RemoteStorageFileShared, false, NULL);
 	}
 }
 
@@ -497,7 +472,7 @@ void CallbackHandler::OnScoreDownloaded(LeaderboardScoresDownloaded_t *pCallback
 {
 	if (bIOFailure)
 	{
-		SendEvent(Event(kEventTypeOnScoreDownloaded, false));
+		SendEvent(ScoreDownloaded, false, NULL);
 		return;
 	}
 
@@ -524,12 +499,12 @@ void CallbackHandler::OnScoreDownloaded(LeaderboardScoresDownloaded_t *pCallback
 
 	if (haveData)
 	{
-		SendEvent(Event(kEventTypeOnScoreDownloaded, true, data.str()));
+		SendEvent(ScoreDownloaded, true, data.str().c_str());
 	}
 	else
 	{
 		// ok but no scores
-		SendEvent(Event(kEventTypeOnScoreDownloaded, true, toLeaderboardScore(leaderboardId.c_str(), -1, -1, -1)));
+		SendEvent(ScoreDownloaded, true, toLeaderboardScore(leaderboardId.c_str(), -1, -1, -1).c_str());
 	}
 }
 
@@ -544,11 +519,11 @@ void CallbackHandler::OnGlobalStatsReceived(GlobalStatsReceived_t* pResult, bool
 	if (!bIOFailure)
 	{
 		if (pResult->m_nGameID != SteamUtils()->GetAppID()) return;
-		SendEvent(Event(kEventTypeOnGlobalStatsReceived, pResult->m_eResult == k_EResultOK));
+		SendEvent(GlobalStatsReceived, pResult->m_eResult == k_EResultOK, NULL);
 	}
 	else
 	{
-		SendEvent(Event(kEventTypeOnGlobalStatsReceived, false));
+		SendEvent(GlobalStatsReceived, false, NULL);
 	}
 }
 
@@ -583,11 +558,11 @@ void CallbackHandler::OnEnumerateUserPublishedFiles(RemoteStorageEnumerateUserPu
 				
 			}
 			
-			SendEvent(Event(kEventTypeOnEnumerateUserPublishedFiles, pResult->m_eResult == k_EResultOK, data.str()));
+			SendEvent(UserPublishedFilesEnumerated, pResult->m_eResult == k_EResultOK, data.str().c_str());
 			return;
 		}
 	}
-	SendEvent(Event(kEventTypeOnEnumerateUserSharedWorkshopFiles, false));
+	SendEvent(UserSharedWorkshopFilesEnumerated, false, NULL);
 }
 
 void CallbackHandler::EnumerateUserSharedWorkshopFiles( CSteamID steamId, uint32 unStartIndex, SteamParamStringArray_t *pRequiredTags, SteamParamStringArray_t *pExcludedTags )
@@ -619,10 +594,10 @@ void CallbackHandler::OnEnumerateUserSharedWorkshopFiles(RemoteStorageEnumerateU
 			
 		}
 		
-		SendEvent(Event(kEventTypeOnEnumerateUserSharedWorkshopFiles, pResult->m_eResult == k_EResultOK, data.str()));
+		SendEvent(UserSharedWorkshopFilesEnumerated, pResult->m_eResult == k_EResultOK, data.str().c_str());
 		return;
 	}
-	SendEvent(Event(kEventTypeOnEnumerateUserSharedWorkshopFiles, false));
+	SendEvent(UserSharedWorkshopFilesEnumerated, false, NULL);
 }
 
 void CallbackHandler::EnumerateUserSubscribedFiles( uint32 unStartIndex )
@@ -665,10 +640,10 @@ void CallbackHandler::OnEnumerateUserSubscribedFiles(RemoteStorageEnumerateUserS
 			
 		}
 		
-		SendEvent(Event(kEventTypeOnEnumerateUserSubscribedFiles, pResult->m_eResult == k_EResultOK, data.str()));
+		SendEvent(UserSubscribedFilesEnumerated, pResult->m_eResult == k_EResultOK, data.str().c_str());
 		return;
 	}
-	SendEvent(Event(kEventTypeOnEnumerateUserSubscribedFiles, false));
+	SendEvent(UserSubscribedFilesEnumerated, false, NULL);
 }
 
 void CallbackHandler::GetPublishedFileDetails( PublishedFileId_t unPublishedFileId, uint32 unMaxSecondsOld )
@@ -726,10 +701,10 @@ void CallbackHandler::OnGetPublishedFileDetails(RemoteStorageGetPublishedFileDet
 		data << ",acceptedForUse:",
 		data << pResult->m_bAcceptedForUse;
 		
-		SendEvent(Event(kEventTypeOnGetPublishedFileDetails, pResult->m_eResult == k_EResultOK, data.str()));
+		SendEvent(PublishedFileDetailsGotten, pResult->m_eResult == k_EResultOK, data.str().c_str());
 		return;
 	}
-	SendEvent(Event(kEventTypeOnGetPublishedFileDetails, false));
+	SendEvent(PublishedFileDetailsGotten, false, NULL);
 }
 
 void CallbackHandler::UGCDownload( UGCHandle_t hContent, uint32 unPriority )
@@ -757,10 +732,10 @@ void CallbackHandler::OnUGCDownload(RemoteStorageDownloadUGCResult_t* pResult, b
 		data << ",steamIDOwner:";
 		data << pResult->m_ulSteamIDOwner;
 		
-		SendEvent(Event(kEventTypeOnUGCDownload, pResult->m_eResult == k_EResultOK, data.str()));
+		SendEvent(UGCDownloaded, pResult->m_eResult == k_EResultOK, data.str().c_str());
 		return;
 	}
-	SendEvent(Event(kEventTypeOnUGCDownload, false));
+	SendEvent(UGCDownloaded, false, NULL);
 }
 
 void CallbackHandler::OnDownloadItem( DownloadItemResult_t *pCallback )
@@ -770,7 +745,7 @@ void CallbackHandler::OnDownloadItem( DownloadItemResult_t *pCallback )
 	std::ostringstream fileIDStream;
 	PublishedFileId_t m_ugcFileID = pCallback->m_nPublishedFileId;
 	fileIDStream << m_ugcFileID;
-	SendEvent(Event(kEventTypeOnDownloadItem, pCallback->m_eResult == k_EResultOK, fileIDStream.str().c_str()));
+	SendEvent(ItemDownloaded, pCallback->m_eResult == k_EResultOK, fileIDStream.str().c_str());
 }
 
 void CallbackHandler::OnItemInstalled( ItemInstalled_t *pCallback )
@@ -780,7 +755,7 @@ void CallbackHandler::OnItemInstalled( ItemInstalled_t *pCallback )
 	std::ostringstream fileIDStream;
 	PublishedFileId_t m_ugcFileID = pCallback->m_nPublishedFileId;
 	fileIDStream << m_ugcFileID;
-	SendEvent(Event(kEventTypeOnDownloadItem, true, fileIDStream.str().c_str()));
+	SendEvent(ItemDownloaded, true, fileIDStream.str().c_str());
 }
 
 //-----------------------------------------------------------------------------------------------------------

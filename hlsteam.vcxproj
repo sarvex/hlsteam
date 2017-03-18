@@ -70,7 +70,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <TargetExt>.hdll</TargetExt>
-    <IncludePath>native\include;C:\Projects\haxeTools\hashlink\src;$(IncludePath)</IncludePath>
+    <IncludePath>native\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <TargetExt>.hdll</TargetExt>

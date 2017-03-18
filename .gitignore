@@ -1,4 +1,4 @@
-/native/include/hx/*.h
+/native/include/hl.h
 /native/include/steam/*.h
 /native/lib/*
 /native/obj
@@ -8,5 +8,7 @@
 /ndll
 temp/
 /Release
-*.VC.db
+/Debug
+*.VC.*
 *.user
+/.vs
