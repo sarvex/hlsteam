@@ -155,7 +155,7 @@ class Controller
 	public function getConnectedControllers():Array<Int> {
 		if (!active) return [];
 		connectedControllers = _GetConnectedControllers(connectedControllers);
-		return [for(idx in connectedControllers) idx];
+		return [for(idx in connectedControllers) if( idx >= 0 ) idx];
 	}
 	
 	/**
