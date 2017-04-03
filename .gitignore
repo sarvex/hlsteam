@@ -13,3 +13,7 @@ temp/
 *.user
 /.vs
 /*.hl
+
+/ReleaseVS2013
+
+*.sdf

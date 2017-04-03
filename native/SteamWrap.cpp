@@ -26,43 +26,43 @@ void split(const std::string &s, char delim, std::vector<std::string> &elems) {
 //generates a parameter string array from comma-delimeted-values
 SteamParamStringArray_t * getSteamParamStringArray(const char * str){
 	std::string stdStr = str;
-	
+
 	//NOTE: this will probably fail if the string includes Unicode, but Steam tags probably don't support that?
 	std::vector<std::string> v;
 	split(stdStr, ',', v);
-	
+
 	SteamParamStringArray_t * params = new SteamParamStringArray_t;
-	
+
 	int count = v.size();
-	
+
 	params->m_nNumStrings = (int32) count;
 	params->m_ppStrings = new const char *[count];
-	
+
 	for(int i = 0; i < count; i++) {
 		params->m_ppStrings[i] = v[i].c_str();
 	}
-	
+
 	return params;
 }
 
 //generates a uint64 array from comma-delimeted-values
 uint64 * getUint64Array(const char * str, uint32 * numElements){
 	std::string stdStr = str;
-	
+
 	//NOTE: this will probably fail if the string includes Unicode, but Steam tags probably don't support that?
 	std::vector<std::string> v;
 	split(stdStr, ',', v);
-	
+
 	int count = v.size();
-	
+
 	uint64 * values = new uint64[count];
-	
+
 	for(int i = 0; i < count; i++) {
 		values[i] = strtoull(v[i].c_str(), NULL, 0);
 	}
-	
+
 	*numElements = count;
-	
+
 	return values;
 }
 
@@ -106,30 +106,30 @@ typedef enum {
 } event_type;
 
 //A simple data structure that holds on to the native 64-bit handles and maps them to regular ints.
-//This is because it is cumbersome to pass back 64-bit values over CFFI, and strictly speaking, the haxe 
-//side never needs to know the actual values. So we just store the full 64-bit values locally and pass back 
+//This is because it is cumbersome to pass back 64-bit values over CFFI, and strictly speaking, the haxe
+//side never needs to know the actual values. So we just store the full 64-bit values locally and pass back
 //0-based index values which easily fit into a regular int.
 class steamHandleMap{
 	//TODO: figure out templating or whatever so I can make typed versions of this like in Haxe (steamHandleMap<ControllerHandle_t>)
 	//      all the steam handle typedefs are just renamed uint64's, but this could always change so to be 100% super safe I should
 	//      figure out the templating stuff.
-	
+
 	private:
 		std::map<int, uint64> values;
 		std::map<int, uint64>::iterator it;
 		int maxKey;
-		
+
 	public:
-		
+
 		void init()		{
 			values.clear();
 			maxKey = -1;
 		}
-		
+
 		bool exists(uint64 val){
 			return find(val) >= 0;
 		}
-		
+
 		int find(uint64 val){
 			for(int i = 0; i <= maxKey; i++){
 				if(values[i] == val)
@@ -137,23 +137,23 @@ class steamHandleMap{
 			}
 			return -1;
 		}
-		
+
 		uint64 get(int index){
 			return values[index];
 		}
-		
+
 		//add a unique uint64 value to this data structure & return what index it was stored at
 		int add(uint64 val)	{
 			int i = find(val);
-			
+
 			//if it already exists just return where it is stored
 			if(i >= 0)
 				return i;
-			
+
 			//if it is unique increase our maxKey count and return that
 			maxKey++;
 			values[maxKey] = val;
-			
+
 			return maxKey;
 		}
 };
@@ -167,6 +167,31 @@ static void SendEvent(event_type type, bool success, const char *data) {
 		((void(*)(event_type, bool, vbyte*))g_eventHandler->fun)(type, success, (vbyte*)data);
 }
 
+
+template< class T >
+class CClosureCallResult : public CCallResult<CClosureCallResult<T>,T> {
+	vclosure *closure;
+	void (*on_result)( vclosure *, T *, bool);
+public:
+	CClosureCallResult( vclosure *cval, void (*on_result)( vclosure *t, T*, bool) ) {
+		this->closure = cval;
+		this->on_result = on_result;
+		hl_add_root(&closure);
+	}
+	~CClosureCallResult() {
+		hl_remove_root(&closure);
+	}
+	void OnResult( T *result, bool onIOError ) {
+		on_result(closure,result,onIOError);
+		delete this;}
+};
+
+#define ASYNC_CALL(steam_call, type, on_result) \
+	CClosureCallResult<type> *m_call = new CClosureCallResult<type>(closure,on_result); \
+	m_call->Set(steam_call, m_call, &CClosureCallResult<type>::OnResult);
+
+#define _CRESULT	_ABSTRACT(steam_call_result)
+#define _CALLB(T)	_FUN(_VOID, T _BOOL)
 
 //-----------------------------------------------------------------------------------------------------------
 // CallbackHandler
@@ -192,7 +217,7 @@ public:
 	STEAM_CALLBACK( CallbackHandler, OnGamepadTextInputDismissed, GamepadTextInputDismissed_t, m_CallbackGamepadTextInputDismissed );
 	STEAM_CALLBACK( CallbackHandler, OnDownloadItem, DownloadItemResult_t, m_CallbackDownloadItemResult );
 	STEAM_CALLBACK( CallbackHandler, OnItemInstalled, ItemInstalled_t, m_CallbackItemInstalled );
-	
+
 	void FindLeaderboard(const char* name);
 	void OnLeaderboardFound( LeaderboardFindResult_t *pResult, bool bIOFailure);
 	CCallResult<CallbackHandler, LeaderboardFindResult_t> m_callResultFindLeaderboard;
@@ -212,39 +237,39 @@ public:
 	void CreateUGCItem(AppId_t nConsumerAppId, EWorkshopFileType eFileType);
 	void OnUGCItemCreated( CreateItemResult_t *pResult, bool bIOFailure);
 	CCallResult<CallbackHandler, CreateItemResult_t> m_callResultCreateUGCItem;
-	
+
 	void SendQueryUGCRequest(UGCQueryHandle_t handle);
-	void OnUGCQueryCompleted( SteamUGCQueryCompleted_t* pResult, bool bIOFailure); 
+	void OnUGCQueryCompleted( SteamUGCQueryCompleted_t* pResult, bool bIOFailure);
 	CCallResult<CallbackHandler, SteamUGCQueryCompleted_t> m_callResultUGCQueryCompleted;
-	
+
 	void SubmitUGCItemUpdate(UGCUpdateHandle_t handle, const char *pchChangeNote);
 	void OnItemUpdateSubmitted( SubmitItemUpdateResult_t *pResult, bool bIOFailure);
 	CCallResult<CallbackHandler, SubmitItemUpdateResult_t> m_callResultSubmitUGCItemUpdate;
-	
+
 	void EnumerateUserSharedWorkshopFiles( CSteamID steamId, uint32 unStartIndex, SteamParamStringArray_t *pRequiredTags, SteamParamStringArray_t *pExcludedTags );
 	void OnEnumerateUserSharedWorkshopFiles( RemoteStorageEnumerateUserPublishedFilesResult_t * pResult, bool bIOFailure);
 	CCallResult<CallbackHandler, RemoteStorageEnumerateUserPublishedFilesResult_t > m_callResultEnumerateUserSharedWorkshopFiles;
-	
+
 	void EnumerateUserSubscribedFiles ( uint32 unStartIndex );
 	void OnEnumerateUserSubscribedFiles ( RemoteStorageEnumerateUserSubscribedFilesResult_t * pResult, bool bIOFailure);
 	CCallResult<CallbackHandler, RemoteStorageEnumerateUserSubscribedFilesResult_t > m_callResultEnumerateUserSubscribedFiles;
-	
+
 	void EnumerateUserPublishedFiles ( uint32 unStartIndex );
 	void OnEnumerateUserPublishedFiles ( RemoteStorageEnumerateUserPublishedFilesResult_t * pResult, bool bIOFailure);
 	CCallResult<CallbackHandler, RemoteStorageEnumerateUserPublishedFilesResult_t > m_callResultEnumerateUserPublishedFiles;
-	
+
 	void UGCDownload ( UGCHandle_t hContent, uint32 unPriority );
 	void OnUGCDownload ( RemoteStorageDownloadUGCResult_t * pResult, bool bIOFailure);
 	CCallResult<CallbackHandler, RemoteStorageDownloadUGCResult_t  > m_callResultUGCDownload;
-	
+
 	void GetPublishedFileDetails ( PublishedFileId_t unPublishedFileId, uint32 unMaxSecondsOld );
 	void OnGetPublishedFileDetails ( RemoteStorageGetPublishedFileDetailsResult_t * pResult, bool bIOFailure);
 	CCallResult<CallbackHandler, RemoteStorageGetPublishedFileDetailsResult_t > m_callResultGetPublishedFileDetails;
-	
+
 	void FileShare(const char* fileName);
 	void OnFileShared( RemoteStorageFileShareResult_t *pResult, bool bIOFailure);
 	CCallResult<CallbackHandler, RemoteStorageFileShareResult_t> m_callResultFileShare;
-	
+
 };
 
 void CallbackHandler::OnGamepadTextInputDismissed( GamepadTextInputDismissed_t *pCallback ){
@@ -278,7 +303,7 @@ void CallbackHandler::OnUGCQueryCompleted(SteamUGCQueryCompleted_t *pCallback, b
 		data << pCallback->m_unNumResultsReturned << ",";
 		data << pCallback->m_unTotalMatchingResults << ",";
 		data << pCallback->m_bCachedData;
-		
+
 		SendEvent(UGCQueryCompleted, true, data.str().c_str());
 	}else{
 		SendEvent(UGCQueryCompleted, false, NULL);
@@ -394,11 +419,11 @@ void CallbackHandler::OnScoreUploaded(LeaderboardScoreUploaded_t *pCallback, boo
 void CallbackHandler::OnFileShared(RemoteStorageFileShareResult_t *pCallback, bool bIOFailure){
 	if (pCallback->m_eResult == k_EResultOK && !bIOFailure)	{
 		UGCHandle_t rawHandle = pCallback->m_hFile;
-		
+
 		//convert uint64 handle to string
 		std::ostringstream strHandle;
 		strHandle << rawHandle;
-		
+
 		SendEvent(RemoteStorageFileShared, true, strHandle.str().c_str());
 	}else{
 		SendEvent(RemoteStorageFileShared, false, NULL);
@@ -437,7 +462,7 @@ void CallbackHandler::OnScoreDownloaded(LeaderboardScoresDownloaded_t *pCallback
 		SteamUserStats()->GetDownloadedLeaderboardEntry(pCallback->m_hSteamLeaderboardEntries, i, &entry, details, 1);
 		if (entry.m_cDetails != 1) continue;
 
-		if (haveData) 
+		if (haveData)
 			data << ";";
 		data << toLeaderboardScore(leaderboardId.c_str(), entry.m_nScore, details[0], entry.m_nGlobalRank).c_str();
 		haveData = true;
@@ -472,7 +497,7 @@ void CallbackHandler::OnEnumerateUserPublishedFiles(RemoteStorageEnumerateUserPu
 	if (!bIOFailure){
 		if(pResult->m_eResult == k_EResultOK){
 			std::ostringstream data;
-			
+
 			data << "result:";
 			data << pResult->m_eResult;
 			data << ",resultsReturned:";
@@ -480,13 +505,13 @@ void CallbackHandler::OnEnumerateUserPublishedFiles(RemoteStorageEnumerateUserPu
 			data << ",totalResults:";
 			data << pResult->m_nTotalResultCount;
 			data << ",publishedFileIds:";
-			
+
 			for(int32 i = 0; i < pResult->m_nResultsReturned; ++i) {
 				data << pResult->m_rgPublishedFileId[i];
 				if(i != pResult->m_nResultsReturned-1)
 					data << ',';
 			}
-			
+
 			SendEvent(UserPublishedFilesEnumerated, pResult->m_eResult == k_EResultOK, data.str().c_str());
 			return;
 		}
@@ -502,7 +527,7 @@ void CallbackHandler::EnumerateUserSharedWorkshopFiles( CSteamID steamId, uint32
 void CallbackHandler::OnEnumerateUserSharedWorkshopFiles(RemoteStorageEnumerateUserPublishedFilesResult_t* pResult, bool bIOFailure){
 	if(pResult->m_eResult == k_EResultOK)	{
 		std::ostringstream data;
-		
+
 		data << "result:";
 		data << pResult->m_eResult;
 		data << ",resultsReturned:";
@@ -510,13 +535,13 @@ void CallbackHandler::OnEnumerateUserSharedWorkshopFiles(RemoteStorageEnumerateU
 		data << ",totalResults:";
 		data << pResult->m_nTotalResultCount;
 		data << ",publishedFileIds:";
-		
+
 		for(int32 i = 0; i < pResult->m_nResultsReturned; ++i) {
 			data << pResult->m_rgPublishedFileId[i];
 			if(i != pResult->m_nResultsReturned-1)
 				data << ',';
 		}
-		
+
 		SendEvent(UserSharedWorkshopFilesEnumerated, pResult->m_eResult == k_EResultOK, data.str().c_str());
 		return;
 	}
@@ -531,7 +556,7 @@ void CallbackHandler::EnumerateUserSubscribedFiles( uint32 unStartIndex ){
 void CallbackHandler::OnEnumerateUserSubscribedFiles(RemoteStorageEnumerateUserSubscribedFilesResult_t* pResult, bool bIOFailure){
 	if(pResult->m_eResult == k_EResultOK)	{
 		std::ostringstream data;
-		
+
 		data << "result:";
 		data << pResult->m_eResult;
 		data << ",resultsReturned:";
@@ -539,24 +564,24 @@ void CallbackHandler::OnEnumerateUserSubscribedFiles(RemoteStorageEnumerateUserS
 		data << ",totalResults:";
 		data << pResult->m_nTotalResultCount;
 		data << ",publishedFileIds:";
-		
+
 		for(int32 i = 0; i < pResult->m_nResultsReturned; ++i) {
-			
+
 			data << pResult->m_rgPublishedFileId[i];
 			if(i != pResult->m_nResultsReturned-1){
 				data << ',';
 			}
-			
+
 		}
-		
+
 		data << ",timeSubscribed:";
-		
+
 		for(int32 i = 0; i < pResult->m_nResultsReturned; ++i) {
 			data << pResult->m_rgRTimeSubscribed[i];
 			if(i != pResult->m_nResultsReturned-1)
 				data << ',';
 		}
-		
+
 		SendEvent(UserSubscribedFilesEnumerated, pResult->m_eResult == k_EResultOK, data.str().c_str());
 		return;
 	}
@@ -571,7 +596,7 @@ void CallbackHandler::GetPublishedFileDetails( PublishedFileId_t unPublishedFile
 void CallbackHandler::OnGetPublishedFileDetails(RemoteStorageGetPublishedFileDetailsResult_t* pResult, bool bIOFailure){
 	if(pResult->m_eResult == k_EResultOK)	{
 		std::ostringstream data;
-		
+
 		data << "result:";
 		data << pResult->m_eResult;
 		data << ",publishedFileID:";
@@ -614,7 +639,7 @@ void CallbackHandler::OnGetPublishedFileDetails(RemoteStorageGetPublishedFileDet
 		data << pResult->m_eFileType;
 		data << ",acceptedForUse:",
 		data << pResult->m_bAcceptedForUse;
-		
+
 		SendEvent(PublishedFileDetailsGotten, pResult->m_eResult == k_EResultOK, data.str().c_str());
 		return;
 	}
@@ -629,7 +654,7 @@ void CallbackHandler::UGCDownload( UGCHandle_t hContent, uint32 unPriority ){
 void CallbackHandler::OnUGCDownload(RemoteStorageDownloadUGCResult_t* pResult, bool bIOFailure){
 	if(pResult->m_eResult == k_EResultOK){
 		std::ostringstream data;
-		
+
 		data << "result:";
 		data << pResult->m_eResult;
 		data << ",fileHandle:";
@@ -642,7 +667,7 @@ void CallbackHandler::OnUGCDownload(RemoteStorageDownloadUGCResult_t* pResult, b
 		data << pResult->m_pchFileName;
 		data << ",steamIDOwner:";
 		data << pResult->m_ulSteamIDOwner;
-		
+
 		SendEvent(UGCDownloaded, pResult->m_eResult == k_EResultOK, data.str().c_str());
 		return;
 	}
@@ -651,7 +676,7 @@ void CallbackHandler::OnUGCDownload(RemoteStorageDownloadUGCResult_t* pResult, b
 
 void CallbackHandler::OnDownloadItem( DownloadItemResult_t *pCallback ){
 	if (pCallback->m_unAppID != SteamUtils()->GetAppID()) return;
-	
+
 	std::ostringstream fileIDStream;
 	PublishedFileId_t m_ugcFileID = pCallback->m_nPublishedFileId;
 	fileIDStream << m_ugcFileID;
@@ -660,7 +685,7 @@ void CallbackHandler::OnDownloadItem( DownloadItemResult_t *pCallback ){
 
 void CallbackHandler::OnItemInstalled( ItemInstalled_t *pCallback ){
 	if (pCallback->m_unAppID != SteamUtils()->GetAppID()) return;
-	
+
 	std::ostringstream fileIDStream;
 	PublishedFileId_t m_ugcFileID = pCallback->m_nPublishedFileId;
 	fileIDStream << m_ugcFileID;
@@ -835,10 +860,10 @@ HL_PRIM bool HL_NAME(set_ugc_item_tags)(vbyte *updateHandle, vbyte *tags){
 	std::istringstream handleStream((char*)updateHandle);
 	if (!(handleStream >> updateHandle64))
 		return false;
-	
+
 	// Create tag array from the string.
 	SteamParamStringArray_t *pTags = getSteamParamStringArray((char*)tags);
-	
+
 	bool result = SteamUGC()->SetItemTags(updateHandle64, pTags);
 	deleteSteamParamStringArray(pTags);
 	return result;
@@ -847,26 +872,26 @@ DEFINE_PRIM(_BOOL, set_ugc_item_tags, _BYTES _BYTES);
 
 HL_PRIM bool HL_NAME(add_ugc_item_key_value_tag)(vbyte *updateHandle, vbyte *keyStr, vbyte *valueStr){
 	if (!CheckInit()) return false;
-	
+
 	// Create uint64 from the string.
 	uint64 updateHandle64;
 	std::istringstream handleStream((char*)updateHandle);
 	if (!(handleStream >> updateHandle64))
 		return false;
-	
+
 	return SteamUGC()->AddItemKeyValueTag(updateHandle64, (char*)keyStr, (char*)valueStr);
 }
 DEFINE_PRIM(_BOOL, add_ugc_item_key_value_tag, _BYTES _BYTES _BYTES);
 
 HL_PRIM bool HL_NAME(remove_ugc_item_key_value_tags)(vbyte *updateHandle, vbyte *keyStr) {
 	if (!CheckInit()) return false;
-	
+
 	// Create uint64 from the string.
 	uint64 updateHandle64;
 	std::istringstream handleStream((char*)updateHandle);
 	if (!(handleStream >> updateHandle64))
 		return false;
-	
+
 	return SteamUGC()->RemoveItemKeyValueTags(updateHandle64, (char*)keyStr);
 }
 DEFINE_PRIM(_BOOL, remove_ugc_item_key_value_tags, _BYTES _BYTES);
@@ -1052,12 +1077,12 @@ DEFINE_PRIM(_BYTES, get_persona_name, _NO_ARG);
 
 HL_PRIM vbyte *HL_NAME(get_steam_id)(){
 	if(!CheckInit()) return (vbyte*)"0";
-	
+
 	CSteamID userId = SteamUser()->GetSteamID();
-	
+
 	std::ostringstream returnData;
 	returnData << userId.ConvertToUint64();
-	
+
 	return (vbyte*)returnData.str().c_str();
 }
 DEFINE_PRIM(_BYTES, get_steam_id, _NO_ARG);
@@ -1104,13 +1129,13 @@ DEFINE_PRIM(_I32, get_num_subscribed_items, _NO_ARG);
 
 HL_PRIM vbyte *HL_NAME(get_subscribed_items)(){
 	if (!CheckInit()) return (vbyte*)"";
-	
+
 	int numSubscribed = SteamUGC()->GetNumSubscribedItems();
 	if(numSubscribed <= 0) return (vbyte*)"";
 	PublishedFileId_t* pvecPublishedFileID = new PublishedFileId_t[numSubscribed];
-	
+
 	int result = SteamUGC()->GetSubscribedItems(pvecPublishedFileID, numSubscribed);
-	
+
 	std::ostringstream data;
 	for(int i = 0; i < result; i++){
 		if(i != 0)
@@ -1118,7 +1143,7 @@ HL_PRIM vbyte *HL_NAME(get_subscribed_items)(){
 		data << pvecPublishedFileID[i];
 	}
 	delete pvecPublishedFileID;
-	
+
 	return (vbyte*)data.str().c_str();
 }
 DEFINE_PRIM(_BYTES, get_subscribed_items, _NO_ARG);
@@ -1132,20 +1157,20 @@ DEFINE_PRIM(_I32, get_item_state, _BYTES);
 
 HL_PRIM bool HL_NAME(get_item_download_info)(vbyte *publishedFileID, double *downloaded, double *total ){
 	if (!CheckInit()) return (vbyte*)"";
-	
+
 	PublishedFileId_t nPublishedFileID = (PublishedFileId_t) strtoll((char*)publishedFileID, NULL, 10);
-	
+
 	uint64 punBytesDownloaded;
 	uint64 punBytesTotal;
-	
+
 	bool result = SteamUGC()->GetItemDownloadInfo(nPublishedFileID, &punBytesDownloaded, &punBytesTotal);
-	
+
 	if (!result)
 		return false;
 
 	*downloaded = (double)punBytesDownloaded;
 	*total = (double)punBytesTotal;
-	
+
 	return result;
 }
 DEFINE_PRIM(_BOOL, get_item_download_info, _BYTES _REF(_F64) _REF(_F64));
@@ -1153,23 +1178,23 @@ DEFINE_PRIM(_BOOL, get_item_download_info, _BYTES _REF(_F64) _REF(_F64));
 HL_PRIM bool HL_NAME(download_item)(vbyte *publishedFileID, bool highPriority){
 	if (!CheckInit()) return false;
 	PublishedFileId_t nPublishedFileID = (PublishedFileId_t) strtoll((char*)publishedFileID, NULL, 10);
-	
+
 	return SteamUGC()->DownloadItem(nPublishedFileID, highPriority);
 }
 DEFINE_PRIM(_BOOL, download_item, _BYTES _BOOL);
 
 HL_PRIM vbyte *HL_NAME(get_item_install_info)(vbyte *publishedFileID, int maxFolderPathLength){
 	if (!CheckInit()) return (vbyte*)"";
-	
+
 	PublishedFileId_t nPublishedFileID = (PublishedFileId_t) strtoll((char*)publishedFileID, NULL, 10);
-	
+
 	uint64 punSizeOnDisk;
 	uint32 punTimeStamp;
 	uint32 cchFolderSize = (uint32) maxFolderPathLength;
 	char * pchFolder = new char[cchFolderSize];
-	
+
 	bool result = SteamUGC()->GetItemInstallInfo(nPublishedFileID, &punSizeOnDisk, pchFolder, cchFolderSize, &punTimeStamp);
-	
+
 	if(result){
 		std::ostringstream data;
 		data << punSizeOnDisk;
@@ -1181,22 +1206,22 @@ HL_PRIM vbyte *HL_NAME(get_item_install_info)(vbyte *publishedFileID, int maxFol
 		data << punTimeStamp;
 		return (vbyte*)data.str().c_str();
 	}
-	
+
 	return (vbyte*)"0||0|";
 }
 DEFINE_PRIM(_BYTES, get_item_install_info, _BYTES _I32);
 
 HL_PRIM vbyte *HL_NAME(create_query_all_ugc_request)(int queryType, int matchingUGCType, int creatorAppID, int consumerAppID, int page){
 	if (!CheckInit()) return (vbyte*)"";
-	
+
 	EUGCQuery eQueryType = (EUGCQuery) queryType;
 	EUGCMatchingUGCType eMatchingUGCType = (EUGCMatchingUGCType) matchingUGCType;
 	AppId_t nCreatorAppID = creatorAppID;
 	AppId_t nConsumerAppID = consumerAppID;
 	uint32 unPage = page;
-	
+
 	UGCQueryHandle_t result = SteamUGC()->CreateQueryAllUGCRequest(eQueryType, eMatchingUGCType, nCreatorAppID, nConsumerAppID, unPage);
-	
+
 	std::ostringstream data;
 	data << result;
 	return (vbyte*)data.str().c_str();
@@ -1207,9 +1232,9 @@ HL_PRIM vbyte *HL_NAME(create_query_ugc_details_request)(vbyte *fileIDs){
 	if (!CheckInit()) return (vbyte*)"";
 	uint32 unNumPublishedFileIDs = 0;
 	PublishedFileId_t * pvecPublishedFileID = getUint64Array((char*)fileIDs, &unNumPublishedFileIDs);
-	
+
 	UGCQueryHandle_t result = SteamUGC()->CreateQueryUGCDetailsRequest(pvecPublishedFileID, unNumPublishedFileIDs);
-	
+
 	std::ostringstream data;
 	data << result;
 	return (vbyte*)data.str().c_str();
@@ -1241,61 +1266,61 @@ DEFINE_PRIM(_BOOL, release_query_ugc_request, _BYTES);
 
 HL_PRIM vbyte *HL_NAME(get_query_ugc_key_value_tag)(vbyte *cHandle, int iIndex, int iKeyValueTagIndex, int keySize, int valueSize){
 	if (!CheckInit()) return (vbyte*)"";
-	
+
 	UGCQueryHandle_t handle = strtoull((char*)cHandle, NULL, 0);
 	uint32 index = iIndex;
 	uint32 keyValueTagIndex = iKeyValueTagIndex;
 	uint32 cchKeySize = keySize;
 	uint32 cchValueSize = valueSize;
-	
+
 	char *pchKey = new char[cchKeySize];
 	char *pchValue = new char[cchValueSize];
-	
+
 	SteamUGC()->GetQueryUGCKeyValueTag(handle, index, keyValueTagIndex, pchKey, cchKeySize, pchValue, cchValueSize);
-	
+
 	std::ostringstream data;
 	data << pchKey << "=" << pchValue;
-	
+
 	delete pchKey;
 	delete pchValue;
-	
+
 	return (vbyte*)data.str().c_str();
 }
 DEFINE_PRIM(_BYTES, get_query_ugc_key_value_tag, _BYTES _I32 _I32 _I32 _I32);
 
 HL_PRIM vbyte *HL_NAME(get_query_ugc_metadata)(vbyte *sHandle, int iIndex, int iMetaDataSize){
 	if (!CheckInit()) return (vbyte*)("");
-	
+
 	UGCQueryHandle_t handle = strtoull((char*)sHandle, NULL, 0);
-	
+
 	uint32 cchMetadatasize = iMetaDataSize;
 	char * pchMetadata = new char[cchMetadatasize];
 	uint32 index = iIndex;
-	
+
 	SteamUGC()->GetQueryUGCMetadata(handle, index, pchMetadata, cchMetadatasize);
-	
+
 	std::ostringstream data;
 	data << pchMetadata;
-	
+
 	delete pchMetadata;
-	
+
 	return (vbyte*)data.str().c_str();
 }
 DEFINE_PRIM(_BYTES, get_query_ugc_metadata, _BYTES _I32 _I32);
 
 HL_PRIM vbyte *HL_NAME(get_query_ugc_result)(vbyte *sHandle, int iIndex){
 	if (!CheckInit()) return (vbyte*)"";
-	
+
 	UGCQueryHandle_t handle = strtoull((char*)sHandle, NULL, 0);
-	
+
 	uint32 index = iIndex;
-	
+
 	SteamUGCDetails_t * d = new SteamUGCDetails_t;
-	
+
 	SteamUGC()->GetQueryUGCResult(handle, index, d);
-	
+
 	std::ostringstream data;
-	
+
 	data << "publishedFileID:" << d->m_nPublishedFileId << ",";
 	data << "result:" << d->m_eResult << ",";
 	data << "fileType:" << d->m_eFileType<< ",";
@@ -1322,9 +1347,9 @@ HL_PRIM vbyte *HL_NAME(get_query_ugc_result)(vbyte *sHandle, int iIndex){
 	data << "votesDown:" << d->m_unVotesDown<< ",";
 	data << "score:" << d->m_flScore<< ",";
 	data << "numChildren:" << d->m_unNumChildren;
-	
+
 	delete d;
-	
+
 	return (vbyte*)data.str().c_str();
 }
 DEFINE_PRIM(_BYTES, get_query_ugc_result, _BYTES _I32);
@@ -1333,27 +1358,27 @@ DEFINE_PRIM(_BYTES, get_query_ugc_result, _BYTES _I32);
 
 HL_PRIM void HL_NAME(get_ugc_download_progress)(vbyte *contentHandle, int *downloaded, int *expected){
 	if (!CheckInit()) return;
-	
+
 	uint64 u64Handle = strtoll((char*)contentHandle, NULL, 10);
-	
+
 	SteamRemoteStorage()->GetUGCDownloadProgress(u64Handle, downloaded, expected);
 }
 DEFINE_PRIM(_VOID, get_ugc_download_progress, _BYTES _REF(_I32) _REF(_I32));
 
 HL_PRIM void HL_NAME(enumerate_user_shared_workshop_files)(vbyte *steamIDStr, int startIndex, vbyte *requiredTagsStr, vbyte *excludedTagsStr){
 	if(!CheckInit()) return;
-	
+
 	//Reconstruct the steamID from the string representation
 	uint64 u64SteamID = strtoll((char*)steamIDStr, NULL, 10);
 	CSteamID steamID = u64SteamID;
-	
+
 	//Construct the string arrays from the comma-delimited strings
 	SteamParamStringArray_t * requiredTags = getSteamParamStringArray((char*)requiredTagsStr);
 	SteamParamStringArray_t * excludedTags = getSteamParamStringArray((char*)excludedTagsStr);
-	
+
 	//make the actual call
 	s_callbackHandler->EnumerateUserSharedWorkshopFiles(steamID, startIndex, requiredTags, excludedTags);
-	
+
 	//clean up requiredTags & excludedTags:
 	deleteSteamParamStringArray(requiredTags);
 	deleteSteamParamStringArray(excludedTags);
@@ -1376,10 +1401,10 @@ DEFINE_PRIM(_VOID, enumerate_user_subscribed_files, _I32);
 
 HL_PRIM void HL_NAME(get_published_file_details)(vbyte *fileId, int maxSecondsOld){
 	if(!CheckInit()) return;
-	
+
 	uint64 u64FileID = strtoull((char*)fileId, NULL, 0);
 	uint32 u32MaxSecondsOld = maxSecondsOld;
-	
+
 	s_callbackHandler->GetPublishedFileDetails(u64FileID, u32MaxSecondsOld);
 }
 DEFINE_PRIM(_VOID, get_published_file_details, _BYTES _I32);
@@ -1394,9 +1419,9 @@ DEFINE_PRIM(_VOID, ugc_download, _BYTES _I32);
 
 HL_PRIM int HL_NAME(ugc_read)(vbyte *handle, vbyte *data, int bytesToRead, int offset, int readAction){
 	if (!CheckInit()) return 0;
-	
+
 	uint64 u64Handle = strtoull((char*)handle, NULL, 0);
-	
+
 	if(u64Handle == 0 || bytesToRead == 0) return 0;
 	return SteamRemoteStorage()->UGCRead(u64Handle, data, bytesToRead, offset, (EUGCReadAction)readAction);
 }
@@ -1424,14 +1449,14 @@ DEFINE_PRIM(_BOOL, file_exists, _BYTES);
 
 HL_PRIM vbyte *HL_NAME(file_read)(vbyte *fileName, int *len){
 	if (!CheckInit()) return NULL;
-	
+
 	const char * fName = (char*)fileName;
-	
+
 	bool exists = SteamRemoteStorage()->FileExists(fName);
 	if(!exists) return NULL;
-	
+
 	int length = SteamRemoteStorage()->GetFileSize(fName);
-	
+
 	char *bytesData = (char *)hl_gc_alloc_noptr(length);
 	int32 result = SteamRemoteStorage()->FileRead(fName, bytesData, length);
 
@@ -1453,6 +1478,7 @@ HL_PRIM bool HL_NAME(file_delete)(vbyte *fileName){
 DEFINE_PRIM(_BOOL, file_delete, _BYTES);
 
 HL_PRIM void HL_NAME(file_share)(vbyte *fileName){
+	if( !CheckInit() ) return;
 	s_callbackHandler->FileShare((char*)fileName);
 }
 DEFINE_PRIM(_VOID, file_share, _BYTES);
@@ -1501,16 +1527,16 @@ DEFINE_PRIM(_BOOL, shutdown_controllers, _NO_ARG);
 
 HL_PRIM bool HL_NAME(show_binding_panel)(int controller){
 	ControllerHandle_t c_handle = controller != -1 ? mapControllers.get(controller) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
-	
+
 	return SteamController()->ShowBindingPanel(c_handle);
 }
 DEFINE_PRIM(_BOOL, show_binding_panel, _I32);
 
 HL_PRIM bool HL_NAME(show_gamepad_text_input)(int inputMode, int lineMode, vbyte *description, int charMax, vbyte *existingText){
-	
+
 	EGamepadTextInputMode eInputMode = static_cast<EGamepadTextInputMode>(inputMode);
 	EGamepadTextInputLineMode eLineInputMode = static_cast<EGamepadTextInputLineMode>(lineMode);
-	
+
 	return SteamUtils()->ShowGamepadTextInput(eInputMode, eLineInputMode, (char*)description, (uint32)charMax, (char*)existingText);
 }
 DEFINE_PRIM(_BOOL, show_gamepad_text_input, _I32 _I32 _BYTES _I32 _BYTES);
@@ -1518,7 +1544,7 @@ DEFINE_PRIM(_BOOL, show_gamepad_text_input, _I32 _I32 _BYTES _I32 _BYTES);
 HL_PRIM vbyte *HL_NAME(get_entered_gamepad_text_input)(){
 	uint32 length = SteamUtils()->GetEnteredGamepadTextLength();
 	char *pchText = (char *)hl_gc_alloc_noptr(length);
-	if( SteamUtils()->GetEnteredGamepadTextInput(pchText, length) )	
+	if( SteamUtils()->GetEnteredGamepadTextInput(pchText, length) )
 		return (vbyte*)pchText;
 	return (vbyte*)"";
 
@@ -1527,10 +1553,10 @@ DEFINE_PRIM(_BYTES, get_entered_gamepad_text_input, _NO_ARG);
 
 HL_PRIM varray *HL_NAME(get_connected_controllers)(varray *arr){
 	SteamController()->RunFrame();
-	
+
 	ControllerHandle_t handles[STEAM_CONTROLLER_MAX_COUNT];
 	int result = SteamController()->GetConnectedControllers(handles);
-	
+
 	if( !arr )
 		arr = hl_alloc_array(&hlt_i32, STEAM_CONTROLLER_MAX_COUNT);
 	int *cur = hl_aptr(arr, int);
@@ -1541,7 +1567,7 @@ HL_PRIM varray *HL_NAME(get_connected_controllers)(varray *arr){
 		cur[i] = index;
 	}
 
-	for (int i = result; i < STEAM_CONTROLLER_MAX_COUNT; i++) 
+	for (int i = result; i < STEAM_CONTROLLER_MAX_COUNT; i++)
 		cur[i] = -1;
 
 	return arr;
@@ -1567,19 +1593,19 @@ DEFINE_PRIM(_I32, get_analog_action_handle, _BYTES);
 HL_PRIM int HL_NAME(get_digital_action_data)(int controllerHandle, int actionHandle){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	ControllerDigitalActionHandle_t a_handle = actionHandle;
-	
+
 	ControllerDigitalActionData_t data = SteamController()->GetDigitalActionData(c_handle, a_handle);
-	
+
 	int result = 0;
-	
+
 	//Take both bools and pack them into an int
-	
-	if(data.bState) 
+
+	if(data.bState)
 		result |= 0x1;
-	
-	if(data.bActive) 
+
+	if(data.bActive)
 		result |= 0x10;
-	
+
 	return result;
 }
 DEFINE_PRIM(_I32, get_digital_action_data, _I32 _I32);
@@ -1598,9 +1624,9 @@ typedef struct {
 HL_PRIM void HL_NAME(get_analog_action_data)(int controllerHandle, int actionHandle, analog_action_data *data){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	ControllerAnalogActionHandle_t a_handle = actionHandle;
-	
+
 	ControllerAnalogActionData_t d = SteamController()->GetAnalogActionData(c_handle, a_handle);
-	
+
 	data->bActive = d.bActive;
 	data->eMode = d.eMode;
 	data->x = d.x;
@@ -1612,15 +1638,15 @@ HL_PRIM varray *HL_NAME(get_digital_action_origins)(int controllerHandle, int ac
 	ControllerHandle_t c_handle              = mapControllers.get(controllerHandle);
 	ControllerActionSetHandle_t s_handle     = actionSetHandle;
 	ControllerDigitalActionHandle_t a_handle = digitalActionHandle;
-	
+
 	EControllerActionOrigin origins[STEAM_CONTROLLER_MAX_ORIGINS];
-	for(int i = 0; i < STEAM_CONTROLLER_MAX_ORIGINS; i++) 
+	for(int i = 0; i < STEAM_CONTROLLER_MAX_ORIGINS; i++)
 		origins[i] = k_EControllerActionOrigin_None;
-	
+
 	int result = SteamController()->GetDigitalActionOrigins(c_handle, s_handle, a_handle, origins);
 	varray *arr = hl_alloc_array(&hlt_i32, result);
 	int *cur = hl_aptr(arr, int);
-	for(int i = 0; i < STEAM_CONTROLLER_MAX_ORIGINS; i++) 
+	for(int i = 0; i < STEAM_CONTROLLER_MAX_ORIGINS; i++)
 		cur[i] = origins[i];
 	return arr;
 }
@@ -1631,17 +1657,17 @@ HL_PRIM varray *HL_NAME(get_analog_action_origins)(int controllerHandle, int act
 	ControllerHandle_t c_handle              = mapControllers.get(controllerHandle);
 	ControllerActionSetHandle_t s_handle     = actionSetHandle;
 	ControllerAnalogActionHandle_t a_handle  = analogActionHandle;
-	
+
 	EControllerActionOrigin origins[STEAM_CONTROLLER_MAX_ORIGINS];
-	
+
 	//Initialize the whole thing to None to avoid garbage
 	for(int i = 0; i < STEAM_CONTROLLER_MAX_ORIGINS; i++)
 		origins[i] = k_EControllerActionOrigin_None;
-	
+
 	int result = SteamController()->GetAnalogActionOrigins(c_handle, s_handle, a_handle, origins);
 	varray *arr = hl_alloc_array(&hlt_i32, result);
 	int *cur = hl_aptr(arr, int);
-	for(int i = 0; i < STEAM_CONTROLLER_MAX_ORIGINS; i++) 
+	for(int i = 0; i < STEAM_CONTROLLER_MAX_ORIGINS; i++)
 		cur[i] = origins[i];
 	return arr;
 }
@@ -1650,12 +1676,12 @@ DEFINE_PRIM(_ARR, get_analog_action_origins, _I32 _I32 _I32);
 //-----------------------------------------------------------------------------------------------------------
 HL_PRIM vbyte *HL_NAME(get_glyph_for_action_origin)(int origin){
 	if (!CheckInit()) return NULL;
-	
+
 	if (origin >= k_EControllerActionOrigin_Count)
 		return NULL;
-	
+
 	EControllerActionOrigin eOrigin = static_cast<EControllerActionOrigin>(origin);
-	
+
 	const char * result = SteamController()->GetGlyphForActionOrigin(eOrigin);
 	return (vbyte*)result;
 }
@@ -1667,9 +1693,9 @@ HL_PRIM vbyte *HL_NAME(get_string_for_action_origin)(int origin){
 
 	if (origin >= k_EControllerActionOrigin_Count)
 		return NULL;
-	
+
 	EControllerActionOrigin eOrigin = static_cast<EControllerActionOrigin>(origin);
-	
+
 	const char * result = SteamController()->GetStringForActionOrigin(eOrigin);
 	return (vbyte*)result;
 }
@@ -1679,7 +1705,7 @@ DEFINE_PRIM(_BYTES, get_string_for_action_origin, _I32);
 HL_PRIM void HL_NAME(activate_action_set)(int controllerHandle, int actionSetHandle){
 	ControllerHandle_t c_handle = controllerHandle != -1 ? mapControllers.get(controllerHandle) : STEAM_CONTROLLER_HANDLE_ALL_CONTROLLERS;
 	ControllerActionSetHandle_t a_handle = actionSetHandle;
-	
+
 	SteamController()->ActivateActionSet(c_handle, a_handle);
 }
 DEFINE_PRIM(_VOID, activate_action_set, _I32 _I32);
@@ -1700,7 +1726,7 @@ HL_PRIM void HL_NAME(trigger_haptic_pulse)(int controllerHandle, int targetPad, 
 		default: eTargetPad = k_ESteamControllerPad_Left;
 	}
 	unsigned short usDurationMicroSec = durationMicroSec;
-	
+
 	SteamController()->TriggerHapticPulse(c_handle, eTargetPad, usDurationMicroSec);
 }
 DEFINE_PRIM(_VOID, trigger_haptic_pulse, _I32 _I32 _I32);
@@ -1717,7 +1743,7 @@ HL_PRIM void HL_NAME(trigger_repeated_haptic_pulse)(int controllerHandle, int ta
 	unsigned short usOffMicroSec = offMicroSec;
 	unsigned short unRepeat = repeat;
 	unsigned short nFlags = flags;
-	
+
 	SteamController()->TriggerRepeatedHapticPulse(c_handle, eTargetPad, usDurationMicroSec, usOffMicroSec, unRepeat, nFlags);
 }
 DEFINE_PRIM(_VOID, trigger_repeated_haptic_pulse, _I32 _I32 _I32 _I32 _I32 _I32);
@@ -1811,6 +1837,39 @@ HL_PRIM double HL_NAME(get_controller_max_analog_action_data)(){
 DEFINE_PRIM(_F64, get_controller_max_analog_action_data, _NO_ARG);
 
 
+// -----------------------
+// LOBBY
+
+HL_PRIM void HL_NAME(cancel_call_result)( CClosureCallResult<int> *m_call ) {
+	m_call->Cancel();
+	delete m_call;
+}
+
+DEFINE_PRIM(_VOID, cancel_call_result, _CRESULT);
+
+static void dyn_call_result( vclosure *c, vdynamic *p, bool error ) {
+	vdynamic b;
+	vdynamic *args[2];
+	args[0] = p;
+	args[1] = &b;
+	b.t = &hlt_bool;
+	b.v.b = error;
+	hl_dyn_call(c,args,2);
+}
+
+static void on_lobby_list( vclosure *c, LobbyMatchList_t *result, bool error ) {
+	vdynamic d;
+	d.t = &hlt_i32;
+	d.v.i = error ? -1 : result->m_nLobbiesMatching;
+	dyn_call_result(c,&d,error);
+}
+
+HL_PRIM CClosureCallResult<LobbyMatchList_t>* HL_NAME(request_lobby_list)( vclosure *closure ) {
+	if( !CheckInit() ) return NULL;
+	ASYNC_CALL(SteamMatchmaking()->RequestLobbyList(), LobbyMatchList_t, on_lobby_list);
+	return m_call;
+}
+DEFINE_PRIM(_CRESULT, request_lobby_list, _CALLB(_I32));
 
 } // extern "C"
 

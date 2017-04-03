@@ -11,7 +11,7 @@ private enum LeaderboardOp
 }
 
 @:enum
-abstract SteamNotificationPosition(Int) to Int 
+abstract SteamNotificationPosition(Int) to Int
 {
 	var TopLeft = 0;
 	var TopRight = 1;
@@ -51,47 +51,46 @@ typedef ControllerAnalogActionHandle = Int;
 class Steam
 {
 	/*************PUBLIC***************/
-	
+
 	/**
 	 * Whether the Steam API is detected & initialized or not. If false, all calls will fail
 	 */
 	public static var active(default, null):Bool = false;
-	
+
 	/**
 	 * If true, Steam was detected but did not initialize properly, and you should restart under Steam
 	 */
 	public static var wantQuit(default, null):Bool = false;
-	
+
 	/**
 	 * The Steam Controller API
 	 */
 	public static var controllers(default, null):Controller;
-	
+
 	/**
 	 * The Steam UGC API
 	 */
 	public static var ugc(default, null):UGC;
-	
+
 	/**
 	 * The Steam Cloud API
 	 */
 	public static var cloud(default, null):Cloud;
-	
+
 	/**
 	 * DEPRECATED: The Steam Workshop API, provided here for legacy support. The UGC API supercedes it and is generally preferred.
 	 */
 	public static var workshop(default, null):Workshop;
-	
+
 	//User-settable callbacks:
 
 	public static var whenGamepadTextInputDismissed:String->Void;
 	public static var whenAchievementStored:String->Void;
 	public static var whenLeaderboardScoreDownloaded:LeaderboardScore->Void;
 	public static var whenLeaderboardScoreUploaded:LeaderboardScore->Void;
-	public static var whenTrace:String->Void;
 	public static var whenUGCItemIdReceived:String->Void;
 	public static var whenUGCItemUpdateComplete:Bool->String->Void;
-	
+
 	public static var whenRemoteStorageFileShared:Bool->String->Void;
 	public static var whenUserSharedWorkshopFilesEnumerated:Bool->EnumerateUserPublishedFilesResult->Void;
 	public static var whenPublishedWorkshopFilesEnumerated:Bool->EnumerateWorkshopFilesResult->Void;
@@ -99,47 +98,55 @@ class Steam
 	public static var whenUserPublishedFilesEnumerated:Bool->EnumerateUserPublishedFilesResult->Void;
 	public static var whenUGCDownloaded:Bool->DownloadUGCResult->Void;
 	public static var whenPublishedFileDetailsGotten:Bool->GetPublishedFileDetailsResult->Void;
-	
+
 	public static var whenItemInstalled:String->Void;
 	public static var whenItemDownloaded:Bool->String->Void;
 	public static var whenQueryUGCRequestSent:SteamUGCQueryCompleted->Void;
-	
+
 	/**
 	 * @param appId_	Your Steam APP ID (the numbers on the end of your store page URL - store.steampowered.com/app/XYZ)
 	 * @param notificationPosition	The position of the Steam Overlay Notification box.
 	 */
 	public static function init(appId_:Int, notificationPosition:SteamNotificationPosition = SteamNotificationPosition.BottomRight) {
-		#if sys //TODO: figure out what targets this will & won't work with and upate this guard
 		if (active) return;
-		
+
 		appId = appId_;
 		leaderboardIds = new Array<String>();
 		leaderboardOps = new List<LeaderboardOp>();
-		
+
 		// if we get this far, the dlls loaded ok and we need Steam to init.
 		// otherwise, we're trying to run the Steam version without the Steam client
 		active = _Init(steamWrap_onEvent, notificationPosition);
-		
+
 		if (active) {
-			customTrace("Steam active");
+			//customTrace("Steam active");
 			_RequestStats();
 			_RequestGlobalStats();
-			
+
 			//initialize other API's:
 			ugc = new UGC(appId, customTrace);
 			controllers = new Controller(customTrace);
 			cloud = new Cloud(appId, customTrace);
 			workshop = new Workshop(appId, customTrace);
+			haxe.MainLoop.add(sync);
 		}
 		else {
 			customTrace("Steam failed to activate");
 			// restart under Steam
 			wantQuit = true;
 		}
-		
-		#end
 	}
-	
+
+	public static function sync() {
+		if (!active) return;
+		_RunCallbacks();
+
+		if (wantStoreStats) {
+			wantStoreStats = false;
+			_StoreStats();
+		}
+	}
+
 	/*************PUBLIC***************/
 
 	/**
@@ -150,7 +157,7 @@ class Steam
 	public static function clearAchievement(id:String):Bool {
 		return active && report("clearAchievement", [id], _ClearAchievement(@:privateAccess id.toUtf8()));
 	}
-	
+
 	public static function downloadLeaderboardScore(id:String):Bool {
 		if (!active) return false;
 		var startProcessingNow = (leaderboardOps.length == 0);
@@ -159,14 +166,14 @@ class Steam
 		if (startProcessingNow) processNextLeaderboardOp();
 		return true;
 	}
-	
+
 	private static function findLeaderboardIfNecessary(id:String) {
 		if (!Lambda.has(leaderboardIds, id) && !Lambda.exists(leaderboardOps, function(op) { return Type.enumEq(op, FIND(id)); }))
 		{
 			leaderboardOps.add(LeaderboardOp.FIND(id));
 		}
 	}
-	
+
 	/**
 	 * Returns achievement status.
 	 * @param id Achievement API name.
@@ -175,7 +182,7 @@ class Steam
 	public static function getAchievement(id:String):Bool {
 		return active && _GetAchievement(@:privateAccess id.toUtf8());
 	}
-	
+
 	/**
 	 * Returns human-readable achievement description.
 	 * @param id Achievement API name.
@@ -185,7 +192,7 @@ class Steam
 		if (!active) return null;
 		return @:privateAccess String.fromUTF8(_GetAchievementDisplayAttribute(@:privateAccess id.toUtf8(), @:privateAccess "desc".toUtf8()));
 	}
-	
+
 	/**
 	 * Returns human-readable achievement name.
 	 * @param id Achievement API name.
@@ -195,18 +202,18 @@ class Steam
 		if (!active) return null;
 		return @:privateAccess String.fromUTF8(_GetAchievementDisplayAttribute(@:privateAccess id.toUtf8(), @:privateAccess "name".toUtf8()));
 	}
-	
+
 	public static function getCurrentGameLanguage():String {
 		var l = _GetCurrentGameLanguage();
 		return l==null ? null : @:privateAccess String.fromUTF8(l);
 	}
-	
+
 	public static function getPersonaName():String {
 		if (!active) return null;
 		var p = _GetPersonaName();
 		return p == null ? null : @:privateAccess String.fromUTF8(p);
 	}
-	
+
 	/**
 	 * Get a stat from steam as a float
 	 * Kinda awkwardly returns 0 on errors and uses 0 for checking success
@@ -220,7 +227,7 @@ class Steam
 		report("getStat", [id], val != 0);
 		return val;
 	}
-	
+
 	/**
 	 * Get a stat from steam as an integer
 	 * Kinda awkwardly returns 0 on errors and uses 0 for checking success
@@ -234,10 +241,10 @@ class Steam
 		report("getStat", [id], val != 0);
 		return val;
 	}
-	
+
 	/**
 	 * DEPRECATED: use getStatInt() instead!
-	 * 
+	 *
 	 * Get a stat from steam as an integer
 	 * Kinda awkwardly returns 0 on errors and uses 0 for checking success
 	 * @param	id
@@ -250,70 +257,60 @@ class Steam
 		report("getStat", [id], val != 0);
 		return val;
 	}
-	
+
 	public static function getSteamID():String {
 		if (!active) return null;
 		var id = _GetSteamID();
 		return id == null ? null : @:privateAccess String.fromUTF8(id);
 	}
-	
+
 	public static function indicateAchievementProgress(id:String, curProgress:Int, maxProgress:Int):Bool {
 		return active && report("indicateAchivevementProgress", [id, Std.string(curProgress), Std.string(maxProgress)], _IndicateAchievementProgress(@:privateAccess id.toUtf8(), curProgress, maxProgress));
 	}
-	
+
 	public static function isOverlayEnabled():Bool {
 		if (!active)
 			return false;
 		return _IsOverlayEnabled();
 	}
-	
+
 	public static function BOverlayNeedsPresent() {
 		if (!active)
 			return false;
 		return _BOverlayNeedsPresent();
 	}
-	
+
 	public static function isSteamInBigPictureMode() {
 		if (!active)
 			return false;
 		return _IsSteamInBigPictureMode();
 	}
-	
+
 	public static function isSteamRunning() {
 		if (!active)
 			return false;
 		return _IsSteamRunning();
 	}
-	
-	public static function onEnterFrame() {
-		if (!active) return;
-		_RunCallbacks();
 
-		if (wantStoreStats) {
-			wantStoreStats = false;
-			_StoreStats();
-		}
-	}
-	
 	public static function openOverlay(url:String) {
 		if (!active) return;
 		_OpenOverlay(@:privateAccess url.toUtf8());
 	}
-	
+
 	public static function restartAppInSteam():Bool {
 		if (!active) return false;
 		return _RestartAppIfNecessary(appId);
 	}
-	
+
 	public static function shutdown() {
 		if (!active) return;
 		_Shutdown();
 	}
-	
+
 	public static function setAchievement(id:String):Bool {
 		return active && report("setAchievement", [id], _SetAchievement(@:privateAccess id.toUtf8()));
 	}
-	
+
 	/**
 	 * Returns achievement "hidden" flag.
 	 * @param id Achievement API name.
@@ -322,7 +319,7 @@ class Steam
 	public static function isAchievementHidden(id:String):Bool {
 		return active && @:privateAccess String.fromUTF8(_GetAchievementDisplayAttribute(@:privateAccess id.toUtf8(), @:privateAccess "hidden".toUtf8())) == "1";
 	}
-	
+
 	/**
 	 * Returns amount of achievements.
 	 * Used for iterating achievements. In general games should not need these functions because they should have a
@@ -332,7 +329,7 @@ class Steam
 		if (!active) return 0;
 		return _GetNumAchievements();
 	}
-	
+
 	/**
 	 * Returns achievement API name from its index in achievement list.
 	 * @param index Achievement index in range [0,getNumAchievements].
@@ -342,10 +339,10 @@ class Steam
 		if (!active) return null;
 		return @:privateAccess String.fromUTF8(_GetAchievementName(index));
 	}
-	
+
 	/**
 	 * DEPRECATED: use setStatInt() instead!
-	 * 
+	 *
 	 * Sets a steam stat as an int
 	 * @param	id Stat API name
 	 * @param	val
@@ -354,7 +351,7 @@ class Steam
 	public static function setStat(id:String, val:Int):Bool {
 		return setStatInt(id,val);
 	}
-	
+
 	/**
 	 * Sets a steam stat as a float
 	 * @param	id Stat API name
@@ -364,7 +361,7 @@ class Steam
 	public static function setStatFloat(id:String, val:Float):Bool {
 		return active && report("setStatFloat", [id, Std.string(val)], _SetStatFloat(@:privateAccess id.toUtf8(), val));
 	}
-	
+
 	/**
 	 * Sets a steam stat as an int
 	 * @param	id Stat API name
@@ -374,11 +371,11 @@ class Steam
 	public static function setStatInt(id:String, val:Int):Bool {
 		return active && report("setStatInt", [id, Std.string(val)], _SetStatInt(@:privateAccess id.toUtf8(), val));
 	}
-	
+
 	public static function storeStats():Bool {
 		return active && report("storeStats", [], _StoreStats());
 	}
-	
+
 	public static function uploadLeaderboardScore(score:LeaderboardScore):Bool {
 		if (!active) return false;
 		var startProcessingNow = (leaderboardOps.length == 0);
@@ -397,18 +394,15 @@ class Steam
 
 	private static var leaderboardIds:Array<String>;
 	private static var leaderboardOps:List<LeaderboardOp>;
-	
-	private static inline function customTrace(str:String) {
-		if (whenTrace != null)
-			whenTrace(str);
-		else
-			trace(str);
+
+	public static dynamic function customTrace(str:String) {
+		Sys.println(str);
 	}
-	
+
 	private static function processNextLeaderboardOp() {
 		var op = leaderboardOps.pop();
 		if (op == null) return;
-		
+
 		switch (op) {
 			case FIND(id):
 				if (!report("Leaderboard.FIND", [id], _FindLeaderboard(@:privateAccess id.toUtf8())))
@@ -421,8 +415,8 @@ class Steam
 					processNextLeaderboardOp();
 		}
 	}
-	
-	private static inline function report(func:String, params:Array<String>, result:Bool):Bool {
+
+	private static function report(func:String, params:Array<String>, result:Bool):Bool {
 		var str = "[STEAM] " + func + "(" + params.join(",") + ") " + (result ? " SUCCEEDED" : " FAILED");
 		customTrace(str);
 		return result;
@@ -430,20 +424,20 @@ class Steam
 
 	private static function steamWrap_onEvent( type : EventType, success : Bool, data : hl.Bytes ) : Void {
 		var data:String = data == null ? null : @:privateAccess String.fromUTF8(data);
-		
-		customTrace("[STEAM] " + type + (success ? " SUCCESS" : " FAIL") + " (" + data + ")");
-		
+
+		customTrace("[STEAM] Event@" + type + (success ? " SUCCESS" : " FAIL") + (data == null ? "" : " (" + data + ")"));
+
 		switch (type) {
 			case UserStatsReceived:
 				haveReceivedUserStats = success;
-				
+
 			case UserStatsStored:
 				// retry next frame if failed
 				wantStoreStats = !success;
-				
+
 			case UserAchievementStored:
 				if (whenAchievementStored != null) whenAchievementStored(data);
-			
+
 			case GamepadTextInputDismissed:
 				if (whenGamepadTextInputDismissed != null) {
 					if (success) {
@@ -453,10 +447,10 @@ class Steam
 						whenGamepadTextInputDismissed(null);
 					}
 				}
-			
+
 			case GlobalStatsReceived:
 				haveGlobalStats = success;
-				
+
 			case LeaderboardFound:
 				if (success) {
 					leaderboardIds.push(data);
@@ -538,7 +532,7 @@ class Steam
 			case None:
 		}
 	}
-	
+
 	@:hlNative("steam","init") private static function _Init( onEvent : EventType -> Bool -> hl.Bytes -> Void, notifPos : Int ) : Bool { return false; }
 	@:hlNative("steam","shutdown") private static function _Shutdown(): Void{};
 	@:hlNative("steam","run_callbacks") private static function _RunCallbacks(): Void{};
@@ -600,34 +594,34 @@ class LeaderboardScore {
 class EnumerateUserSubscribedFilesResult extends EnumerateUserPublishedFilesResult
 {
 	public var timeSubscribed:Array<Int>;
-	
+
 	public function new(Result:EResult=1, ResultsReturned:Int=0, TotalResults:Int=0, PublishedFileIds:Array<String>=null, TimeSubscribed:Array<Int>=null)
 	{
 		super(Result, ResultsReturned, TotalResults, PublishedFileIds);
 		timeSubscribed = TimeSubscribed;
 	}
-	
+
 	public static function fromString(str:String):EnumerateUserSubscribedFilesResult
 	{
 		var returnObject = new EnumerateUserSubscribedFilesResult();
 		returnObject = cast EnumerateUserPublishedFilesResult.fromString(str, returnObject);
-		
+
 		var timeSubscribed:Array<Int> = [];
-		
+
 		var arr = str.split(",");
 		var currField = "";
 		for (str in arr){
-			
+
 			if (str.indexOf(":") == -1){
-				
+
 				currField = "";
 				var nameValue = str.split(":");
-				
+
 				if (nameValue[0] == "timeSubscribed"){
 					timeSubscribed.push(Util.str2Int(nameValue[1]));
 					currField = "timeSubscribed";
 				}
-				
+
 			}
 			else
 			{
@@ -636,11 +630,11 @@ class EnumerateUserSubscribedFilesResult extends EnumerateUserPublishedFilesResu
 				}
 			}
 		}
-		
+
 		returnObject.timeSubscribed = timeSubscribed;
 		return returnObject;
 	}
-	
+
 	public override function toString():String
 	{
 		return "EnumerateUserSubscribedFilesResult{result:" + result + ",resultsReturned:" + resultsReturned + ",totalResults:" + totalResults + ",publishedFileIds:" + publishedFileIds + "timeSubscribed:" + timeSubscribed + "}";
@@ -652,7 +646,7 @@ class EnumerateWorkshopFilesResult extends EnumerateUserPublishedFilesResult
 	public var score:Array<Float>;
 	public var appID:Int;
 	public var startIndex:Int;
-	
+
 	public function new(Result:EResult=1, ResultsReturned:Int=0, TotalResults:Int=0, PublishedFileIds:Array<String>=null, Score:Array<Float>=null, AppID:Int=0, StartIndex:Int=0)
 	{
 		super(Result, ResultsReturned, TotalResults, PublishedFileIds);
@@ -660,18 +654,18 @@ class EnumerateWorkshopFilesResult extends EnumerateUserPublishedFilesResult
 		appID = AppID;
 		startIndex = StartIndex;
 	}
-	
+
 	public static function fromString(str:String):EnumerateWorkshopFilesResult
 	{
 		var returnObject = new EnumerateWorkshopFilesResult();
 		EnumerateUserPublishedFilesResult.fromString(str, returnObject);
-		
+
 		var appID:Int = 0;
 		var startIndex:Int = 0;
-		
+
 		var arr = str.split(",");
 		for (str in arr){
-			
+
 			if (str.indexOf(":") != -1)
 			{
 				var nameValue = str.split(":");
@@ -681,15 +675,15 @@ class EnumerateWorkshopFilesResult extends EnumerateUserPublishedFilesResult
 					default: //do nothing
 				}
 			}
-			
+
 		}
-		
+
 		returnObject.appID = appID;
 		returnObject.startIndex = startIndex;
-		
+
 		return returnObject;
 	}
-	
+
 	public override function toString():String
 	{
 		return "EnumerateWorkshopFilesResult{result:" + result + ",resultsReturned:" + resultsReturned + ",totalResults:" + totalResults + ",appID:" + appID + ",startIndex:" + startIndex + ",publishedFileIds:" + publishedFileIds + "}";
@@ -702,7 +696,7 @@ class EnumerateUserPublishedFilesResult
 	public var resultsReturned:Int;
 	public var totalResults:Int;
 	public var publishedFileIds:Array<String>;
-	
+
 	public function new(Result:EResult=Fail, ResultsReturned:Int=0, TotalResults:Int=0, PublishedFileIds:Array<String>=null)
 	{
 		result = Result;
@@ -710,18 +704,18 @@ class EnumerateUserPublishedFilesResult
 		totalResults = TotalResults;
 		publishedFileIds = PublishedFileIds;
 	}
-	
+
 	public static function fromString(str:String, ?resultObject:EnumerateUserPublishedFilesResult):EnumerateUserPublishedFilesResult
 	{
 		var result:Int = EResult.Fail;
 		var resultsReturned:Int = 0;
 		var totalResults:Int = 0;
 		var publishedFileIds:Array<String> = [];
-		
+
 		var arr = str.split(",");
 		var currField = "";
 		for (str in arr){
-			
+
 			if (str.indexOf(":") != -1)
 			{
 				currField = "";
@@ -742,20 +736,20 @@ class EnumerateUserPublishedFilesResult
 				}
 			}
 		}
-		
+
 		if (resultObject == null)
 		{
 			resultObject = new EnumerateUserPublishedFilesResult();
 		}
-		
+
 		resultObject.result = cast result;
 		resultObject.resultsReturned = resultsReturned;
 		resultObject.totalResults = totalResults;
 		resultObject.publishedFileIds = publishedFileIds;
-		
+
 		return resultObject;
 	}
-	
+
 	public function toString():String
 	{
 		return "EnumerateUserPublishedFilesResult{result:" + result + ",resultsReturned:" + resultsReturned + ",totalResults:" + totalResults + ",publishedFileIds:" + publishedFileIds+"}";
@@ -770,7 +764,7 @@ class DownloadUGCResult
 	public var sizeInBytes:Int;
 	public var fileName:String;
 	public var steamIDOwner:String;
-	
+
 	public function new(Result:EResult = Fail, FileHandle:String = "", AppID:Int = 0, SizeInBytes:Int = 0, FileName:String = "", SteamIDOwner:String = "")
 	{
 		result = Result;
@@ -780,7 +774,7 @@ class DownloadUGCResult
 		fileName = FileName;
 		steamIDOwner = SteamIDOwner;
 	}
-	
+
 	public static function fromString(str:String):DownloadUGCResult
 	{
 		var result = Fail;
@@ -789,7 +783,7 @@ class DownloadUGCResult
 		var sizeInBytes = 0;
 		var fileName = "";
 		var steamIDOwner = "";
-		
+
 		var arr = str.split(",");
 		for (str in arr){
 			if (str.indexOf(":") != -1)
@@ -805,10 +799,10 @@ class DownloadUGCResult
 				}
 			}
 		}
-		
+
 		return new DownloadUGCResult(result, fileHandle, appID, sizeInBytes, fileName, steamIDOwner);
 	}
-	
+
 	public function toString():String
 	{
 		return ("{result:" + result + ",fileHandle:" + fileHandle+",appID:" + appID + ",sizeInBytes:" + sizeInBytes + ",fileName:" + fileName+",steamIDOwner:" + steamIDOwner + "}");
@@ -820,43 +814,43 @@ class GetItemInstallInfoResult
 	public var sizeOnDisk:Int;
 	public var folder:String;
 	public var timeStamp:String;
-	
+
 	public function new(SizeOnDisk:Int = 0, Folder:String = "", TimeStamp:String = "")
 	{
 		sizeOnDisk = SizeOnDisk;
 		folder = Folder;
 		timeStamp = TimeStamp;
 	}
-	
+
 	public static function fromString(str:String):GetItemInstallInfoResult
 	{
 		var sizeOnDisk:Int = 0;
 		var folder:String = "";
 		var timeStamp:String = "";
-		
+
 		var folderSize:Int = 0;
-		
+
 		var arr = str.split("|");
-		
+
 		if (arr != null && arr.length == 4){
 			var sizeOnDiskStr = arr[0];
 			folder = arr[1];
 			var folderSizeStr = arr[2];
 			timeStamp = arr[3];
-			
+
 			var i:Null<Int> = 0;
-			
+
 			i = Util.str2Int(sizeOnDiskStr);
 			sizeOnDisk = (i != null) ? i : 0;
-			
+
 			i = Util.str2Int(folderSizeStr);
 			folderSize = (i != null) ? i : 0;
 		}
-		
+
 		if(folder.length > folderSize){
 			folder = folder.substr(0, folderSize);
 		}
-		
+
 		return new GetItemInstallInfoResult(sizeOnDisk, folder, timeStamp);
 	}
 }
@@ -884,7 +878,7 @@ class GetPublishedFileDetailsResult
 	public var url:String;
 	public var fileType:EWorkshopFileType;
 	public var acceptedForUse:Bool;
-	
+
 	public function new(
 		Result:EResult = Fail,
 		FileID:String = "",
@@ -931,7 +925,7 @@ class GetPublishedFileDetailsResult
 		fileType = FileType;
 		acceptedForUse = AcceptedForUse;
 	}
-	
+
 	public static function fromString(str:String):GetPublishedFileDetailsResult
 	{
 		var result:EResult = Fail;
@@ -955,7 +949,7 @@ class GetPublishedFileDetailsResult
 		var url:String = "";
 		var fileType:EWorkshopFileType = Community;
 		var acceptedForUse:Bool = false;
-		
+
 		var arr = str.split(",");
 		for (str in arr){
 			if (str.indexOf(":") != -1)
@@ -984,7 +978,7 @@ class GetPublishedFileDetailsResult
 				}
 			}
 		}
-		
+
 		return new GetPublishedFileDetailsResult(
 			result,
 			fileID,
@@ -1017,9 +1011,9 @@ class SteamUGCQueryCompleted
 	public var numResultsReturned:Int = 0;
 	public var totalMatchingResults:Int = 0;
 	public var cachedData:Bool = false;
-	
+
 	public function new(){}
-	
+
 	public static function fromString(str:String):SteamUGCQueryCompleted{
 		var arr = str.split(",");
 		var data = new SteamUGCQueryCompleted();
@@ -1042,82 +1036,82 @@ class SteamUGCQueryCompleted
 class SteamUGCDetails
 {
 	public var publishedFileId:String = "";
-	
+
 	/** The result of the operation. **/
 	public var result:EResult = EResult.Fail;
-	
+
 	/** Type of the file **/
 	public var fileType:EWorkshopFileType = EWorkshopFileType.Community;
-	
+
 	/** ID of the app that created this file **/
 	public var creatorAppID:String = "";
-	
+
 	/** ID of the app that will consume this file **/
 	public var consumerAppID:String = "";
-	
+
 	/** title of document **/
 	public var title:String = "";
-	
+
 	/** description of document **/
 	public var description:String = "";
-	
+
 	/** Steam ID of the user who created this content **/
 	public var steamIDOwner:String = "";
-	
+
 	/** time when the published file was created **/
 	public var timeCreated:Float = 0;
-	
+
 	/** time when the published file was last updated **/
 	public var timeUpdated:Float = 0;
-	
+
 	/** time when the user added the published file to their list (not always applicable) **/
 	public var timeAddedToUserList:Float = 0;
-	
+
 	/** visibility **/
 	public var visibility:EPublishedFileVisibility = EPublishedFileVisibility.Private;
-	
+
 	/** whether the file was banned **/
 	public var banned:Bool = false;
-	
+
 	/** developer has specifically flagged this item as accepted in the Workshop **/
 	public var acceptedForUse:Bool = false;
-	
+
 	/** whether the list of tags was too long to be returned in the provided buffer **/
 	public var tagsTruncated:Bool = false;
-	
+
 	/** comma separated list of all tags associated with this file **/
 	public var tags:String = "";
-	
+
 	/** The handle of the primary file **/
 	public var file:String = "";
-	
+
 	/** The handle of the preview file **/
 	public var previewFile:String = "";
-	
+
 	/** The cloud filename of the primary file **/
 	public var fileName:String = "";
-	
+
 	/** Size of the primary file **/
 	public var fileSize:Int = 0;
-	
+
 	/** Size of the preview file **/
 	public var previewFileSize:Int = 0;
-	
+
 	/** URL (for a video or a website) **/
 	public var url:String = "";
-	
+
 	/** number of votes up **/
 	public var votesUp:Int = 0;
-	
+
 	/** number of votes down **/
 	public var votesDown:Int = 0;
-	
+
 	/** calculated score **/
 	public var score:Float = 0.0;
-	
+
 	/** collection details **/
 	public var numChildren:Int = 0;
-	
+
 	public function new(
 		PublishedFileId:String = "",
 		Result:EResult = EResult.Fail,
@@ -1174,7 +1168,7 @@ class SteamUGCDetails
 		score = Score;
 		numChildren = NumChildren;
 	}
-	
+
 	public static function fromString(str:String):SteamUGCDetails{
 		var PublishedFileId:String = "";
 		var Result:EResult = EResult.Fail;
@@ -1202,14 +1196,14 @@ class SteamUGCDetails
 		var VotesDown:Int = 0;
 		var Score:Float = 0.0;
 		var NumChildren:Int = 0;
-		
+
 		var arr = str.split(",");
 		for (str in arr){
 			if (str.indexOf(":") != -1)
 			{
 				var nameValue = str.split(":");
 				var val = nameValue[1];
-				
+
 				switch(nameValue[0]){
 					case "publishedFileId": PublishedFileId = val;
 					case "result": Result = Util.str2Int(val);
@@ -1240,7 +1234,7 @@ class SteamUGCDetails
 				}
 			}
 		}
-		
+
 		return new SteamUGCDetails(
 			PublishedFileId,
 			Result,
@@ -1270,7 +1264,7 @@ class SteamUGCDetails
 			NumChildren
 		);
 	}
-	
+
 	public function toString():String{
 		var names:Array<String> =
 		[
@@ -1301,7 +1295,7 @@ class SteamUGCDetails
 			"score",
 			"numChildren"
 		];
-		var values:Array<Dynamic> = 
+		var values:Array<Dynamic> =
 		[
 			publishedFileId,
 			result,
@@ -1330,7 +1324,7 @@ class SteamUGCDetails
 			score,
 			numChildren
 		];
-		
+
 		var str = "{";
 		for (i in 0...names.length){
 			var name = names[i];
@@ -1363,7 +1357,7 @@ class SteamUGCDetails
 	var SteamWorksAccessInvite = 13;	// internal
 	var SteamVideo             = 14;	// Steam video
 	var GameManagedItem        = 15;	// managed completely by the game, not the user, and not shown on the web
-	
+
 	public inline function fromInt(i:Int)
 	{
 		if (i < 0 || i > 15)
@@ -1375,7 +1369,7 @@ class SteamUGCDetails
 			this = i;
 		}
 	}
-	
+
 	public inline function toInt():Int
 	{
 		return cast this;
@@ -1387,7 +1381,7 @@ class SteamUGCDetails
 	var Public = 0;
 	var FriendsOnly = 1;
 	var Private = 2;
-	
+
 	public inline function fromInt(i:Int)
 	{
 		if (i < 0 || i > 2)
@@ -1399,7 +1393,7 @@ class SteamUGCDetails
 			this = i;
 		}
 	}
-	
+
 	public inline function toInt():Int
 	{
 		return cast this;
@@ -1409,7 +1403,7 @@ class SteamUGCDetails
 @:enum abstract EResult(Int) from Int to Int
 {
 	var OK  = 1;                            // success
-	var Fail = 2;                           // generic failure 
+	var Fail = 2;                           // generic failure
 	var NoConnection = 3;                   // no/failed network connection
 	//var NoConnectionRetry = 4;            // OBSOLETE - removed
 	var InvalidPassword = 5;                // password/ticket is invalid
@@ -1474,8 +1468,8 @@ class SteamUGCDetails
 	var CannotUseOldPassword = 64;          // The requested new password is not legal
 	var InvalidLoginAuthCode = 65;          // account login denied due to auth code invalid
 	var AccountLogonDeniedNoMail = 66;      // account login denied due to 2nd factor auth failure - and no mail has been sent
-	var HardwareNotCapableOfIPT = 67;       // 
-	var IPTInitError = 68;                  // 
+	var HardwareNotCapableOfIPT = 67;       //
+	var IPTInitError = 68;                  //
 	var ParentalControlRestricted = 69;     // operation failed due to parental control restrictions for current user
 	var FacebookQueryError = 70;            // Facebook query returned an error
 	var ExpiredLoginAuthCode = 71;          // account login denied due to auth code expired
@@ -1545,26 +1539,26 @@ class SteamUGCDetails
 	 * This value maintains the same behavior as before the EUGCReadAction parameter was introduced.
 	 */
 	var ContinueReadingUntilFinished = 0;
-	
+
 	/**
 	 * Keeps the file handle open.  Use this when using UGCRead to seek to different parts of the file.
 	 * When you are done seeking around the file, make a final call with k_EUGCRead_Close to close it.
 	 */
 	var ContinueReading = 1;
-	
+
 	/**
-	 * Frees the file handle.  Use this when you're done reading the content.  
-	 * To read the file from Steam again you will need to call UGCDownload again. 
+	 * Frees the file handle.  Use this when you're done reading the content.
+	 * To read the file from Steam again you will need to call UGCDownload again.
 	 */
 	var Close = 2;
-	
+
 	public inline function fromInt(i:Int)
 	{
 		if (i < 0) i = 0;
 		if (i > 2) i = 2;
 		this = i;
 	}
-	
+
 	public inline function toInt():Int
 	{
 		return cast this;
@@ -1574,31 +1568,31 @@ class SteamUGCDetails
 @:enum abstract EItemState(Int) from Int to Int
 {
 	/**item not tracked on client**/
-	var None			= 0; 
-	
+	var None			= 0;
+
 	/**current user is subscribed to this item. Not just cached.**/
 	var Subscribed		= 1;
-	
+
 	/**item was created with ISteamRemoteStorage**/
 	var LegacyItem		= 2;
-	
+
 	/**item is installed and usable (but maybe out of date)**/
 	var Installed		= 4;
-	
+
 	/**items needs an update. Either because it's not installed yet or creator updated content**/
 	var NeedsUpdate		= 8;
-	
+
 	/**item update is currently downloading**/
 	var Downloading		= 16;
-	
+
 	/**DownloadItem() was called for this item, content isn't available until DownloadItemResult_t is fired**/
 	var DownloadPending	= 32;
-	
+
 	public function has(state:EItemState):Bool
 	{
 		return this & state != None;
 	}
-	
+
 	public inline function fromInt(i:Int){
 		if (i < 0) i = 0;
 		if (i > 32) i = 32;
@@ -1607,7 +1601,7 @@ class SteamUGCDetails
 			default: 0;
 		}
 	}
-	
+
 	public inline function toInt():Int{
 		return cast this;
 	}
@@ -1634,13 +1628,13 @@ class SteamUGCDetails
 	var RankedByLifetimeAveragePlaytime:Int					= 16;
 	var RankedByPlaytimeSessionsTrend:Int					= 17;
 	var RankedByLifetimePlaytimeSessions:Int				= 18;
-	
+
 	public inline function fromInt(i:Int){
 		if (i < 0) i = 0;
 		if (i > 18) i = 18;
 		this = i;
 	}
-	
+
 	public inline function toInt():Int{
 		return cast this;
 	}
@@ -1667,13 +1661,13 @@ class SteamUGCDetails
 	var GameManagedItems	= 12;
 	/**return everything**/
 	var All:Int				= ~0;
-	
+
 	public inline function fromInt(i:Int){
 		if (i < -1) i = -1;
 		if (i > 12) i = 12;
 		this = i;
 	}
-	
+
 	public inline function toInt():Int{
 		return cast this;
 	}
@@ -1681,7 +1675,7 @@ class SteamUGCDetails
 
 /**
  * Different lists of published UGC for a user.
- * If the current logged in user is different than the specified user, the same options may not be 
+ * If the current logged in user is different than the specified user, the same options may not be
  * allowed.
  */
 @:enum abstract EUserUGCList(Int) from Int to Int
@@ -1695,13 +1689,13 @@ class SteamUGCDetails
 	var Subscribed:Int		= 6;
 	var UsedOrPlayed:Int	= 7;
 	var Followed:Int		= 8;
-	
+
 	public inline function fromInt(i:Int){
 		if (i < 0) i = 0;
 		if (i > 8) i = 8;
 		this = i;
 	}
-	
+
 	public inline function toInt():Int{
 		return cast this;
 	}
@@ -1716,13 +1710,13 @@ class SteamUGCDetails
 	var SubscriptionDateDesc:Int	= 4;
 	var VoteScoreDesc:Int			= 5;
 	var ForModeration:Int			= 6;
-	
+
 	public inline function fromInt(i:Int){
 		if (i < 0) i = 0;
 		if (i > 6) i = 6;
 		this = i;
 	}
-	
+
 	public inline function toInt():Int{
 		return cast this;
 	}
