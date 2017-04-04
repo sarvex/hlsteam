@@ -78,11 +78,6 @@ class Api
 	 */
 	public static var cloud(default, null):Cloud;
 
-	/**
-	 * DEPRECATED: The Steam Workshop API, provided here for legacy support. The UGC API supercedes it and is generally preferred.
-	 */
-	public static var workshop(default, null):Workshop;
-
 	//User-settable callbacks:
 
 	public static var whenGamepadTextInputDismissed:String->Void;
@@ -128,7 +123,6 @@ class Api
 			ugc = new UGC(appId, customTrace);
 			controllers = new Controller(customTrace);
 			cloud = new Cloud(appId, customTrace);
-			workshop = new Workshop(appId, customTrace);
 			haxe.MainLoop.add(sync);
 		}
 		else {

@@ -201,7 +201,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="native\SteamWrap.cpp" />
+    <ClCompile Include="native\cloud.cpp" />
+    <ClCompile Include="native\common.cpp" />
+    <ClCompile Include="native\controller.cpp" />
+    <ClCompile Include="native\matchmaking.cpp" />
+    <ClCompile Include="native\stats.cpp" />
+    <ClCompile Include="native\ugc.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="native\steamwrap.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

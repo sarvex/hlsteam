@@ -26,8 +26,15 @@ class Matchmaking {
 		return null;
 	}
 
-	public static function createLobby( kind : LobbyKind, maxPlayers : Int, onResult : Callback<UID> ) : AsyncCall {
+	public static function createLobby( kind : LobbyKind, maxPlayers : Int, onResult : Lobby -> Void ) : AsyncCall {
+		return create_lobby(kind, maxPlayers, function(uid, error) {
+			onResult(error ? null : new Lobby(uid));
+		});
+	}
+
+	static function create_lobby( kind : LobbyKind, maxPlayers : Int, onResult : Callback<UID> ) : AsyncCall {
 		return null;
 	}
 
 }
+
