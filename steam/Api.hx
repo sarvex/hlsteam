@@ -99,7 +99,7 @@ class Api
 
 		// if we get this far, the dlls loaded ok and we need Steam to init.
 		// otherwise, we're trying to run the Steam version without the Steam client
-		active = _Init(steamWrap_onEvent);
+		active = _Init(steamWrap_onEvent, onGlobalEvent);
 
 		if (active) {
 			//customTrace("Steam active");
@@ -110,6 +110,9 @@ class Api
 			ugc = new UGC(appId, customTrace);
 			controllers = new Controller(customTrace);
 			cloud = new Cloud(appId, customTrace);
+
+			@:privateAccess Matchmaking.init();
+
 			haxe.MainLoop.add(sync);
 		}
 		else {
@@ -117,6 +120,20 @@ class Api
 			// restart under Steam
 			wantQuit = true;
 		}
+	}
+
+	static var globalEvents = new Map<Int,Dynamic->Void>();
+
+	@:noComplete public static function registerGlobalEvent( event : Int, callb : Dynamic -> Void ) {
+		globalEvents.set(event, callb);
+	}
+
+	static function onGlobalEvent( event : Int, data : Dynamic ) {
+		var callb = globalEvents.get(event);
+		if( callb != null )
+			callb(data);
+		else
+			customTrace("Unhandled global event #"+event+" ("+data+")");
 	}
 
 	public static function setNotificationPosition( pos:SteamNotificationPosition ) {
@@ -488,7 +505,7 @@ class Api
 		}
 	}
 
-	@:hlNative("steam","init") private static function _Init( onEvent : EventType -> Bool -> hl.Bytes -> Void ) : Bool { return false; }
+	@:hlNative("steam","init") private static function _Init( onEvent : EventType -> Bool -> hl.Bytes -> Void, onGlobalEvent : Int -> Dynamic -> Void ) : Bool { return false; }
 	@:hlNative("steam","shutdown") private static function _Shutdown(): Void{};
 	@:hlNative("steam","run_callbacks") private static function _RunCallbacks(): Void{};
 	@:hlNative("steam","request_stats") private static function _RequestStats() : Bool { return false; }

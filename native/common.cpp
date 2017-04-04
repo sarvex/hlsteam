@@ -6,7 +6,7 @@ void hl_set_uid( vdynamic *out, int64 uid ) {
 		int64 v;
 	} data;
 	data.v = uid;
-	out->t = &hlt_bytes;
+	out->t = &hlt_uid;
 	out->v.ptr = hl_copy_bytes(data.b,8);
 }
 
@@ -103,30 +103,36 @@ void CallbackHandler::OnItemInstalled( ItemInstalled_t *pCallback ){
 }
 
 CallbackHandler* s_callbackHandler = NULL;
+static vclosure *s_globalEvent = NULL;
 
 bool CheckInit(){
 	return SteamUser() && SteamUser()->BLoggedOn() && SteamUserStats() && (s_callbackHandler != 0) && (g_eventHandler != 0);
 }
 
-extern "C"
-{
+void GlobalEvent( int id, vdynamic *v ) {
+	vdynamic i;
+	vdynamic *args[2];
+	i.t = &hlt_i32;
+	i.v.i = id;
+	args[0] = &i;
+	args[1] = v;
+	hl_dyn_call(s_globalEvent, args, 2);
+}
 
-HL_PRIM bool HL_NAME(init)(vclosure *onEvent){
+HL_PRIM bool HL_NAME(init)( vclosure *onEvent, vclosure *onGlobalEvent ){
 	bool result = SteamAPI_Init();
 	if (result)	{
 		g_eventHandler = onEvent;
-		// TODO gc_root
 		s_callbackHandler = new CallbackHandler();
+		s_globalEvent = onGlobalEvent;
+		hl_add_root(&s_globalEvent);
 	}
 	return result;
 }
-DEFINE_PRIM(_BOOL, init, _FUN(_VOID, _I32 _BOOL _BYTES));
 
 HL_PRIM void HL_NAME(set_notification_position)( ENotificationPosition pos ) {
 	SteamUtils()->SetOverlayNotificationPosition(pos);
 }
-
-DEFINE_PRIM(_VOID, set_notification_position, _I32);
 
 HL_PRIM void HL_NAME(shutdown)(){
 	SteamAPI_Shutdown();
@@ -135,12 +141,10 @@ HL_PRIM void HL_NAME(shutdown)(){
 	delete s_callbackHandler;
 	s_callbackHandler = NULL;
 }
-DEFINE_PRIM(_VOID, shutdown, _NO_ARG);
 
 HL_PRIM void HL_NAME(run_callbacks)(){
 	SteamAPI_RunCallbacks();
 }
-DEFINE_PRIM(_VOID, run_callbacks, _NO_ARG);
 
 HL_PRIM bool HL_NAME(open_overlay)(vbyte *url){
 	if (!CheckInit()) return false;
@@ -148,6 +152,11 @@ HL_PRIM bool HL_NAME(open_overlay)(vbyte *url){
 	SteamFriends()->ActivateGameOverlayToWebPage((char*)url);
 	return true;
 }
+
+DEFINE_PRIM(_BOOL, init, _FUN(_VOID, _I32 _BOOL _BYTES) _FUN(_VOID, _I32 _DYN));
+DEFINE_PRIM(_VOID, set_notification_position, _I32);
+DEFINE_PRIM(_VOID, shutdown, _NO_ARG);
+DEFINE_PRIM(_VOID, run_callbacks, _NO_ARG);
 DEFINE_PRIM(_BOOL, open_overlay, _BYTES);
 
 //-----------------------------------------------------------------------------------------------------------
@@ -156,7 +165,6 @@ HL_PRIM vbyte *HL_NAME(get_persona_name)(){
 	if(!CheckInit()) return (vbyte*)"Unknown";
 	return (vbyte*)SteamFriends()->GetPersonaName();
 }
-DEFINE_PRIM(_BYTES, get_persona_name, _NO_ARG);
 
 HL_PRIM vbyte *HL_NAME(get_steam_id)(){
 	if(!CheckInit()) return (vbyte*)"0";
@@ -168,44 +176,42 @@ HL_PRIM vbyte *HL_NAME(get_steam_id)(){
 
 	return (vbyte*)returnData.str().c_str();
 }
-DEFINE_PRIM(_BYTES, get_steam_id, _NO_ARG);
 
 HL_PRIM bool HL_NAME(restart_app_if_necessary)(int appId){
 	return SteamAPI_RestartAppIfNecessary(appId);
 }
-DEFINE_PRIM(_BOOL, restart_app_if_necessary, _I32);
 
 HL_PRIM bool HL_NAME(is_overlay_enabled)(){
 	return SteamUtils()->IsOverlayEnabled();
 }
-DEFINE_PRIM(_BOOL, is_overlay_enabled, _NO_ARG);
 
 HL_PRIM bool HL_NAME(boverlay_needs_present)(){
 	return SteamUtils()->BOverlayNeedsPresent();
 }
-DEFINE_PRIM(_BOOL, boverlay_needs_present, _NO_ARG);
 
 HL_PRIM bool HL_NAME(is_steam_in_big_picture_mode)(){
 	return SteamUtils()->IsSteamInBigPictureMode();
 }
-DEFINE_PRIM(_BOOL, is_steam_in_big_picture_mode, _NO_ARG);
 
 HL_PRIM bool HL_NAME(is_steam_running)(){
 	return SteamAPI_IsSteamRunning();
 }
-DEFINE_PRIM(_BOOL, is_steam_running, _NO_ARG);
 
 HL_PRIM vbyte *HL_NAME(get_current_game_language)(){
 	return (vbyte*)SteamApps()->GetCurrentGameLanguage();
 }
-DEFINE_PRIM(_BYTES, get_current_game_language, _NO_ARG);
 
 HL_PRIM void HL_NAME(cancel_call_result)( CClosureCallResult<int> *m_call ) {
 	m_call->Cancel();
 	delete m_call;
 }
 
+DEFINE_PRIM(_BYTES, get_persona_name, _NO_ARG);
+DEFINE_PRIM(_BYTES, get_steam_id, _NO_ARG);
+DEFINE_PRIM(_BOOL, restart_app_if_necessary, _I32);
+DEFINE_PRIM(_BOOL, is_overlay_enabled, _NO_ARG);
+DEFINE_PRIM(_BOOL, boverlay_needs_present, _NO_ARG);
+DEFINE_PRIM(_BOOL, is_steam_in_big_picture_mode, _NO_ARG);
+DEFINE_PRIM(_BOOL, is_steam_running, _NO_ARG);
+DEFINE_PRIM(_BYTES, get_current_game_language, _NO_ARG);
 DEFINE_PRIM(_VOID, cancel_call_result, _CRESULT);
-
-} // extern "C"
-

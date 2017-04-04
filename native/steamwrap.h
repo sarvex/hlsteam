@@ -15,6 +15,7 @@
 
 typedef vbyte *		vuid;
 #define _UID		_BYTES
+#define hlt_uid		hlt_bytes
 
 void dyn_call_result( vclosure *c, vdynamic *p, bool error );
 void hl_set_uid( vdynamic *out, int64 uid );
@@ -41,6 +42,10 @@ public:
 #define ASYNC_CALL(steam_call, type, on_result) \
 	CClosureCallResult<type> *m_call = new CClosureCallResult<type>(closure,on_result); \
 	m_call->Set(steam_call, m_call, &CClosureCallResult<type>::OnResult);
+
+#define EVENT_CALLBACK(name,type) \
+	STEAM_CALLBACK(Callbacks, _On##name, type, name); \
+	void On##name( type *t ) { GlobalEvent(type::k_iCallback, Encode##name(t)); }
 
 #define _CRESULT	_ABSTRACT(steam_call_result)
 #define _CALLB(T)	_FUN(_VOID, T _BOOL)
@@ -120,8 +125,25 @@ public:
 
 };
 
+class HLValue {
+public:
+	vdynamic *value;
+	HLValue() {
+		value = (vdynamic*)hl_alloc_dynobj();
+	}
+	void Set( const char *name, int64 uid ) {
+		vdynamic *d = hl_alloc_dynamic(&hlt_uid);
+		hl_set_uid(d,uid);
+		Set(name, d);
+	}
+	void Set( const char *name, vdynamic *d ) {
+		hl_dyn_setp(value, hl_hash_utf8(name), &hlt_dyn, d);
+	}
+};
+
 extern CallbackHandler *s_callbackHandler;
 
+void GlobalEvent( int type, vdynamic *data );
 void SendEvent(event_type type, bool success, const char *data);
 bool CheckInit();
 

@@ -22,13 +22,45 @@ package steam;
 @:hlNative("steam")
 class Matchmaking {
 
+	static var lobbies = new Map<String,Lobby>();
+
+	static function init() {
+		_init();
+		var eid = 500;
+		// LobbyDataUpdate_t
+		Api.registerGlobalEvent(eid + 5, function(data:{lobby:UID, member:Null<UID>}) {
+
+			if( data == null ) {
+				Api.customTrace("Failed to retreive data");
+				return;
+			}
+
+			var l = lobbies.get(data.lobby.toString());
+			if( l == null ) {
+				Api.customTrace("Lobby not found " + data.lobby);
+				return;
+			}
+
+			l.onDataUpdated(data.member);
+		});
+	}
+
+	@:hlNative("steam", "match_init") static function _init() {
+	}
+
 	public static function requestLobbyList( onResult : Callback<Int> ) : AsyncCall {
 		return null;
 	}
 
 	public static function createLobby( kind : LobbyKind, maxPlayers : Int, onResult : Lobby -> Void ) : AsyncCall {
 		return create_lobby(kind, maxPlayers, function(uid, error) {
-			onResult(error ? null : new Lobby(uid));
+			if( error ) {
+				onResult(null);
+				return;
+			}
+			var l = new Lobby(uid);
+			@:privateAccess l.register();
+			onResult(l);
 		});
 	}
 

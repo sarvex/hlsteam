@@ -130,6 +130,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>steam_api.lib;libhl.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>../hl/Debug/$(TargetName)$(TargetExt)</OutputFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
