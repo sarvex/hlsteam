@@ -1,4 +1,4 @@
-package steamwrap.api;
+package steam;
 
 private typedef AsyncData = hl.Abstract<"steam_call_result">;
 

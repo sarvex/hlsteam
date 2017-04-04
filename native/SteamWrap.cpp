@@ -13,6 +13,17 @@
 
 #include <steam/steam_api.h>
 
+#define HLT_I64		hlt_bytes
+#define _SI64		_BYTES
+static int64 hl_to_i64( int64 v ) {
+	union {
+		vbyte b[8];
+		int64 v;
+	} data;
+	data.v = v;
+	return (int64)(int_val)hl_copy_bytes(data.b,8);
+}
+
 //just splits a string
 void split(const std::string &s, char delim, std::vector<std::string> &elems) {
 	std::stringstream ss;
@@ -702,34 +713,22 @@ static bool CheckInit(){
 	return SteamUser() && SteamUser()->BLoggedOn() && SteamUserStats() && (s_callbackHandler != 0) && (g_eventHandler != 0);
 }
 
-HL_PRIM bool HL_NAME(init)(vclosure *onEvent, int notificationPosition){
+HL_PRIM bool HL_NAME(init)(vclosure *onEvent){
 	bool result = SteamAPI_Init();
 	if (result)	{
 		g_eventHandler = onEvent;
 		// TODO gc_root
 		s_callbackHandler = new CallbackHandler();
-
-		switch (notificationPosition){
-			case 0:
-				SteamUtils()->SetOverlayNotificationPosition(k_EPositionTopLeft);
-				break;
-			case 1:
-				SteamUtils()->SetOverlayNotificationPosition(k_EPositionTopRight);
-				break;
-			case 2:
-				SteamUtils()->SetOverlayNotificationPosition(k_EPositionBottomRight);
-				break;
-			case 3:
-				SteamUtils()->SetOverlayNotificationPosition(k_EPositionBottomLeft);
-				break;
-			default:
-				SteamUtils()->SetOverlayNotificationPosition(k_EPositionBottomRight);
-				break;
-		}
 	}
 	return result;
 }
-DEFINE_PRIM(_BOOL, init, _FUN(_VOID, _I32 _BOOL _BYTES) _I32);
+DEFINE_PRIM(_BOOL, init, _FUN(_VOID, _I32 _BOOL _BYTES));
+
+HL_PRIM void HL_NAME(set_notification_position)( ENotificationPosition pos ) {
+	SteamUtils()->SetOverlayNotificationPosition(pos);
+}
+
+DEFINE_PRIM(_VOID, set_notification_position, _I32);
 
 HL_PRIM void HL_NAME(shutdown)(){
 	SteamAPI_Shutdown();
@@ -1870,6 +1869,20 @@ HL_PRIM CClosureCallResult<LobbyMatchList_t>* HL_NAME(request_lobby_list)( vclos
 	return m_call;
 }
 DEFINE_PRIM(_CRESULT, request_lobby_list, _CALLB(_I32));
+
+static void on_lobby_created( vclosure *c, LobbyCreated_t *result, bool error ) {
+	vdynamic d;
+	d.t = &HLT_I64;
+	d.v.i64 = error ? 0 : hl_to_i64(result->m_ulSteamIDLobby);
+	dyn_call_result(c,&d,error);
+}
+
+HL_PRIM CClosureCallResult<LobbyCreated_t>* HL_NAME(create_lobby)( ELobbyType lobbyType, int maxMembers, vclosure *closure ) {
+	ASYNC_CALL(SteamMatchmaking()->CreateLobby(lobbyType,maxMembers), LobbyCreated_t, on_lobby_created);
+	return m_call;
+}
+
+DEFINE_PRIM(_CRESULT, create_lobby, _I32 _I32 _CALLB(_SI64));
 
 } // extern "C"
 

@@ -1,7 +1,7 @@
-package steamwrap.api;
+package steam;
 
 import haxe.Int64;
-import steamwrap.helpers.Util;
+import steam.helpers.Util;
 
 private enum LeaderboardOp
 {
@@ -15,8 +15,8 @@ abstract SteamNotificationPosition(Int) to Int
 {
 	var TopLeft = 0;
 	var TopRight = 1;
-	var BottomRight = 2;
-	var BottomLeft = 3;
+	var BottomLeft = 2;
+	var BottomRight = 3;
 }
 
 typedef ControllerHandle = Int64;
@@ -48,7 +48,8 @@ typedef ControllerAnalogActionHandle = Int;
 	var UGCQueryCompleted                 = 20;
 }
 
-class Steam
+@:hlNative("steam")
+class Api
 {
 	/*************PUBLIC***************/
 
@@ -107,7 +108,7 @@ class Steam
 	 * @param appId_	Your Steam APP ID (the numbers on the end of your store page URL - store.steampowered.com/app/XYZ)
 	 * @param notificationPosition	The position of the Steam Overlay Notification box.
 	 */
-	public static function init(appId_:Int, notificationPosition:SteamNotificationPosition = SteamNotificationPosition.BottomRight) {
+	public static function init(appId_:Int) {
 		if (active) return;
 
 		appId = appId_;
@@ -116,7 +117,7 @@ class Steam
 
 		// if we get this far, the dlls loaded ok and we need Steam to init.
 		// otherwise, we're trying to run the Steam version without the Steam client
-		active = _Init(steamWrap_onEvent, notificationPosition);
+		active = _Init(steamWrap_onEvent);
 
 		if (active) {
 			//customTrace("Steam active");
@@ -135,6 +136,9 @@ class Steam
 			// restart under Steam
 			wantQuit = true;
 		}
+	}
+
+	public static function setNotificationPosition( pos:SteamNotificationPosition ) {
 	}
 
 	public static function sync() {
@@ -533,7 +537,7 @@ class Steam
 		}
 	}
 
-	@:hlNative("steam","init") private static function _Init( onEvent : EventType -> Bool -> hl.Bytes -> Void, notifPos : Int ) : Bool { return false; }
+	@:hlNative("steam","init") private static function _Init( onEvent : EventType -> Bool -> hl.Bytes -> Void ) : Bool { return false; }
 	@:hlNative("steam","shutdown") private static function _Shutdown(): Void{};
 	@:hlNative("steam","run_callbacks") private static function _RunCallbacks(): Void{};
 	@:hlNative("steam","request_stats") private static function _RequestStats() : Bool { return false; }

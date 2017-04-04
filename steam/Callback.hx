@@ -1,4 +1,4 @@
-package steamwrap.api;
+package steam;
 
 typedef Callback<T> = T -> Bool -> Void;
 
