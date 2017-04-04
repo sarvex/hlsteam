@@ -311,3 +311,50 @@ class UGC
 		#end
 	}
 }
+
+
+class GetItemInstallInfoResult
+{
+	public var sizeOnDisk:Int;
+	public var folder:String;
+	public var timeStamp:String;
+
+	public function new(SizeOnDisk:Int = 0, Folder:String = "", TimeStamp:String = "")
+	{
+		sizeOnDisk = SizeOnDisk;
+		folder = Folder;
+		timeStamp = TimeStamp;
+	}
+
+	public static function fromString(str:String):GetItemInstallInfoResult
+	{
+		var sizeOnDisk:Int = 0;
+		var folder:String = "";
+		var timeStamp:String = "";
+
+		var folderSize:Int = 0;
+
+		var arr = str.split("|");
+
+		if (arr != null && arr.length == 4){
+			var sizeOnDiskStr = arr[0];
+			folder = arr[1];
+			var folderSizeStr = arr[2];
+			timeStamp = arr[3];
+
+			var i:Null<Int> = 0;
+
+			i = steam.helpers.Util.str2Int(sizeOnDiskStr);
+			sizeOnDisk = (i != null) ? i : 0;
+
+			i = steam.helpers.Util.str2Int(folderSizeStr);
+			folderSize = (i != null) ? i : 0;
+		}
+
+		if(folder.length > folderSize){
+			folder = folder.substr(0, folderSize);
+		}
+
+		return new GetItemInstallInfoResult(sizeOnDisk, folder, timeStamp);
+	}
+}

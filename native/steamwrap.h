@@ -59,11 +59,6 @@ typedef enum {
 	UGCItemCreated,
 	UGCItemUpdateSubmitted,
 	RemoteStorageFileShared,
-	UserSharedWorkshopFilesEnumerated,
-	UserPublishedFilesEnumerated,
-	UserSubscribedFilesEnumerated,
-	UGCDownloaded,
-	PublishedFileDetailsGotten,
 	ItemDownloaded,
 	ItemInstalled,
 	UGCQueryCompleted
