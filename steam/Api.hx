@@ -89,7 +89,6 @@ class Api
 
 	/**
 	 * @param appId_	Your Steam APP ID (the numbers on the end of your store page URL - store.steampowered.com/app/XYZ)
-	 * @param notificationPosition	The position of the Steam Overlay Notification box.
 	 */
 	public static function init(appId_:Int) {
 		if (active) return;
