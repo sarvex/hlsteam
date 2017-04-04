@@ -13,15 +13,15 @@
 
 #include <steam/steam_api.h>
 
-#define HLT_I64		hlt_bytes
-#define _SI64		_BYTES
-static int64 hl_to_i64( int64 v ) {
+#define _UID		_BYTES
+static void hl_set_uid( vdynamic *out, int64 uid ) {
 	union {
 		vbyte b[8];
 		int64 v;
 	} data;
-	data.v = v;
-	return (int64)(int_val)hl_copy_bytes(data.b,8);
+	data.v = uid;
+	out->t = &hlt_bytes;
+	out->v.ptr = hl_copy_bytes(data.b,8);
 }
 
 //just splits a string
@@ -1872,8 +1872,7 @@ DEFINE_PRIM(_CRESULT, request_lobby_list, _CALLB(_I32));
 
 static void on_lobby_created( vclosure *c, LobbyCreated_t *result, bool error ) {
 	vdynamic d;
-	d.t = &HLT_I64;
-	d.v.i64 = error ? 0 : hl_to_i64(result->m_ulSteamIDLobby);
+	hl_set_uid(&d,error ? 0 : result->m_ulSteamIDLobby);
 	dyn_call_result(c,&d,error);
 }
 
@@ -1882,7 +1881,7 @@ HL_PRIM CClosureCallResult<LobbyCreated_t>* HL_NAME(create_lobby)( ELobbyType lo
 	return m_call;
 }
 
-DEFINE_PRIM(_CRESULT, create_lobby, _I32 _I32 _CALLB(_SI64));
+DEFINE_PRIM(_CRESULT, create_lobby, _I32 _I32 _CALLB(_UID));
 
 } // extern "C"
 
