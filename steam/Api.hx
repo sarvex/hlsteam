@@ -210,12 +210,6 @@ class Api
 		return l==null ? null : @:privateAccess String.fromUTF8(l);
 	}
 
-	public static function getPersonaName():String {
-		if (!active) return null;
-		var p = _GetPersonaName();
-		return p == null ? null : @:privateAccess String.fromUTF8(p);
-	}
-
 	/**
 	 * Get a stat from steam as a float
 	 * Kinda awkwardly returns 0 on errors and uses 0 for checking success
@@ -260,10 +254,12 @@ class Api
 		return val;
 	}
 
-	public static function getSteamID():String {
-		if (!active) return null;
-		var id = _GetSteamID();
-		return id == null ? null : @:privateAccess String.fromUTF8(id);
+	public static function getUser() {
+		return active ? new User(get_steam_id()) : null;
+	}
+
+	static function get_steam_id() : UID {
+		return null;
 	}
 
 	public static function indicateAchievementProgress(id:String, curProgress:Int, maxProgress:Int):Bool {
@@ -518,8 +514,6 @@ class Api
 	@:hlNative("steam","get_achievement_display_attribute") private static function _GetAchievementDisplayAttribute( name : hl.Bytes, key : hl.Bytes ) : hl.Bytes { return null; }
 	@:hlNative("steam","get_num_achievements") private static function _GetNumAchievements() : Int { return 0; }
 	@:hlNative("steam","get_achievement_name") private static function _GetAchievementName( index : Int ) : hl.Bytes { return null; }
-	@:hlNative("steam","get_steam_id") private static function _GetSteamID() : hl.Bytes { return null; }
-	@:hlNative("steam","get_persona_name") private static function _GetPersonaName() : hl.Bytes { return null; }
 	@:hlNative("steam","clear_achievement") private static function _ClearAchievement( name : hl.Bytes ) : Bool { return false; }
 	@:hlNative("steam","indicate_achievement_progress") private static function _IndicateAchievementProgress( name : hl.Bytes, curProgress : Int, maxProgress : Int ) : Bool { return false; }
 	@:hlNative("steam","store_stats") private static function _StoreStats() : Bool { return false; }

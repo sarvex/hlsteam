@@ -20,6 +20,7 @@ typedef vbyte *		vuid;
 void dyn_call_result( vclosure *c, vdynamic *p, bool error );
 void hl_set_uid( vdynamic *out, int64 uid );
 CSteamID hl_to_uid( vuid v );
+vuid hl_of_uid( CSteamID id );
 
 template< class T >
 class CClosureCallResult : public CCallResult<CClosureCallResult<T>,T> {
@@ -131,10 +132,8 @@ public:
 	HLValue() {
 		value = (vdynamic*)hl_alloc_dynobj();
 	}
-	void Set( const char *name, int64 uid ) {
-		vdynamic *d = hl_alloc_dynamic(&hlt_uid);
-		hl_set_uid(d,uid);
-		Set(name, d);
+	void Set( const char *name, CSteamID uid ) {
+		hl_dyn_setp(value, hl_hash_utf8(name), &hlt_uid, hl_of_uid(uid));
 	}
 	void Set( const char *name, vdynamic *d ) {
 		hl_dyn_setp(value, hl_hash_utf8(name), &hlt_dyn, d);

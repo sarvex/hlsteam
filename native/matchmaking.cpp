@@ -36,6 +36,10 @@ HL_PRIM CClosureCallResult<LobbyMatchList_t>* HL_NAME(request_lobby_list)( vclos
 	return m_call;
 }
 
+HL_PRIM vuid HL_NAME(get_lobby_by_index)( int index ) {
+	return hl_of_uid(SteamMatchmaking()->GetLobbyByIndex(index));
+}
+
 static void on_lobby_created( vclosure *c, LobbyCreated_t *result, bool error ) {
 	vdynamic d;
 	hl_set_uid(&d,error ? 0 : result->m_ulSteamIDLobby);
@@ -47,9 +51,44 @@ HL_PRIM CClosureCallResult<LobbyCreated_t>* HL_NAME(create_lobby)( ELobbyType lo
 	return m_call;
 }
 
+HL_PRIM void HL_NAME(leave_lobby)( vuid uid ) {
+	SteamMatchmaking()->LeaveLobby(hl_to_uid(uid));
+}
+
+static void on_lobby_joined( vclosure *c, LobbyEnter_t *result, bool error ) {
+	vdynamic d;
+	d.t = &hlt_bool;
+	d.v.b = result->m_bLocked;
+	dyn_call_result(c,&d,error);
+}
+
+HL_PRIM CClosureCallResult<LobbyEnter_t>* HL_NAME(join_lobby)( vuid uid, vclosure *closure ) {
+	ASYNC_CALL(SteamMatchmaking()->JoinLobby(hl_to_uid(uid)), LobbyEnter_t, on_lobby_joined);
+	return m_call;
+}
+
+HL_PRIM int HL_NAME(get_num_lobby_members)( vuid uid ) {
+	return SteamMatchmaking()->GetNumLobbyMembers(hl_to_uid(uid));
+}
+
+HL_PRIM vuid HL_NAME(get_lobby_member_by_index)( vuid uid, int index ) {
+	return hl_of_uid(SteamMatchmaking()->GetLobbyMemberByIndex(hl_to_uid(uid),index));
+}
+
+HL_PRIM vuid HL_NAME(get_lobby_owner)( vuid uid ) {
+	return hl_of_uid(SteamMatchmaking()->GetLobbyOwner(hl_to_uid(uid)));
+}
+
 DEFINE_PRIM(_CRESULT, request_lobby_list, _CALLB(_I32));
 DEFINE_PRIM(_CRESULT, create_lobby, _I32 _I32 _CALLB(_UID));
+DEFINE_PRIM(_UID, get_lobby_by_index, _I32);
+DEFINE_PRIM(_VOID, leave_lobby, _UID);
+DEFINE_PRIM(_CRESULT, join_lobby, _UID _CALLB(_BOOL));
 
+DEFINE_PRIM(_I32, get_num_lobby_members, _UID);
+DEFINE_PRIM(_UID, get_lobby_member_by_index, _UID _I32);
+
+DEFINE_PRIM(_UID, get_lobby_owner, _UID);
 
 // --------- Lobby Data --------------------------
 

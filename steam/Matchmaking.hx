@@ -41,14 +41,27 @@ class Matchmaking {
 				return;
 			}
 
-			l.onDataUpdated(data.member);
+			if( data.member != null )
+				l.onUserDataUpdated(data.member);
+			else
+				l.onDataUpdated();
 		});
 	}
 
 	@:hlNative("steam", "match_init") static function _init() {
 	}
 
-	public static function requestLobbyList( onResult : Callback<Int> ) : AsyncCall {
+	public static function requestLobbyList( onLobbyList : Array<Lobby> -> Void ) {
+		request_lobby_list(function(count, error) {
+			if( error ) {
+				onLobbyList(null);
+				return;
+			}
+			onLobbyList([for( i in 0...count ) new Lobby(get_lobby_by_index(i))]);
+		});
+	}
+
+	static function request_lobby_list( onResult : Callback<Int> ) : AsyncCall {
 		return null;
 	}
 
@@ -65,6 +78,10 @@ class Matchmaking {
 	}
 
 	static function create_lobby( kind : LobbyKind, maxPlayers : Int, onResult : Callback<UID> ) : AsyncCall {
+		return null;
+	}
+
+	static function get_lobby_by_index( index : Int ) : UID {
 		return null;
 	}
 
