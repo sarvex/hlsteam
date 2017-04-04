@@ -79,6 +79,10 @@ HL_PRIM vuid HL_NAME(get_lobby_owner)( vuid uid ) {
 	return hl_of_uid(SteamMatchmaking()->GetLobbyOwner(hl_to_uid(uid)));
 }
 
+HL_PRIM void HL_NAME(lobby_invite_friends)( vuid uid ) {
+	SteamFriends()->ActivateGameOverlayInviteDialog(hl_to_uid(uid));
+}
+
 DEFINE_PRIM(_CRESULT, request_lobby_list, _CALLB(_I32));
 DEFINE_PRIM(_CRESULT, create_lobby, _I32 _I32 _CALLB(_UID));
 DEFINE_PRIM(_UID, get_lobby_by_index, _I32);
@@ -89,6 +93,7 @@ DEFINE_PRIM(_I32, get_num_lobby_members, _UID);
 DEFINE_PRIM(_UID, get_lobby_member_by_index, _UID _I32);
 
 DEFINE_PRIM(_UID, get_lobby_owner, _UID);
+DEFINE_PRIM(_VOID, lobby_invite_friends, _UID);
 
 // --------- Lobby Data --------------------------
 

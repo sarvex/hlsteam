@@ -68,6 +68,14 @@ class Lobby {
 	public dynamic function onUserDataUpdated( uid : UID ) {
 	}
 
+	public function inviteFriends() {
+		lobby_invite_friends(uid);
+	}
+
+	public function toString() {
+		return "Lobby#" + uid.toString();
+	}
+
 	public function dispose() {
 		@:privateAccess Matchmaking.lobbies.remove(uid.toString());
 	}
@@ -111,6 +119,9 @@ class Lobby {
 
 	static function get_lobby_owner( uid : UID ) : UID {
 		return null;
+	}
+
+	static function lobby_invite_friends( uid : UID ) {
 	}
 
 }

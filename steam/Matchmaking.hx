@@ -77,6 +77,18 @@ class Matchmaking {
 		});
 	}
 
+	public static function checkInvite( onInvite : Lobby -> Void ) {
+		var args = Sys.args();
+		if( args[0] != "+connect_lobb" )
+			return;
+		var uid = haxe.Int64.parseString(args[1]);
+		var bytes = new hl.Bytes(8);
+		bytes.setI32(0, uid.low);
+		bytes.setI32(4, uid.high);
+		var uid : UID = cast bytes;
+		onInvite(new Lobby(uid));
+	}
+
 	static function create_lobby( kind : LobbyKind, maxPlayers : Int, onResult : Callback<UID> ) : AsyncCall {
 		return null;
 	}
