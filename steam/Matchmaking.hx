@@ -19,36 +19,82 @@ package steam;
 	public var Invisible = 3;
 }
 
+private enum LobbyChatFlag {
+	Entered;
+	Left;
+	Disconnected;
+	Kicked;
+	Banned;
+}
+
 @:hlNative("steam")
 class Matchmaking {
 
 	static var lobbies = new Map<String,Lobby>();
+	static var _init = init();
 
 	static function init() {
-		_init();
 		var eid = 500;
-		// LobbyDataUpdate_t
-		Api.registerGlobalEvent(eid + 5, function(data:{lobby:UID, member:Null<UID>}) {
+		var fid = 300;
 
+		// LobbyDataUpdate_t
+		Api.registerGlobalEvent(eid + 5, function(data:{lobby:UID, user:Null<UID>}) {
 			if( data == null ) {
 				Api.customTrace("Failed to retreive data");
 				return;
 			}
-
-			var l = lobbies.get(data.lobby.toString());
-			if( l == null ) {
-				Api.customTrace("Lobby not found " + data.lobby);
-				return;
-			}
-
-			if( data.member != null )
-				l.onUserDataUpdated(data.member);
+			var l = getLobby(data.lobby);
+			if( l == null ) return;
+			if( data.user != null )
+				l.onUserDataUpdated(new User(data.user));
 			else
 				l.onDataUpdated();
 		});
+
+		// LobbyChatUpdate_t
+		Api.registerGlobalEvent(eid + 6, function(data:{lobby:UID, user:UID, origin:UID, flags:haxe.EnumFlags<LobbyChatFlag>}) {
+			var l = getLobby(data.lobby);
+			if( l == null ) return;
+			if( data.flags.has(Entered) )
+				l.onUserJoined(new User(data.user));
+			else
+				l.onUserLeft(new User(data.user)); // no need for reason for now
+		});
+
+		// LobbyChatMsg_t
+		Api.registerGlobalEvent(eid + 7, function(data:{lobby:UID, user:UID, type:Lobby.ChatMessageType, cid:Int}) {
+			var l = getLobby(data.lobby);
+			if( l == null ) return;
+			l.onChatMessage(data.type, data.cid);
+		});
+
+		// PersonaStateChange_t
+		Api.registerGlobalEvent(fid + 4, function(data:{user:UID, flags:Int}) {
+			for( l in lobbies ) {
+				for( u in l.getMembers() )
+					if( u.uid == data.user ) {
+						l.onUserDataUpdated(u);
+						break;
+					}
+			}
+		});
+
+		// GameLobbyJoinRequested_t
+		Api.registerGlobalEvent(fid + 33, function(data:{user:UID, lobby:UID}) {
+			var l = lobbies.get(data.lobby.toString());
+			if( l == null )
+				l = new Lobby(data.lobby);
+			onInvited(l, new User(data.user));
+		});
+
+		return true;
 	}
 
-	@:hlNative("steam", "match_init") static function _init() {
+	static function getLobby( lid : UID ) {
+		var l = lobbies.get(lid.toString());
+		if( l == null )
+			Api.customTrace("Lobby not found " + lid);
+		return l;
 	}
 
 	public static function requestLobbyList( onLobbyList : Array<Lobby> -> Void ) {
@@ -75,6 +121,10 @@ class Matchmaking {
 			@:privateAccess l.register();
 			onResult(l);
 		});
+	}
+
+	public static dynamic function onInvited( lobby : Lobby, by : User ) {
+		Api.customTrace("onInvited not handled for " + lobby + " by " + by);
 	}
 
 	public static function checkInvite( onInvite : Lobby -> Void ) {

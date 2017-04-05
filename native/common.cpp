@@ -1,5 +1,12 @@
 #include "steamwrap.h"
 
+vdynamic *CallbackHandler::EncodePersonaChange( PersonaStateChange_t *d ) {
+	HLValue ret;
+	ret.Set("user",d->m_ulSteamID);
+	ret.Set("flags", d->m_nChangeFlags);
+	return ret.value;
+}
+
 void hl_set_uid( vdynamic *out, int64 uid ) {
 	out->t = &hlt_uid;
 	out->v.ptr = hl_of_uid(CSteamID((uint64)uid));
@@ -122,6 +129,11 @@ void GlobalEvent( int id, vdynamic *v ) {
 	args[1] = v;
 	hl_dyn_call(s_globalEvent, args, 2);
 }
+
+#define EVENT_DECL(name,type) void CallbackHandler::On##name( type *t ) { GlobalEvent(type::k_iCallback, Encode##name(t)); }
+#define GLOBAL_EVENTS
+#include "events.h"
+#undef GLOBAL_EVENTS
 
 HL_PRIM bool HL_NAME(init)( vclosure *onEvent, vclosure *onGlobalEvent ){
 	bool result = SteamAPI_Init();

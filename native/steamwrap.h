@@ -44,10 +44,6 @@ public:
 	CClosureCallResult<type> *m_call = new CClosureCallResult<type>(closure,on_result); \
 	m_call->Set(steam_call, m_call, &CClosureCallResult<type>::OnResult);
 
-#define EVENT_CALLBACK(name,type) \
-	STEAM_CALLBACK(Callbacks, _On##name, type, name); \
-	void On##name( type *t ) { GlobalEvent(type::k_iCallback, Encode##name(t)); }
-
 #define _CRESULT	_ABSTRACT(steam_call_result)
 #define _CALLB(T)	_FUN(_VOID, T _BOOL)
 
@@ -77,20 +73,13 @@ private:
 public:
 
 	CallbackHandler() :
- 		m_CallbackUserStatsReceived( this, &CallbackHandler::OnUserStatsReceived ),
- 		m_CallbackUserStatsStored( this, &CallbackHandler::OnUserStatsStored ),
- 		m_CallbackAchievementStored( this, &CallbackHandler::OnAchievementStored ),
-		m_CallbackGamepadTextInputDismissed( this, &CallbackHandler::OnGamepadTextInputDismissed ),
-		m_CallbackDownloadItemResult( this, &CallbackHandler::OnDownloadItem ),
-		m_CallbackItemInstalled( this, &CallbackHandler::OnItemInstalled )
+#	define EVENT_DECL(name,type) m_##name(this,&CallbackHandler::On##name),
+#	include "events.h"
+		m_leaderboards()
 	{}
 
-	STEAM_CALLBACK( CallbackHandler, OnUserStatsReceived, UserStatsReceived_t, m_CallbackUserStatsReceived );
-	STEAM_CALLBACK( CallbackHandler, OnUserStatsStored, UserStatsStored_t, m_CallbackUserStatsStored );
-	STEAM_CALLBACK( CallbackHandler, OnAchievementStored, UserAchievementStored_t, m_CallbackAchievementStored );
-	STEAM_CALLBACK( CallbackHandler, OnGamepadTextInputDismissed, GamepadTextInputDismissed_t, m_CallbackGamepadTextInputDismissed );
-	STEAM_CALLBACK( CallbackHandler, OnDownloadItem, DownloadItemResult_t, m_CallbackDownloadItemResult );
-	STEAM_CALLBACK( CallbackHandler, OnItemInstalled, ItemInstalled_t, m_CallbackItemInstalled );
+#	define EVENT_DECL(name,type) STEAM_CALLBACK(CallbackHandler, On##name, type, m_##name); vdynamic *Encode##name( type *t );
+#	include "events.h"
 
 	void FindLeaderboard(const char* name);
 	void OnLeaderboardFound( LeaderboardFindResult_t *pResult, bool bIOFailure);
@@ -134,6 +123,15 @@ public:
 	}
 	void Set( const char *name, CSteamID uid ) {
 		hl_dyn_setp(value, hl_hash_utf8(name), &hlt_uid, hl_of_uid(uid));
+	}
+	void Set( const char *name, uint64 uid ) {
+		Set(name,CSteamID(uid));
+	}
+	void Set( const char *name, uint32 v ) {
+		Set(name,(int)v);
+	}
+	void Set( const char *name, int v ) {
+		hl_dyn_seti(value, hl_hash_utf8(name), &hlt_i32, v);
 	}
 	void Set( const char *name, vdynamic *d ) {
 		hl_dyn_setp(value, hl_hash_utf8(name), &hlt_dyn, d);

@@ -1,22 +1,48 @@
 package steam;
 
+@:enum abstract ChatMessageType(Int) {
+	var Invalid = 0;
+	/** Normal text message from another user **/
+	var ChatMsg = 1;
+	/** Another user is typing (not used in multi-user chat) **/
+	var Typing = 2;
+	/** Invite from other user into that users current game **/
+	var InviteGame = 3;
+	/** user has left the conversation ( closed chat window ) **/
+	var LeftConversation = 6;
+	/** user has entered the conversation (used in multi-user chat and group chat) **/
+	var Entered = 7;
+	/** user was kicked (data: 64-bit steamid of actor performing the kick) **/
+	var WasKicked = 8;
+	/** user was banned (data: 64-bit steamid of actor performing the ban) **/
+	var WasBanned = 9;
+	/** user disconnected **/
+	var Disconnected = 10;
+	/** a chat message from user's chat history or offilne message **/
+	var HistoricalChat = 11;
+	/** a link was removed by the chat filter **/
+	var LinkBlocked = 14;
+}
+
 @:hlNative("steam")
 @:access(String)
 class Lobby {
 
 	public var uid(default, null) : UID;
 	public var owner(get, never) : User;
+	public var maxMembers(get, never) : Int;
 
 	public function new(uid:UID) {
 		this.uid = uid;
 	}
 
 	public function setData( key : String, value : String ) {
-		set_lobby_data(uid, key.toUtf8(), value.toUtf8());
+		if( !set_lobby_data(uid, key.toUtf8(), value.toUtf8()) )
+			throw "Failed to set lobby data";
 	}
 
 	public function removeData( key : String ) {
-		delete_lobby_data(uid, key.toUtf8());
+		return delete_lobby_data(uid, key.toUtf8());
 	}
 
 	public function getData( key : String ) : String {
@@ -53,6 +79,15 @@ class Lobby {
 		return [for( i in 0...get_num_lobby_members(uid) ) new User(get_lobby_member_by_index(uid, i))];
 	}
 
+	public function getMemberData( user : User, key : String ) : String {
+		var v = get_lobby_member_data(uid, user.uid, key.toUtf8());
+		return String.fromUTF8(v);
+	}
+
+	public function setMemberData( key : String, value : String ) {
+		set_lobby_member_data(uid, key.toUtf8(), value.toUtf8());
+	}
+
 	public function requestData() {
 		register();
 		return request_lobby_data(uid);
@@ -65,11 +100,37 @@ class Lobby {
 	public dynamic function onDataUpdated() {
 	}
 
-	public dynamic function onUserDataUpdated( uid : UID ) {
+	public dynamic function onUserDataUpdated( user : User ) {
+	}
+
+	public dynamic function onUserJoined( user : User ) {
+	}
+
+	public dynamic function onUserLeft( user : User ) {
+	}
+
+	public dynamic function onChatMessage( type : ChatMessageType, cid : Int ) {
+	}
+
+	public function getChatEntry( cid : Int, maxData = 1024 ) : { user : User, data : haxe.io.Bytes, type : ChatMessageType } {
+		var tmp = new hl.Bytes(maxData);
+		var type = Invalid;
+		var len = 0;
+		var user = get_lobby_chat_entry(uid, cid, tmp, maxData, type, len);
+		return { user : new User(user), data : tmp.sub(0, len).toBytes(len), type : type };
+	}
+
+	public function sendChatMessage( bytes : haxe.io.Bytes ) {
+		if( !send_lobby_chat_msg(uid, bytes, bytes.length) )
+			throw "Failed to send chat message";
 	}
 
 	public function inviteFriends() {
 		lobby_invite_friends(uid);
+	}
+
+	public function inviteUser( user : User ) {
+		return lobby_invite_user(uid, user.uid);
 	}
 
 	public function toString() {
@@ -80,14 +141,22 @@ class Lobby {
 		@:privateAccess Matchmaking.lobbies.remove(uid.toString());
 	}
 
+	function get_maxMembers() {
+		return get_lobby_member_limit(uid);
+	}
+
+	// --- HL stubs ----
+
 	static function request_lobby_data( uid : UID ) {
 		return false;
 	}
 
 	static function set_lobby_data( uid : UID, key : hl.Bytes, data : hl.Bytes ) {
+		return false;
 	}
 
 	static function delete_lobby_data( uid : UID, key : hl.Bytes ) {
+		return false;
 	}
 
 	static function get_lobby_data( uid : UID, key : hl.Bytes ) : hl.Bytes {
@@ -122,6 +191,29 @@ class Lobby {
 	}
 
 	static function lobby_invite_friends( uid : UID ) {
+	}
+
+	static function send_lobby_chat_msg( uid : UID, bytes : hl.Bytes, len : Int ) : Bool {
+		return false;
+	}
+
+	static function get_lobby_chat_entry( uid : UID, cid : Int, tmp : hl.Bytes, tmpLen : Int, type : hl.Ref<ChatMessageType>, len : hl.Ref<Int> ) : UID {
+		return null;
+	}
+
+	static function lobby_invite_user( uid : UID, fid : UID ) {
+		return false;
+	}
+
+	static function get_lobby_member_data( lid : UID, uid : UID, key : hl.Bytes ) : hl.Bytes {
+		return null;
+	}
+
+	static function set_lobby_member_data( lid : UID, key : hl.Bytes, value : hl.Bytes ) {
+	}
+
+	static function get_lobby_member_limit( uid : UID ) {
+		return 0;
 	}
 
 }

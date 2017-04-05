@@ -111,8 +111,6 @@ class Api
 			controllers = new Controller(customTrace);
 			cloud = new Cloud(appId, customTrace);
 
-			@:privateAccess Matchmaking.init();
-
 			haxe.MainLoop.add(sync);
 		}
 		else {

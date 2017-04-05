@@ -1,25 +1,37 @@
 #include "steamwrap.h"
 
-class Callbacks {
-public:
-	Callbacks() : LobbyData(this,&Callbacks::OnLobbyData) {}
-	EVENT_CALLBACK( LobbyData, LobbyDataUpdate_t );
-	vdynamic *EncodeLobbyData( LobbyDataUpdate_t *d ) {
-		if( !d->m_bSuccess ) return NULL;
-		HLValue ret;
-		ret.Set("lobby",d->m_ulSteamIDLobby);
-		if( d->m_ulSteamIDMember != d->m_ulSteamIDLobby ) ret.Set("member",d->m_ulSteamIDMember);
-		return ret.value;
-	}
-};
-
-static Callbacks *match_callbacks = NULL;
-
-HL_PRIM void HL_NAME(match_init)() {
-	match_callbacks = new Callbacks();
+vdynamic *CallbackHandler::EncodeLobbyData( LobbyDataUpdate_t *d ) {
+	if( !d->m_bSuccess ) return NULL;
+	HLValue ret;
+	ret.Set("lobby",d->m_ulSteamIDLobby);
+	if( d->m_ulSteamIDMember != d->m_ulSteamIDLobby ) ret.Set("user",d->m_ulSteamIDMember);
+	return ret.value;
 }
 
-DEFINE_PRIM(_VOID, match_init, _NO_ARG);
+vdynamic *CallbackHandler::EncodeLobbyChatUpdate( LobbyChatUpdate_t *d ) {
+	HLValue ret;
+	ret.Set("lobby",d->m_ulSteamIDLobby);
+	ret.Set("user",d->m_ulSteamIDUserChanged);
+	ret.Set("origin", d->m_ulSteamIDMakingChange);
+	ret.Set("flags", d->m_rgfChatMemberStateChange);
+	return ret.value;
+}
+
+vdynamic *CallbackHandler::EncodeLobbyChatMsg( LobbyChatMsg_t *d ) {
+	HLValue ret;
+	ret.Set("lobby",d->m_ulSteamIDLobby);
+	ret.Set("user",d->m_ulSteamIDUser);
+	ret.Set("type",d->m_eChatEntryType);
+	ret.Set("cid", d->m_iChatID);
+	return ret.value;
+}
+
+vdynamic *CallbackHandler::EncodeLobbyJoinRequest( GameLobbyJoinRequested_t *d ) {
+	HLValue ret;
+	ret.Set("lobby", d->m_steamIDLobby);
+	ret.Set("user", d->m_steamIDFriend);
+	return ret.value;
+}
 
 // --------- Lobby Search / Create --------------------------
 
@@ -83,6 +95,26 @@ HL_PRIM void HL_NAME(lobby_invite_friends)( vuid uid ) {
 	SteamFriends()->ActivateGameOverlayInviteDialog(hl_to_uid(uid));
 }
 
+HL_PRIM bool HL_NAME(send_lobby_chat_msg)( vuid uid, vbyte *msg, int len ) {
+	return SteamMatchmaking()->SendLobbyChatMsg(hl_to_uid(uid),msg,len);
+}
+
+HL_PRIM vuid HL_NAME(get_lobby_chat_entry)( vuid uid, int cid, vbyte *data, int maxData, int *type, int *outLen ) {
+	CSteamID user;
+	EChatEntryType chatType;
+	*outLen = SteamMatchmaking()->GetLobbyChatEntry(hl_to_uid(uid), cid, &user, data, maxData, &chatType);
+	*type = chatType;
+	return hl_of_uid(user);
+}
+
+HL_PRIM bool HL_NAME(lobby_invite_user)( vuid lid, vuid fid ) {
+	return SteamMatchmaking()->InviteUserToLobby(hl_to_uid(lid),hl_to_uid(fid));
+}
+
+HL_PRIM int HL_NAME(get_lobby_member_limit)( vuid uid ) {
+	return SteamMatchmaking()->GetLobbyMemberLimit(hl_to_uid(uid));
+}
+
 DEFINE_PRIM(_CRESULT, request_lobby_list, _CALLB(_I32));
 DEFINE_PRIM(_CRESULT, create_lobby, _I32 _I32 _CALLB(_UID));
 DEFINE_PRIM(_UID, get_lobby_by_index, _I32);
@@ -91,9 +123,13 @@ DEFINE_PRIM(_CRESULT, join_lobby, _UID _CALLB(_BOOL));
 
 DEFINE_PRIM(_I32, get_num_lobby_members, _UID);
 DEFINE_PRIM(_UID, get_lobby_member_by_index, _UID _I32);
+DEFINE_PRIM(_I32, get_lobby_member_limit, _UID);
 
 DEFINE_PRIM(_UID, get_lobby_owner, _UID);
 DEFINE_PRIM(_VOID, lobby_invite_friends, _UID);
+DEFINE_PRIM(_BOOL, lobby_invite_user, _UID _UID);
+DEFINE_PRIM(_BOOL, send_lobby_chat_msg, _UID _BYTES _I32);
+DEFINE_PRIM(_UID, get_lobby_chat_entry, _UID _I32 _BYTES _I32 _REF(_I32) _REF(_I32));
 
 // --------- Lobby Data --------------------------
 
@@ -105,12 +141,12 @@ HL_PRIM const char *HL_NAME(get_lobby_data)( vuid uid, const char *key ) {
 	return SteamMatchmaking()->GetLobbyData(hl_to_uid(uid),key);
 }
 
-HL_PRIM void HL_NAME(set_lobby_data)( vuid uid, const char *key, const char *value ) {
-	SteamMatchmaking()->SetLobbyData(hl_to_uid(uid), key, value);
+HL_PRIM bool HL_NAME(set_lobby_data)( vuid uid, const char *key, const char *value ) {
+	return SteamMatchmaking()->SetLobbyData(hl_to_uid(uid), key, value);
 }
 
-HL_PRIM void HL_NAME(delete_lobby_data)( vuid uid, const char *key ) {
-	SteamMatchmaking()->DeleteLobbyData(hl_to_uid(uid),key);
+HL_PRIM bool HL_NAME(delete_lobby_data)( vuid uid, const char *key ) {
+	return SteamMatchmaking()->DeleteLobbyData(hl_to_uid(uid),key);
 }
 
 HL_PRIM int HL_NAME(get_lobby_data_count)( vuid uid ) {
@@ -121,9 +157,22 @@ HL_PRIM bool HL_NAME(get_lobby_data_byindex)( vuid uid, int index, char *key, in
 	return SteamMatchmaking()->GetLobbyDataByIndex(hl_to_uid(uid), index, key, ksize, value, vsize);
 }
 
+HL_PRIM vbyte *HL_NAME(get_lobby_member_data)( vuid lid, vuid uid, const char *key ) {
+	return (vbyte*)SteamMatchmaking()->GetLobbyMemberData(hl_to_uid(lid), hl_to_uid(uid), key );
+}
+
+HL_PRIM void HL_NAME(set_lobby_member_data)( vuid lid, const char *key, const char *value ) {
+	SteamMatchmaking()->SetLobbyMemberData(hl_to_uid(lid), key, value);
+}
+
 DEFINE_PRIM(_BOOL, request_lobby_data, _UID);
 DEFINE_PRIM(_BYTES, get_lobby_data, _UID _BYTES);
-DEFINE_PRIM(_VOID, set_lobby_data, _UID _BYTES _BYTES);
-DEFINE_PRIM(_VOID, delete_lobby_data, _UID _BYTES);
+DEFINE_PRIM(_BOOL, set_lobby_data, _UID _BYTES _BYTES);
+DEFINE_PRIM(_BOOL, delete_lobby_data, _UID _BYTES);
 DEFINE_PRIM(_I32, get_lobby_data_count, _UID);
 DEFINE_PRIM(_BOOL, get_lobby_data_byindex, _UID _I32 _BYTES _I32 _BYTES _I32);
+DEFINE_PRIM(_BYTES, get_lobby_member_data, _UID _UID _BYTES);
+DEFINE_PRIM(_VOID, set_lobby_member_data, _UID _BYTES _BYTES);
+
+// --------- User Data --------------------------
+
