@@ -140,6 +140,7 @@ HL_PRIM bool HL_NAME(init)( vclosure *onEvent, vclosure *onGlobalEvent ){
 }
 
 HL_PRIM void HL_NAME(set_notification_position)( ENotificationPosition pos ) {
+	if( !CheckInit() ) return;
 	SteamUtils()->SetOverlayNotificationPosition(pos);
 }
 

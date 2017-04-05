@@ -118,7 +118,7 @@ class Matchmaking {
 
 	public static function checkInvite( onInvite : Lobby -> Void ) {
 		var args = Sys.args();
-		if( args[0] != "+connect_lobb" )
+		if( args[0] != "+connect_lobby" )
 			return;
 		var uid = haxe.Int64.parseString(args[1]);
 		var bytes = new hl.Bytes(8);
