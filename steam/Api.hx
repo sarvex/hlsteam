@@ -97,6 +97,11 @@ class Api
 		leaderboardIds = new Array<String>();
 		leaderboardOps = new List<LeaderboardOp>();
 
+		// PersonaStateChange_t
+		registerGlobalEvent(300 + 4, function(data:{user:UID, flags:haxe.EnumFlags<User.Changed>}) {
+			@:privateAccess User.fromUID(data.user).onDataUpdated(data.flags);
+		});
+
 		// if we get this far, the dlls loaded ok and we need Steam to init.
 		// otherwise, we're trying to run the Steam version without the Steam client
 		active = _Init(steamWrap_onEvent, onGlobalEvent);
@@ -253,7 +258,7 @@ class Api
 	}
 
 	public static function getUser() {
-		return active ? new User(get_steam_id()) : null;
+		return active ? User.fromUID(get_steam_id()) : null;
 	}
 
 	static function get_steam_id() : UID {

@@ -46,7 +46,7 @@ class Matchmaking {
 			var l = getLobby(data.lobby);
 			if( l == null ) return;
 			if( data.user != null )
-				l.onUserDataUpdated(new User(data.user));
+				l.onUserDataUpdated(User.fromUID(data.user));
 			else
 				l.onDataUpdated();
 		});
@@ -56,9 +56,9 @@ class Matchmaking {
 			var l = getLobby(data.lobby);
 			if( l == null ) return;
 			if( data.flags.has(Entered) )
-				l.onUserJoined(new User(data.user));
+				l.onUserJoined(User.fromUID(data.user));
 			else
-				l.onUserLeft(new User(data.user)); // no need for reason for now
+				l.onUserLeft(User.fromUID(data.user)); // no need for reason for now
 		});
 
 		// LobbyChatMsg_t
@@ -68,23 +68,12 @@ class Matchmaking {
 			l.onChatMessage(data.type, data.cid);
 		});
 
-		// PersonaStateChange_t
-		Api.registerGlobalEvent(fid + 4, function(data:{user:UID, flags:Int}) {
-			for( l in lobbies ) {
-				for( u in l.getMembers() )
-					if( u.uid == data.user ) {
-						l.onUserDataUpdated(u);
-						break;
-					}
-			}
-		});
-
 		// GameLobbyJoinRequested_t
 		Api.registerGlobalEvent(fid + 33, function(data:{user:UID, lobby:UID}) {
 			var l = lobbies.get(data.lobby.toString());
 			if( l == null )
 				l = new Lobby(data.lobby);
-			onInvited(l, new User(data.user));
+			onInvited(l, User.fromUID(data.user));
 		});
 
 		return true;

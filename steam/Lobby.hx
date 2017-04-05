@@ -68,15 +68,15 @@ class Lobby {
 	}
 
 	function get_owner() {
-		return new User(get_lobby_owner(uid));
+		return User.fromUID(get_lobby_owner(uid));
 	}
 
 	public function join( onJoin : { inviteOnly : Bool } -> Void ) {
-		return join_lobby(uid, function(v,error) onJoin(error ? null : { inviteOnly : v }));
+		return join_lobby(uid, function(v, error) { if( !error ) register(); onJoin(error ? null : { inviteOnly : v }); });
 	}
 
 	public function getMembers() {
-		return [for( i in 0...get_num_lobby_members(uid) ) new User(get_lobby_member_by_index(uid, i))];
+		return [for( i in 0...get_num_lobby_members(uid) ) User.fromUID(get_lobby_member_by_index(uid, i))];
 	}
 
 	public function getMemberData( user : User, key : String ) : String {
@@ -117,7 +117,7 @@ class Lobby {
 		var type = Invalid;
 		var len = 0;
 		var user = get_lobby_chat_entry(uid, cid, tmp, maxData, type, len);
-		return { user : new User(user), data : tmp.sub(0, len).toBytes(len), type : type };
+		return { user : User.fromUID(user), data : tmp.sub(0, len).toBytes(len), type : type };
 	}
 
 	public function sendChatMessage( bytes : haxe.io.Bytes ) {

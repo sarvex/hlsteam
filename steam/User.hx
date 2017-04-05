@@ -1,14 +1,39 @@
 package steam;
 
+enum Changed {
+	Name;
+	Status;
+	ComeOnline;
+	GoneOffline;
+	GamePlayed;
+	GameServer;
+	Avatar;
+	JoinedSource;
+	LeftSource;
+	RelationshipChanged;
+	NameFirstSet;
+	FacebookInfo;
+	Nickname;
+	SteamLevel;
+}
+
+enum AvatarSize {
+	Small;
+	Medium;
+	Large;
+}
+
 @:hlNative("steam")
 class User {
 
 	public var uid(default, null) : UID;
 	public var name(get, never) : String;
 	var cachedName : String;
+	var waiting : Array<haxe.EnumFlags<Changed>->Void>;
 
-	public function new(uid) {
+	function new(uid) {
 		this.uid = uid;
+		waiting = [];
 	}
 
 	function get_name() {
@@ -17,15 +42,60 @@ class User {
 		return cachedName;
 	}
 
-	@:keep function __compare( u : User ) : Int {
-		return uid.getBytes().compare(u.uid.getBytes());
+	public function requestInformation( onChange, nameOnly = false ) {
+		waiting.push(onChange);
+		request_user_information(uid, nameOnly);
 	}
 
 	public function toString() {
 		return name+"(" + uid.toString() + ")";
 	}
 
+	#if heaps
+	public function getAvatarImage(size) : h2d.Tile {
+		var data = getAvatar(size);
+		if( data == null )
+			return h2d.Tile.fromColor(0, 32, 32);
+		return h2d.Tile.fromPixels(new hxd.Pixels(data.width, data.height, data.rgba, RGBA));
+	}
+	#end
+
+	public function getAvatar( size : AvatarSize ) : { width : Int, height : Int, rgba : haxe.io.Bytes } {
+		var w = 0;
+		var h = 0;
+		var bytes = get_user_avatar(uid, size.getIndex(), w, h);
+		if( bytes == null ) return null;
+		return { width : w, height : h, rgba : bytes.toBytes(w * h * 4) };
+	}
+
+	function onDataUpdated(flags) {
+		if( waiting.length > 0 ) {
+			var old = waiting;
+			waiting = [];
+			for( w in old ) w(flags);
+		}
+	}
+
 	static function get_user_name( uid : UID ) : hl.Bytes {
+		return null;
+	}
+
+	// this will most likely leak but we don't care
+	static var users = new Map<String, User>();
+
+	public static function fromUID( uid : UID ) {
+		var u = users.get(uid.toString());
+		if( u != null ) return u;
+		u = new User(uid);
+		users.set(uid.toString(), u);
+		return u;
+	}
+
+	static function request_user_information( uid : UID, nameOnly : Bool ) {
+		return false;
+	}
+
+	static function get_user_avatar( uid : UID, size : Int, width : hl.Ref<Int>, height : hl.Ref<Int> ) : hl.Bytes {
 		return null;
 	}
 

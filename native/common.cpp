@@ -1,12 +1,5 @@
 #include "steamwrap.h"
 
-vdynamic *CallbackHandler::EncodePersonaChange( PersonaStateChange_t *d ) {
-	HLValue ret;
-	ret.Set("user",d->m_ulSteamID);
-	ret.Set("flags", d->m_nChangeFlags);
-	return ret.value;
-}
-
 void hl_set_uid( vdynamic *out, int64 uid ) {
 	out->t = &hlt_uid;
 	out->v.ptr = hl_of_uid(CSteamID((uint64)uid));
@@ -177,10 +170,6 @@ DEFINE_PRIM(_BOOL, open_overlay, _BYTES);
 
 //-----------------------------------------------------------------------------------------------------------
 
-HL_PRIM vbyte *HL_NAME(get_user_name)( vuid uid ) {
-	return (vbyte*)SteamFriends()->GetFriendPersonaName(hl_to_uid(uid));
-}
-
 HL_PRIM vuid HL_NAME(get_steam_id)(){
 	return hl_of_uid(SteamUser()->GetSteamID());
 }
@@ -214,7 +203,6 @@ HL_PRIM void HL_NAME(cancel_call_result)( CClosureCallResult<int> *m_call ) {
 	delete m_call;
 }
 
-DEFINE_PRIM(_BYTES, get_user_name, _UID);
 DEFINE_PRIM(_UID, get_steam_id, _NO_ARG);
 DEFINE_PRIM(_BOOL, restart_app_if_necessary, _I32);
 DEFINE_PRIM(_BOOL, is_overlay_enabled, _NO_ARG);
