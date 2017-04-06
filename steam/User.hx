@@ -36,6 +36,11 @@ class User {
 		waiting = [];
 	}
 
+	public function getID32() {
+		// lower 32 bits seems to be unique, then padded with 0x01100001
+		return Std.parseInt("0x" + uid.toString().substr(0, 8));
+	}
+
 	function get_name() {
 		if( cachedName != null ) return cachedName;
 		cachedName = @:privateAccess String.fromUTF8(get_user_name(uid));
