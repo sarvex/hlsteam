@@ -112,20 +112,27 @@ class Matchmaking {
 		});
 	}
 
-	public static dynamic function onInvited( lobby : Lobby, by : User ) {
-		Api.customTrace("onInvited not handled for " + lobby + " by " + by);
+	static dynamic function onInvited( lobby : Lobby, by : User ) {
+		Api.customTrace("Invitation ignored - no checkInvite registered");
 	}
 
+	static var inviteCheck = false;
 	public static function checkInvite( onInvite : Lobby -> Void ) {
+
+		onInvited = function(lobby, _) onInvite(lobby);
+
+		if( inviteCheck ) return;
+
+		inviteCheck = true;
 		var args = Sys.args();
-		if( args[0] != "+connect_lobby" )
-			return;
-		var uid = haxe.Int64.parseString(args[1]);
-		var bytes = new hl.Bytes(8);
-		bytes.setI32(0, uid.low);
-		bytes.setI32(4, uid.high);
-		var uid : UID = cast bytes;
-		onInvite(new Lobby(uid));
+		if( args[0] == "+connect_lobby" ) {
+			var uid = haxe.Int64.parseString(args[1]);
+			var bytes = new hl.Bytes(8);
+			bytes.setI32(0, uid.low);
+			bytes.setI32(4, uid.high);
+			var uid : UID = cast bytes;
+			onInvite(new Lobby(uid));
+		}
 	}
 
 	static function create_lobby( kind : LobbyKind, maxPlayers : Int, onResult : Callback<UID> ) : AsyncCall {
