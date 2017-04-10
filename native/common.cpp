@@ -88,23 +88,6 @@ void SendEvent(event_type type, bool success, const char *data) {
 		((void(*)(event_type, bool, vbyte*))g_eventHandler->fun)(type, success, (vbyte*)data);
 }
 
-void CallbackHandler::OnDownloadItem( DownloadItemResult_t *pCallback ){
-	if (pCallback->m_unAppID != SteamUtils()->GetAppID()) return;
-
-	std::ostringstream fileIDStream;
-	PublishedFileId_t m_ugcFileID = pCallback->m_nPublishedFileId;
-	fileIDStream << m_ugcFileID;
-	SendEvent(ItemDownloaded, pCallback->m_eResult == k_EResultOK, fileIDStream.str().c_str());
-}
-
-void CallbackHandler::OnItemInstalled( ItemInstalled_t *pCallback ){
-	if (pCallback->m_unAppID != SteamUtils()->GetAppID()) return;
-
-	std::ostringstream fileIDStream;
-	PublishedFileId_t m_ugcFileID = pCallback->m_nPublishedFileId;
-	fileIDStream << m_ugcFileID;
-	SendEvent(ItemDownloaded, true, fileIDStream.str().c_str());
-}
 
 CallbackHandler* s_callbackHandler = NULL;
 static vclosure *s_globalEvent = NULL;
@@ -127,6 +110,12 @@ void GlobalEvent( int id, vdynamic *v ) {
 #define GLOBAL_EVENTS
 #include "events.h"
 #undef GLOBAL_EVENTS
+
+vdynamic *CallbackHandler::EncodeOverlayActivated(GameOverlayActivated_t *d) {
+	HLValue ret;
+	ret.Set("active", d->m_bActive);
+	return ret.value;
+}
 
 HL_PRIM bool HL_NAME(init)( vclosure *onEvent, vclosure *onGlobalEvent ){
 	bool result = SteamAPI_Init();

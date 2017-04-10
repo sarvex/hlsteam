@@ -1,5 +1,23 @@
 #include "steamwrap.h"
 
+void CallbackHandler::OnDownloadItem(DownloadItemResult_t *pCallback) {
+	if (pCallback->m_unAppID != SteamUtils()->GetAppID()) return;
+
+	std::ostringstream fileIDStream;
+	PublishedFileId_t m_ugcFileID = pCallback->m_nPublishedFileId;
+	fileIDStream << m_ugcFileID;
+	SendEvent(ItemDownloaded, pCallback->m_eResult == k_EResultOK, fileIDStream.str().c_str());
+}
+
+void CallbackHandler::OnItemInstalled(ItemInstalled_t *pCallback) {
+	if (pCallback->m_unAppID != SteamUtils()->GetAppID()) return;
+
+	std::ostringstream fileIDStream;
+	PublishedFileId_t m_ugcFileID = pCallback->m_nPublishedFileId;
+	fileIDStream << m_ugcFileID;
+	SendEvent(ItemDownloaded, true, fileIDStream.str().c_str());
+}
+
 void CallbackHandler::SendQueryUGCRequest(UGCQueryHandle_t handle){
 	SteamAPICall_t hSteamAPICall = SteamUGC()->SendQueryUGCRequest(handle);
 	m_callResultUGCQueryCompleted.Set(hSteamAPICall, this, &CallbackHandler::OnUGCQueryCompleted);

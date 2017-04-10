@@ -68,11 +68,6 @@ class Api
 	 */
 	public static var ugc(default, null):UGC;
 
-	/**
-	 * The Steam Cloud API
-	 */
-	public static var cloud(default, null):Cloud;
-
 	//User-settable callbacks:
 
 	public static var whenGamepadTextInputDismissed:String->Void;
@@ -82,7 +77,6 @@ class Api
 	public static var whenUGCItemIdReceived:String->Void;
 	public static var whenUGCItemUpdateComplete:Bool->String->Void;
 
-	public static var whenRemoteStorageFileShared:Bool->String->Void;
 	public static var whenItemInstalled:String->Void;
 	public static var whenItemDownloaded:Bool->String->Void;
 	public static var whenQueryUGCRequestSent:SteamUGCQueryCompleted->Void;
@@ -114,7 +108,6 @@ class Api
 			//initialize other API's:
 			ugc = new UGC(appId, customTrace);
 			controllers = new Controller(customTrace);
-			cloud = new Cloud(appId, customTrace);
 
 			haxe.MainLoop.add(sync);
 		}
@@ -241,22 +234,6 @@ class Api
 		return val;
 	}
 
-	/**
-	 * DEPRECATED: use getStatInt() instead!
-	 *
-	 * Get a stat from steam as an integer
-	 * Kinda awkwardly returns 0 on errors and uses 0 for checking success
-	 * @param	id
-	 * @return
-	 */
-	public static function getStat(id:String):Int {
-		if (!active)
-			return 0;
-		var val = _GetStatInt(@:privateAccess id.toUtf8());
-		report("getStat", [id], val != 0);
-		return val;
-	}
-
 	public static function getUser() {
 		return active ? User.fromUID(get_steam_id()) : null;
 	}
@@ -298,9 +275,8 @@ class Api
 		_OpenOverlay(@:privateAccess url.toUtf8());
 	}
 
-	public static function restartAppInSteam():Bool {
-		if (!active) return false;
-		return _RestartAppIfNecessary(appId);
+	public static function restartIfNecessary( appId : Int ):Bool {
+		return _RestartAppIfNecessary( appId );
 	}
 
 	public static function shutdown() {
@@ -339,18 +315,6 @@ class Api
 	public static function getAchievementAPIName(index:Int):String {
 		if (!active) return null;
 		return @:privateAccess String.fromUTF8(_GetAchievementName(index));
-	}
-
-	/**
-	 * DEPRECATED: use setStatInt() instead!
-	 *
-	 * Sets a steam stat as an int
-	 * @param	id Stat API name
-	 * @param	val
-	 * @return
-	 */
-	public static function setStat(id:String, val:Int):Bool {
-		return setStatInt(id,val);
 	}
 
 	/**
@@ -481,10 +445,6 @@ class Api
 					whenUGCItemUpdateComplete(success, data);
 				}
 			case UGCLegalAgreementStatus:
-			case RemoteStorageFileShared:
-				if (whenRemoteStorageFileShared != null) {
-					whenRemoteStorageFileShared(success, data);
-				}
 			case ItemInstalled:
 				if (whenItemInstalled != null) {
 					var result:String = cast data;
@@ -500,7 +460,7 @@ class Api
 					var result = SteamUGCQueryCompleted.fromString(data);
 					whenQueryUGCRequestSent(result);
 				}
-			case None:
+			case RemoteStorageFileShared, None:
 		}
 	}
 

@@ -5,16 +5,16 @@ class Test
 {
 	static function main()
 	{
-		trace("Start");
-		
-		var appID:Int = -1;			//PUT YOUR APP ID HERE!
-		
-		if (appID == -1)
-		{
-			trace("You need to supply an app ID!");
-			Sys.exit(0);
+
+		var appID:Int = Std.parseInt(sys.io.File.getContent("steam_appid.txt"));
+
+		if( Api.restartIfNecessary(appID) ){
+			trace("Restart...");
+			Sys.exit(1);
+		}else{
+			trace("Start");
 		}
-		
+
 		Api.init(appID);
 		Api.whenAchievementStored = steamWrap_onAchievementStored;
 		Api.whenLeaderboardScoreDownloaded = steamWrap_onLeaderboardScoreDownloaded;
@@ -30,6 +30,21 @@ class Test
 		{
 			trace("You didn't define any achievements to test...");
 		}
+
+		trace( "Cloud isEnabled= "+steam.Cloud.isEnabled() );
+		trace( "Cloud count= "+steam.Cloud.count() );
+		trace( "Cloud quota= "+steam.Cloud.quota() );
+		if( steam.Cloud.exists("test.txt") ){
+			trace( "Cloud read test= "+steam.Cloud.read("test.txt").toString() );
+			steam.Cloud.delete("test.txt");
+		}else{
+			trace( "Cloud write test= "+steam.Cloud.write("test.txt", haxe.io.Bytes.ofString("pouet")) );
+			trace("try to share...");
+			steam.Cloud.share("test.txt", function(uid){
+				trace("UID="+uid);
+			});
+		}
+
 		
 		//The controller code below assumes you have already read the Steam Docs
 		//on controller support and set up the "default" test configuration, so that
@@ -39,7 +54,7 @@ class Test
 		//
 		//It won't crash if you haven't, it just won't work
 		
-		var controllers:Array<Int> = Steam.controllers.getConnectedControllers();
+		var controllers:Array<Int> = Api.controllers.getConnectedControllers();
 		
 		trace("controllers = " + controllers);
 		
@@ -97,7 +112,7 @@ class Test
 		
 		while (true)
 		{
-			Api.onEnterFrame();
+			Api.sync();
 			Sys.sleep(0.1);
 			
 			if (controllers != null && controllers.length > 0)
@@ -120,7 +135,7 @@ class Test
 		trace("Achievement stored: " + id);
 	}
 
-	private static function steamWrap_onLeaderboardScoreDownloaded(score:steamwrap.api.Api.LeaderboardScore)
+	private static function steamWrap_onLeaderboardScoreDownloaded(score:steam.Api.LeaderboardScore)
 	{
 		trace("Leaderboard score downloaded: " + score.toString());
 	}
