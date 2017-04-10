@@ -7,7 +7,9 @@ EVENT_DECL( LobbyChatUpdate, LobbyChatUpdate_t )
 EVENT_DECL( LobbyChatMsg, LobbyChatMsg_t )
 EVENT_DECL( LobbyJoinRequest, GameLobbyJoinRequested_t )
 
-
+// networking
+EVENT_DECL( P2PSessionRequest, P2PSessionRequest_t )
+EVENT_DECL( P2PSessionConnectionFail, P2PSessionConnectFail_t )
 
 // -------------- OLD EVENTS -----------------------
 #ifndef GLOBAL_EVENTS

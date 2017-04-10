@@ -130,6 +130,9 @@ public:
 	void Set( const char *name, uint32 v ) {
 		Set(name,(int)v);
 	}
+	void Set( const char *name, bool b ) {
+		hl_dyn_seti(value, hl_hash_utf8(name), &hlt_bool, b);
+	}
 	void Set( const char *name, int v ) {
 		hl_dyn_seti(value, hl_hash_utf8(name), &hlt_i32, v);
 	}

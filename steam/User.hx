@@ -30,6 +30,7 @@ class User {
 	public var name(get, never) : String;
 	var cachedName : String;
 	var waiting : Array<haxe.EnumFlags<Changed>->Void>;
+	var p2pcnx : Bool;
 
 	function new(uid) {
 		this.uid = uid;

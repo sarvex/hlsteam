@@ -8,8 +8,10 @@
     <ClCompile Include="native\common.cpp" />
     <ClCompile Include="native\cloud.cpp" />
     <ClCompile Include="native\friends.cpp" />
+    <ClCompile Include="native\networking.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="native\steamwrap.h" />
+    <ClInclude Include="native\events.h" />
   </ItemGroup>
 </Project>

@@ -207,10 +207,12 @@
     <ClCompile Include="native\controller.cpp" />
     <ClCompile Include="native\friends.cpp" />
     <ClCompile Include="native\matchmaking.cpp" />
+    <ClCompile Include="native\networking.cpp" />
     <ClCompile Include="native\stats.cpp" />
     <ClCompile Include="native\ugc.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="native\events.h" />
     <ClInclude Include="native\steamwrap.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
