@@ -113,7 +113,7 @@ void GlobalEvent( int id, vdynamic *v ) {
 
 vdynamic *CallbackHandler::EncodeOverlayActivated(GameOverlayActivated_t *d) {
 	HLValue ret;
-	ret.Set("active", d->m_bActive);
+	ret.Set("active", d->m_bActive != 0);
 	return ret.value;
 }
 

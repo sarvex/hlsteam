@@ -68,7 +68,7 @@ class Api
 	 */
 	public static var ugc(default, null):UGC;
 
-	//User-settable callbacks:
+	// Deprecated User-settable callbacks:
 
 	public static var whenGamepadTextInputDismissed:String->Void;
 	public static var whenAchievementStored:String->Void;
@@ -80,6 +80,10 @@ class Api
 	public static var whenItemInstalled:String->Void;
 	public static var whenItemDownloaded:Bool->String->Void;
 	public static var whenQueryUGCRequestSent:SteamUGCQueryCompleted->Void;
+
+	// User-settable Callbacks
+
+	public static var onOverlay : Bool -> Void;
 
 	/**
 	 * @param appId_	Your Steam APP ID (the numbers on the end of your store page URL - store.steampowered.com/app/XYZ)
@@ -94,6 +98,12 @@ class Api
 		// PersonaStateChange_t
 		registerGlobalEvent(300 + 4, function(data:{user:UID, flags:haxe.EnumFlags<User.Changed>}) {
 			@:privateAccess User.fromUID(data.user).onDataUpdated(data.flags);
+		});
+
+		// GameOverlayActivated_t
+		registerGlobalEvent(300 + 31, function(data:{active: Bool}){
+			if( onOverlay != null )
+				onOverlay( data.active );
 		});
 
 		// if we get this far, the dlls loaded ok and we need Steam to init.
