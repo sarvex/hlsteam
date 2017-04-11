@@ -48,11 +48,11 @@ class Networking {
 
 		initDone = true;
 		// P2PSessionRequest_t
-		Api.registerGlobalEvent(1202, function(uid:UID) {
+		Api.registerGlobalEvent(1202, function(data:{uid:UID}) {
 			if( api == null ) return;
-			var user = User.fromUID(uid);
+			var user = User.fromUID(data.uid);
 			if( api.onConnectionRequest(user) ) {
-				if( !accept_p2p_session(uid) )
+				if( !accept_p2p_session(data.uid) )
 					throw "fail to accept p2p session";
 				addConnection(user);
 			}

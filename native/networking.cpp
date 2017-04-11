@@ -1,7 +1,9 @@
 #include "steamwrap.h"
 
 vdynamic *CallbackHandler::EncodeP2PSessionRequest( P2PSessionRequest_t *d ) {
-	return (vdynamic*)hl_of_uid(d->m_steamIDRemote);
+	HLValue v;
+	v.Set("uid", d->m_steamIDRemote);
+	return v.value;
 }
 
 vdynamic *CallbackHandler::EncodeP2PSessionConnectionFail( P2PSessionConnectFail_t *d ) {
