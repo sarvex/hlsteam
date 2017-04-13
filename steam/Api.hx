@@ -54,11 +54,6 @@ class Api
 	public static var active(default, null):Bool = false;
 
 	/**
-	 * If true, Steam was detected but did not initialize properly, and you should restart under Steam
-	 */
-	public static var wantQuit(default, null):Bool = false;
-
-	/**
 	 * The Steam Controller API
 	 */
 	public static var controllers(default, null):Controller;
@@ -89,7 +84,7 @@ class Api
 	 * @param appId_	Your Steam APP ID (the numbers on the end of your store page URL - store.steampowered.com/app/XYZ)
 	 */
 	public static function init(appId_:Int) {
-		if (active) return;
+		if (active) return true;
 
 		appId = appId_;
 		leaderboardIds = new Array<String>();
@@ -123,9 +118,8 @@ class Api
 		}
 		else {
 			customTrace("Steam failed to activate");
-			// restart under Steam
-			wantQuit = true;
 		}
+		return active;
 	}
 
 	static var globalEvents = new Map<Int,Dynamic->Void>();
