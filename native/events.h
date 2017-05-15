@@ -12,6 +12,10 @@ EVENT_DECL( LobbyJoinRequest, GameLobbyJoinRequested_t )
 EVENT_DECL( P2PSessionRequest, P2PSessionRequest_t )
 EVENT_DECL( P2PSessionConnectionFail, P2PSessionConnectFail_t )
 
+// ugc
+EVENT_DECL(DownloadItem, DownloadItemResult_t)
+EVENT_DECL(ItemInstalled, ItemInstalled_t)
+
 // -------------- OLD EVENTS -----------------------
 #ifndef GLOBAL_EVENTS
 
@@ -22,11 +26,6 @@ EVENT_DECL(AchievementStored, UserAchievementStored_t )
 
 // gamepad
 EVENT_DECL(GamepadTextInputDismissed, GamepadTextInputDismissed_t)
-
-// ugc
-EVENT_DECL(DownloadItem, DownloadItemResult_t)
-EVENT_DECL(ItemInstalled, ItemInstalled_t)
-
 
 #endif // GLOBAL_EVENTS
 

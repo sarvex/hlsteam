@@ -1,158 +1,46 @@
 #include "steamwrap.h"
 
-void CallbackHandler::OnDownloadItem(DownloadItemResult_t *pCallback) {
-	if (pCallback->m_unAppID != SteamUtils()->GetAppID()) return;
-
-	std::ostringstream fileIDStream;
-	PublishedFileId_t m_ugcFileID = pCallback->m_nPublishedFileId;
-	fileIDStream << m_ugcFileID;
-	SendEvent(ItemDownloaded, pCallback->m_eResult == k_EResultOK, fileIDStream.str().c_str());
+vdynamic *CallbackHandler::EncodeDownloadItem(DownloadItemResult_t *d) {
+	HLValue v;
+	v.Set("file", d->m_nPublishedFileId);
+	return v.value;
 }
 
-void CallbackHandler::OnItemInstalled(ItemInstalled_t *pCallback) {
-	if (pCallback->m_unAppID != SteamUtils()->GetAppID()) return;
-
-	std::ostringstream fileIDStream;
-	PublishedFileId_t m_ugcFileID = pCallback->m_nPublishedFileId;
-	fileIDStream << m_ugcFileID;
-	SendEvent(ItemDownloaded, true, fileIDStream.str().c_str());
+vdynamic *CallbackHandler::EncodeItemInstalled(ItemInstalled_t *d) {
+	HLValue v;
+	v.Set("file", d->m_nPublishedFileId);
+	return v.value;
 }
 
-void CallbackHandler::SendQueryUGCRequest(UGCQueryHandle_t handle){
-	SteamAPICall_t hSteamAPICall = SteamUGC()->SendQueryUGCRequest(handle);
-	m_callResultUGCQueryCompleted.Set(hSteamAPICall, this, &CallbackHandler::OnUGCQueryCompleted);
-}
-
-void CallbackHandler::OnUGCQueryCompleted(SteamUGCQueryCompleted_t *pCallback, bool biOFailure){
-	if (pCallback->m_eResult == k_EResultOK)	{
-		std::ostringstream data;
-		data << pCallback->m_handle << ",";
-		data << pCallback->m_unNumResultsReturned << ",";
-		data << pCallback->m_unTotalMatchingResults << ",";
-		data << pCallback->m_bCachedData;
-
-		SendEvent(UGCQueryCompleted, true, data.str().c_str());
-	}else{
-		SendEvent(UGCQueryCompleted, false, NULL);
-	}
-}
-
-void CallbackHandler::SubmitUGCItemUpdate(UGCUpdateHandle_t handle, const char *pchChangeNote){
-	SteamAPICall_t hSteamAPICall = SteamUGC()->SubmitItemUpdate(handle, pchChangeNote);
-	m_callResultSubmitUGCItemUpdate.Set(hSteamAPICall, this, &CallbackHandler::OnItemUpdateSubmitted);
-}
-
-void CallbackHandler::OnItemUpdateSubmitted(SubmitItemUpdateResult_t *pCallback, bool bIOFailure)
-{
-	if(	pCallback->m_eResult == k_EResultInsufficientPrivilege ||
-		pCallback->m_eResult == k_EResultTimeout ||
-		pCallback->m_eResult == k_EResultNotLoggedOn ||
-		bIOFailure
-	)
-		SendEvent(UGCItemUpdateSubmitted, false, NULL);
-	else
-		SendEvent(UGCItemUpdateSubmitted, true, NULL);
-}
-
-void CallbackHandler::CreateUGCItem(AppId_t nConsumerAppId, EWorkshopFileType eFileType){
-	SteamAPICall_t hSteamAPICall = SteamUGC()->CreateItem(nConsumerAppId, eFileType);
-	m_callResultCreateUGCItem.Set(hSteamAPICall, this, &CallbackHandler::OnUGCItemCreated);
-}
-
-void CallbackHandler::OnUGCItemCreated(CreateItemResult_t *pCallback, bool bIOFailure){
-	if (bIOFailure)	{
-		SendEvent(UGCItemCreated, false, NULL);
-		return;
-	}
-
-	PublishedFileId_t m_ugcFileID = pCallback->m_nPublishedFileId;
-
-	/*
-	*  k_EResultInsufficientPrivilege : The user creating the item is currently banned in the community.
-	*  k_EResultTimeout : The operation took longer than expected, have the user retry the create process.
-	*  k_EResultNotLoggedOn : The user is not currently logged into Steam.
-	*/
-	if(	pCallback->m_eResult == k_EResultInsufficientPrivilege ||
-		pCallback->m_eResult == k_EResultTimeout ||
-		pCallback->m_eResult == k_EResultNotLoggedOn){
-		SendEvent(UGCItemCreated, false, NULL);
-	}else{
-		std::ostringstream fileIDStream;
-		fileIDStream << m_ugcFileID;
-		SendEvent(UGCItemCreated, true, fileIDStream.str().c_str());
-	}
-
-	SendEvent(UGCLegalAgreementStatus, !pCallback->m_bUserNeedsToAcceptWorkshopLegalAgreement, NULL);
-
-	if(pCallback->m_bUserNeedsToAcceptWorkshopLegalAgreement){
-		std::ostringstream urlStream;
-		urlStream << "steam://url/CommunityFilePage/" << m_ugcFileID;
-
-		// TODO: Separate this to it's own call through wrapper.
-		SteamFriends()->ActivateGameOverlayToWebPage(urlStream.str().c_str());
-	}
-}
-
-
-//generates a uint64 array from comma-delimeted-values
-uint64 * getUint64Array(const char * str, uint32 * numElements){
-	std::string stdStr = str;
-
-	//NOTE: this will probably fail if the string includes Unicode, but Steam tags probably don't support that?
-	std::vector<std::string> v;
-	split(stdStr, ',', v);
-
-	int count = v.size();
-
-	uint64 * values = new uint64[count];
-
-	for(int i = 0; i < count; i++) {
-		values[i] = strtoull(v[i].c_str(), NULL, 0);
-	}
-
-	*numElements = count;
-
-	return values;
-}
-
-HL_PRIM int HL_NAME(get_num_subscribed_items)() {
-	if (!CheckInit()) return 0;
-	return SteamUGC()->GetNumSubscribedItems();
-}
-DEFINE_PRIM(_I32, get_num_subscribed_items, _NO_ARG);
-
-HL_PRIM vbyte *HL_NAME(get_subscribed_items)(){
-	if (!CheckInit()) return (vbyte*)"";
+HL_PRIM varray *HL_NAME(get_subscribed_items)(){
+	if (!CheckInit()) return NULL;
 
 	int numSubscribed = SteamUGC()->GetNumSubscribedItems();
-	if(numSubscribed <= 0) return (vbyte*)"";
+	if(numSubscribed <= 0) return hl_alloc_array(&hlt_bytes, 0);
 	PublishedFileId_t* pvecPublishedFileID = new PublishedFileId_t[numSubscribed];
 
 	int result = SteamUGC()->GetSubscribedItems(pvecPublishedFileID, numSubscribed);
 
-	std::ostringstream data;
-	for(int i = 0; i < result; i++){
-		if(i != 0)
-			data << ",";
-		data << pvecPublishedFileID[i];
-	}
+	varray *a = hl_alloc_array(&hlt_bytes, result);
+	vuid *aa = hl_aptr(a, vuid);
+	
+	for (int i = 0; i < result; i++)
+		aa[i] = hl_of_uint64(pvecPublishedFileID[i]);
 	delete pvecPublishedFileID;
-
-	return (vbyte*)data.str().c_str();
+	a->size = result;
+	return a;
 }
-DEFINE_PRIM(_BYTES, get_subscribed_items, _NO_ARG);
 
-HL_PRIM int HL_NAME(get_item_state)(vbyte *publishedFileID){
+HL_PRIM int HL_NAME(get_item_state)(vuid publishedFileID){
 	if (!CheckInit()) return 0;
-	PublishedFileId_t nPublishedFileID = (PublishedFileId_t) strtoll((char*)publishedFileID, NULL, 10);
+	PublishedFileId_t nPublishedFileID = (PublishedFileId_t)hl_to_uint64(publishedFileID);
 	return SteamUGC()->GetItemState(nPublishedFileID);
 }
-DEFINE_PRIM(_I32, get_item_state, _BYTES);
 
-HL_PRIM bool HL_NAME(get_item_download_info)(vbyte *publishedFileID, double *downloaded, double *total ){
-	if (!CheckInit()) return (vbyte*)"";
+HL_PRIM bool HL_NAME(get_item_download_info)(vuid publishedFileID, double *downloaded, double *total ){
+	if (!CheckInit()) return false;
 
-	PublishedFileId_t nPublishedFileID = (PublishedFileId_t) strtoll((char*)publishedFileID, NULL, 10);
+	PublishedFileId_t nPublishedFileID = (PublishedFileId_t)hl_to_uint64(publishedFileID);
 
 	uint64 punBytesDownloaded;
 	uint64 punBytesTotal;
@@ -167,364 +55,368 @@ HL_PRIM bool HL_NAME(get_item_download_info)(vbyte *publishedFileID, double *dow
 
 	return result;
 }
-DEFINE_PRIM(_BOOL, get_item_download_info, _BYTES _REF(_F64) _REF(_F64));
 
-HL_PRIM bool HL_NAME(download_item)(vbyte *publishedFileID, bool highPriority){
+HL_PRIM bool HL_NAME(download_item)(vuid publishedFileID, bool highPriority){
 	if (!CheckInit()) return false;
-	PublishedFileId_t nPublishedFileID = (PublishedFileId_t) strtoll((char*)publishedFileID, NULL, 10);
+	PublishedFileId_t nPublishedFileID = (PublishedFileId_t)hl_to_uint64(publishedFileID);
 
 	return SteamUGC()->DownloadItem(nPublishedFileID, highPriority);
 }
-DEFINE_PRIM(_BOOL, download_item, _BYTES _BOOL);
 
-HL_PRIM vbyte *HL_NAME(get_item_install_info)(vbyte *publishedFileID, int maxFolderPathLength){
-	if (!CheckInit()) return (vbyte*)"";
+HL_PRIM vdynamic *HL_NAME(get_item_install_info)(vuid publishedFileID){
+	if (!CheckInit()) return NULL;
 
-	PublishedFileId_t nPublishedFileID = (PublishedFileId_t) strtoll((char*)publishedFileID, NULL, 10);
+	PublishedFileId_t nPublishedFileID = (PublishedFileId_t)hl_to_uint64(publishedFileID);
 
 	uint64 punSizeOnDisk;
 	uint32 punTimeStamp;
-	uint32 cchFolderSize = (uint32) maxFolderPathLength;
-	char * pchFolder = new char[cchFolderSize];
+	uint32 cchFolderSize = 256;
+	char * pchFolder = (char *)hl_gc_alloc_noptr(cchFolderSize);
 
 	bool result = SteamUGC()->GetItemInstallInfo(nPublishedFileID, &punSizeOnDisk, pchFolder, cchFolderSize, &punTimeStamp);
 
 	if(result){
-		std::ostringstream data;
-		data << punSizeOnDisk;
-		data << "|";
-		data << pchFolder;
-		data << "|";
-		data << cchFolderSize;
-		data << "|";
-		data << punTimeStamp;
-		return (vbyte*)data.str().c_str();
+		HLValue ret;
+		ret.Set("size", punSizeOnDisk);
+		ret.Set("time", punTimeStamp);
+		ret.Set("path", pchFolder);
+		return ret.value;
 	}
 
-	return (vbyte*)"0||0|";
+	return NULL;
 }
-DEFINE_PRIM(_BYTES, get_item_install_info, _BYTES _I32);
 
-HL_PRIM vbyte *HL_NAME(create_query_all_ugc_request)(int queryType, int matchingUGCType, int creatorAppID, int consumerAppID, int page){
-	if (!CheckInit()) return (vbyte*)"";
+static void on_item_subscribed(vclosure *c, RemoteStorageSubscribePublishedFileResult_t *result, bool error) {
+	if (!error && result->m_eResult == k_EResultOK) {
+		vdynamic d;
+		hl_set_uid(&d, result->m_nPublishedFileId);
+		dyn_call_result(c, &d, error);
+	}
+	else {
+		dyn_call_result(c, NULL, true);
+	}
+}
+HL_PRIM CClosureCallResult<RemoteStorageSubscribePublishedFileResult_t>* HL_NAME(subscribe_item)(vuid publishedFileID, vclosure *closure) {
+	if (!CheckInit()) return NULL;
+	ASYNC_CALL(SteamUGC()->SubscribeItem(hl_to_uint64(publishedFileID)), RemoteStorageSubscribePublishedFileResult_t, on_item_subscribed);
+	return m_call;
+}
+HL_PRIM CClosureCallResult<RemoteStorageSubscribePublishedFileResult_t>* HL_NAME(unsubscribe_item)(vuid publishedFileID, vclosure *closure) {
+	if (!CheckInit()) return NULL;
+	ASYNC_CALL(SteamUGC()->UnsubscribeItem(hl_to_uint64(publishedFileID)), RemoteStorageSubscribePublishedFileResult_t, on_item_subscribed);
+	return m_call;
+}
+
+
+DEFINE_PRIM(_ARR, get_subscribed_items, _NO_ARG);
+DEFINE_PRIM(_I32, get_item_state, _UID);
+DEFINE_PRIM(_BOOL, get_item_download_info, _UID _REF(_F64) _REF(_F64));
+DEFINE_PRIM(_BOOL, download_item, _UID _BOOL);
+DEFINE_PRIM(_DYN, get_item_install_info, _UID);
+DEFINE_PRIM(_CRESULT, subscribe_item, _UID _CALLB(_UID));
+DEFINE_PRIM(_CRESULT, unsubscribe_item, _UID _CALLB(_UID));
+
+//-----------------------------------------------------------------------------------------------------------
+// UGC QUERY
+//-----------------------------------------------------------------------------------------------------------
+
+HL_PRIM vuid HL_NAME(ugc_query_create_all_request)(int queryType, int matchingUGCType, int creatorAppID, int consumerAppID, int page){
+	if (!CheckInit()) return NULL;
 
 	EUGCQuery eQueryType = (EUGCQuery) queryType;
 	EUGCMatchingUGCType eMatchingUGCType = (EUGCMatchingUGCType) matchingUGCType;
 	AppId_t nCreatorAppID = creatorAppID;
 	AppId_t nConsumerAppID = consumerAppID;
-	uint32 unPage = page;
 
-	UGCQueryHandle_t result = SteamUGC()->CreateQueryAllUGCRequest(eQueryType, eMatchingUGCType, nCreatorAppID, nConsumerAppID, unPage);
-
-	std::ostringstream data;
-	data << result;
-	return (vbyte*)data.str().c_str();
+	UGCQueryHandle_t result = SteamUGC()->CreateQueryAllUGCRequest(eQueryType, eMatchingUGCType, nCreatorAppID, nConsumerAppID, page);
+	return hl_of_uint64(result);
 }
-DEFINE_PRIM(_BYTES, create_query_all_ugc_request, _I32 _I32 _I32 _I32 _I32);
 
-HL_PRIM vbyte *HL_NAME(create_query_ugc_details_request)(vbyte *fileIDs){
-	if (!CheckInit()) return (vbyte*)"";
-	uint32 unNumPublishedFileIDs = 0;
-	PublishedFileId_t * pvecPublishedFileID = getUint64Array((char*)fileIDs, &unNumPublishedFileIDs);
+HL_PRIM vuid HL_NAME(ugc_query_create_user_request)(int uid, int listType, int matchingUGCType, int sortOrder, int creatorAppID, int consumerAppID, int page) {
+	if (!CheckInit()) return NULL;
 
-	UGCQueryHandle_t result = SteamUGC()->CreateQueryUGCDetailsRequest(pvecPublishedFileID, unNumPublishedFileIDs);
+	EUserUGCList eListType = (EUserUGCList)eListType;
+	EUGCMatchingUGCType eMatchingUGCType = (EUGCMatchingUGCType)matchingUGCType;
+	EUserUGCListSortOrder eSortOrder = (EUserUGCListSortOrder)sortOrder;
+	AppId_t nCreatorAppID = creatorAppID;
+	AppId_t nConsumerAppID = consumerAppID;
+	AccountID_t accountId = uid;
 
-	std::ostringstream data;
-	data << result;
-	return (vbyte*)data.str().c_str();
+	UGCQueryHandle_t result = SteamUGC()->CreateQueryUserUGCRequest(accountId, eListType, eMatchingUGCType, eSortOrder, creatorAppID, consumerAppID, page);
+	return hl_of_uint64(result);
 }
-DEFINE_PRIM(_BYTES, create_query_ugc_details_request, _BYTES);
 
-HL_PRIM void HL_NAME(send_query_ugc_request)(vbyte *cHandle){
-	if (!CheckInit()) return;
-	UGCQueryHandle_t handle = strtoull((char*)cHandle, NULL, 0);
-	s_callbackHandler->SendQueryUGCRequest(handle);
+HL_PRIM vuid HL_NAME(ugc_query_create_details_request)(varray *fileIDs){
+	if (!CheckInit()) return NULL;
+
+	PublishedFileId_t * pvecPublishedFileID = new PublishedFileId_t[fileIDs->size];
+	vuid *ids = hl_aptr(fileIDs, vuid);
+	for (int i = 0; i < fileIDs->size; i++)
+		pvecPublishedFileID[i] = hl_to_uint64(ids[i]);
+
+	UGCQueryHandle_t result = SteamUGC()->CreateQueryUGCDetailsRequest(pvecPublishedFileID, fileIDs->size);
+	delete pvecPublishedFileID;
+	return hl_of_uint64(result);
 }
-DEFINE_PRIM(_VOID, send_query_ugc_request, _BYTES);
 
-
-HL_PRIM int HL_NAME(get_query_ugc_num_key_value_tags)(vbyte *cHandle, int iIndex){
-	if (!CheckInit()) return 0;
-	UGCQueryHandle_t handle = strtoull((char*)cHandle, NULL, 0);
-	uint32 index = iIndex;
-	return SteamUGC()->GetQueryUGCNumKeyValueTags(handle, index);
-}
-DEFINE_PRIM(_I32, get_query_ugc_num_key_value_tags, _BYTES _I32);
-
-HL_PRIM bool HL_NAME(release_query_ugc_request)(vbyte *cHandle){
+HL_PRIM bool HL_NAME(ugc_query_set_language)(vuid handle, vbyte *lang) {
 	if (!CheckInit()) return false;
-	UGCQueryHandle_t handle = strtoull((char*)cHandle, NULL, 0);
-	return SteamUGC()->ReleaseQueryUGCRequest(handle);
+	return SteamUGC()->SetLanguage(hl_to_uint64(handle), (char*)lang);
 }
-DEFINE_PRIM(_BOOL, release_query_ugc_request, _BYTES);
 
-HL_PRIM vbyte *HL_NAME(get_query_ugc_key_value_tag)(vbyte *cHandle, int iIndex, int iKeyValueTagIndex, int keySize, int valueSize){
-	if (!CheckInit()) return (vbyte*)"";
-
-	UGCQueryHandle_t handle = strtoull((char*)cHandle, NULL, 0);
-	uint32 index = iIndex;
-	uint32 keyValueTagIndex = iKeyValueTagIndex;
-	uint32 cchKeySize = keySize;
-	uint32 cchValueSize = valueSize;
-
-	char *pchKey = new char[cchKeySize];
-	char *pchValue = new char[cchValueSize];
-
-	SteamUGC()->GetQueryUGCKeyValueTag(handle, index, keyValueTagIndex, pchKey, cchKeySize, pchValue, cchValueSize);
-
-	std::ostringstream data;
-	data << pchKey << "=" << pchValue;
-
-	delete pchKey;
-	delete pchValue;
-
-	return (vbyte*)data.str().c_str();
-}
-DEFINE_PRIM(_BYTES, get_query_ugc_key_value_tag, _BYTES _I32 _I32 _I32 _I32);
-
-HL_PRIM vbyte *HL_NAME(get_query_ugc_metadata)(vbyte *sHandle, int iIndex, int iMetaDataSize){
-	if (!CheckInit()) return (vbyte*)("");
-
-	UGCQueryHandle_t handle = strtoull((char*)sHandle, NULL, 0);
-
-	uint32 cchMetadatasize = iMetaDataSize;
-	char * pchMetadata = new char[cchMetadatasize];
-	uint32 index = iIndex;
-
-	SteamUGC()->GetQueryUGCMetadata(handle, index, pchMetadata, cchMetadatasize);
-
-	std::ostringstream data;
-	data << pchMetadata;
-
-	delete pchMetadata;
-
-	return (vbyte*)data.str().c_str();
-}
-DEFINE_PRIM(_BYTES, get_query_ugc_metadata, _BYTES _I32 _I32);
-
-HL_PRIM vbyte *HL_NAME(get_query_ugc_result)(vbyte *sHandle, int iIndex){
-	if (!CheckInit()) return (vbyte*)"";
-
-	UGCQueryHandle_t handle = strtoull((char*)sHandle, NULL, 0);
-
-	uint32 index = iIndex;
-
-	SteamUGCDetails_t * d = new SteamUGCDetails_t;
-
-	SteamUGC()->GetQueryUGCResult(handle, index, d);
-
-	std::ostringstream data;
-
-	data << "publishedFileID:" << d->m_nPublishedFileId << ",";
-	data << "result:" << d->m_eResult << ",";
-	data << "fileType:" << d->m_eFileType<< ",";
-	data << "creatorAppID:" << d->m_nCreatorAppID<< ",";
-	data << "consumerAppID:" << d->m_nConsumerAppID<< ",";
-	data << "title:" << d->m_rgchTitle<< ",";
-	data << "description:" << d->m_rgchDescription<< ",";
-	data << "steamIDOwner:" << d->m_ulSteamIDOwner<< ",";
-	data << "timeCreated:" << d->m_rtimeCreated<< ",";
-	data << "timeUpdated:" << d->m_rtimeUpdated<< ",";
-	data << "timeAddedToUserList:" << d->m_rtimeAddedToUserList<< ",";
-	data << "visibility:" << d->m_eVisibility<< ",";
-	data << "banned:" << d->m_bBanned<< ",";
-	data << "acceptedForUse:" << d->m_bAcceptedForUse<< ",";
-	data << "tagsTruncated:" << d->m_bTagsTruncated<< ",";
-	data << "tags:" << d->m_rgchTags<< ",";
-	data << "file:" << d->m_hFile<< ",";
-	data << "previewFile:" << d->m_hPreviewFile<< ",";
-	data << "fileName:" << d->m_pchFileName<< ",";
-	data << "fileSize:" << d->m_nFileSize<< ",";
-	data << "previewFileSize:" << d->m_nPreviewFileSize<< ",";
-	data << "rgchURL:" << d->m_rgchURL<< ",";
-	data << "votesup:" << d->m_unVotesUp<< ",";
-	data << "votesDown:" << d->m_unVotesDown<< ",";
-	data << "score:" << d->m_flScore<< ",";
-	data << "numChildren:" << d->m_unNumChildren;
-
-	delete d;
-
-	return (vbyte*)data.str().c_str();
-}
-DEFINE_PRIM(_BYTES, get_query_ugc_result, _BYTES _I32);
-
-HL_PRIM bool HL_NAME(submit_ugc_item_update)(vbyte *updateHandle, vbyte *changeNotes){
+HL_PRIM bool HL_NAME(ugc_query_set_search_text)(vuid handle, vbyte *search) {
 	if (!CheckInit()) return false;
-
-	// Create uint64 from the string.
-	uint64 updateHandle64;
-	std::istringstream handleStream((char*)updateHandle);
-	if (!(handleStream >> updateHandle64))
-		return false;
-
-	s_callbackHandler->SubmitUGCItemUpdate(updateHandle64, (char*)changeNotes);
- 	return true;
+	return SteamUGC()->SetSearchText(hl_to_uint64(handle), (char*)search);
 }
-DEFINE_PRIM(_BOOL, submit_ugc_item_update, _BYTES _BYTES);
 
-HL_PRIM vbyte *HL_NAME(start_update_ugc_item)(int id, int itemID) {
-	if (!CheckInit()) return (vbyte*)"0";
-
-	UGCUpdateHandle_t ugcUpdateHandle = SteamUGC()->StartItemUpdate(id, itemID);
-
-	//Change the uint64 to string, easier to handle between haxe & cpp.
-	std::ostringstream updateHandleStream;
-	updateHandleStream << ugcUpdateHandle;
-
- 	return (vbyte*)updateHandleStream.str().c_str();
-}
-DEFINE_PRIM(_BYTES, start_update_ugc_item, _I32 _I32);
-
-HL_PRIM bool HL_NAME(set_ugc_item_title)(vbyte *updateHandle, vbyte *title) {
+HL_PRIM bool HL_NAME(ugc_query_add_required_tag)(vuid handle, vbyte *tagName) {
 	if (!CheckInit()) return false;
-
-	// Create uint64 from the string.
-	uint64 updateHandle64;
-	std::istringstream handleStream((char*)updateHandle);
-	if (!(handleStream >> updateHandle64))
-		return false;
-	return SteamUGC()->SetItemTitle(updateHandle64, (char*)title);
+	return SteamUGC()->AddRequiredTag(hl_to_uint64(handle), (char*)tagName);
 }
-DEFINE_PRIM(_BOOL, set_ugc_item_title, _BYTES _BYTES);
 
-HL_PRIM bool HL_NAME(set_ugc_item_description)(vbyte *updateHandle, vbyte *description){
-	if(!CheckInit()) return false;
-
-	// Create uint64 from the string.
-	uint64 updateHandle64;
-	std::istringstream handleStream((char*)updateHandle);
-	if (!(handleStream >> updateHandle64))
-		return false;
-
-	return SteamUGC()->SetItemDescription(updateHandle64, (char*)description);
-}
-DEFINE_PRIM(_BOOL, set_ugc_item_description, _BYTES _BYTES);
-
-HL_PRIM bool HL_NAME(set_ugc_item_tags)(vbyte *updateHandle, vbyte *tags){
+HL_PRIM bool HL_NAME(ugc_query_add_required_key_value_tag)(vuid handle, vbyte *pKey, vbyte *pValue) {
 	if (!CheckInit()) return false;
-
-	// Create uint64 from the string.
-	uint64 updateHandle64;
-	std::istringstream handleStream((char*)updateHandle);
-	if (!(handleStream >> updateHandle64))
-		return false;
-
-	// Create tag array from the string.
-	SteamParamStringArray_t *pTags = getSteamParamStringArray((char*)tags);
-
-	bool result = SteamUGC()->SetItemTags(updateHandle64, pTags);
-	deleteSteamParamStringArray(pTags);
-	return result;
+	return SteamUGC()->AddRequiredKeyValueTag(hl_to_uint64(handle), (char*)pKey, (char*)pValue);
 }
-DEFINE_PRIM(_BOOL, set_ugc_item_tags, _BYTES _BYTES);
 
-HL_PRIM bool HL_NAME(add_ugc_item_key_value_tag)(vbyte *updateHandle, vbyte *keyStr, vbyte *valueStr){
+HL_PRIM bool HL_NAME(ugc_query_add_excluded_tag)(vuid handle, vbyte *tagName) {
 	if (!CheckInit()) return false;
-
-	// Create uint64 from the string.
-	uint64 updateHandle64;
-	std::istringstream handleStream((char*)updateHandle);
-	if (!(handleStream >> updateHandle64))
-		return false;
-
-	return SteamUGC()->AddItemKeyValueTag(updateHandle64, (char*)keyStr, (char*)valueStr);
+	return SteamUGC()->AddExcludedTag(hl_to_uint64(handle), (char*)tagName);
 }
-DEFINE_PRIM(_BOOL, add_ugc_item_key_value_tag, _BYTES _BYTES _BYTES);
 
-HL_PRIM bool HL_NAME(remove_ugc_item_key_value_tags)(vbyte *updateHandle, vbyte *keyStr) {
+HL_PRIM bool HL_NAME(ugc_query_set_return_metadata)(vuid handle, bool returnMetadata) {
 	if (!CheckInit()) return false;
-
-	// Create uint64 from the string.
-	uint64 updateHandle64;
-	std::istringstream handleStream((char*)updateHandle);
-	if (!(handleStream >> updateHandle64))
-		return false;
-
-	return SteamUGC()->RemoveItemKeyValueTags(updateHandle64, (char*)keyStr);
+	return SteamUGC()->SetReturnMetadata(hl_to_uint64(handle), returnMetadata);
 }
-DEFINE_PRIM(_BOOL, remove_ugc_item_key_value_tags, _BYTES _BYTES);
 
-HL_PRIM bool HL_NAME(set_ugc_item_visibility)(vbyte *updateHandle, int visibility) {
+HL_PRIM bool HL_NAME(ugc_query_set_return_key_value_tags)(vuid handle, bool returnKeyValueTags) {
 	if (!CheckInit()) return false;
-
-	// Create uint64 from the string.
-	uint64 updateHandle64;
-	std::istringstream handleStream((char*)updateHandle);
-	if (!(handleStream >> updateHandle64))
-		return false;
-
-	ERemoteStoragePublishedFileVisibility visibilityEnum = static_cast<ERemoteStoragePublishedFileVisibility>(visibility);
-
-	return SteamUGC()->SetItemVisibility(updateHandle64, visibilityEnum);
+	return SteamUGC()->SetReturnKeyValueTags(hl_to_uint64(handle), returnKeyValueTags);
 }
-DEFINE_PRIM(_BOOL, set_ugc_item_visibility, _BYTES _I32);
 
-HL_PRIM bool HL_NAME(set_ugc_item_content)(vbyte *updateHandle, vbyte *path){
+static void on_query_completed(vclosure *c, SteamUGCQueryCompleted_t *result, bool error) {
+	if (!error && result->m_eResult == k_EResultOK) {
+		HLValue v;
+		v.Set("handle", result->m_handle);
+		v.Set("resultsReturned", result->m_unNumResultsReturned);
+		v.Set("totalResults", result->m_unTotalMatchingResults);
+		v.Set("cached", result->m_bCachedData);
+		dyn_call_result(c, v.value, error);
+	} else {
+		dyn_call_result(c, NULL, true);
+	}
+}
+HL_PRIM CClosureCallResult<SteamUGCQueryCompleted_t>* HL_NAME(ugc_query_send_request)(vuid cHandle, vclosure *closure){
+	if (!CheckInit()) return NULL;
+	ASYNC_CALL(SteamUGC()->SendQueryUGCRequest(hl_to_uint64(cHandle)), SteamUGCQueryCompleted_t, on_query_completed);
+	return m_call;
+}
+
+HL_PRIM bool HL_NAME(ugc_query_release_request)(vuid cHandle) {
 	if (!CheckInit()) return false;
-
-	// Create uint64 from the string.
-	uint64 updateHandle64;
-	std::istringstream handleStream((char*)updateHandle);
-	if (!(handleStream >> updateHandle64))
-		return false;
-
-	return SteamUGC()->SetItemContent(updateHandle64, (char*)path);
+	return SteamUGC()->ReleaseQueryUGCRequest(hl_to_uint64(cHandle));
 }
-DEFINE_PRIM(_BOOL, set_ugc_item_content, _BYTES _BYTES);
 
-HL_PRIM bool HL_NAME(set_ugc_item_preview_image)(vbyte *updateHandle, vbyte *path){
-	if (!CheckInit()) return false;
+HL_PRIM varray *HL_NAME(ugc_query_get_key_value_tags)(vuid cHandle, int iIndex, int maxValueLength ){
+	if (!CheckInit()) return NULL;
 
-	// Create uint64 from the string.
-	uint64 updateHandle64;
-	std::istringstream handleStream((char*)updateHandle);
-	if (!(handleStream >> updateHandle64))
-		return false;
+	UGCQueryHandle_t handle = hl_to_uint64(cHandle);
 
-	return SteamUGC()->SetItemPreview(updateHandle64, (char*)path);
+	char key[255];
+	char *value = new char[maxValueLength];
+	int num = SteamUGC()->GetQueryUGCNumKeyValueTags(hl_to_uint64(cHandle), iIndex);
+	varray *ret = hl_alloc_array(&hlt_bytes, num<<1);
+	vbyte **a = hl_aptr(ret, vbyte*);
+	for (int i = 0; i < num; i++) {
+		SteamUGC()->GetQueryUGCKeyValueTag(handle, iIndex, i, key, 255, value, maxValueLength);
+		
+		a[i*2] = hl_copy_bytes((vbyte*)key, strlen(key) + 1);
+		a[i*2+1] = hl_copy_bytes((vbyte*)value, strlen(value) + 1);
+	}
+	delete value;
+	return ret;
 }
-DEFINE_PRIM(_BOOL, set_ugc_item_preview_image, _BYTES _BYTES);
 
-HL_PRIM bool HL_NAME(create_ugc_item)(int id) {
-	if (!CheckInit()) return false;
-
-	s_callbackHandler->CreateUGCItem(id, k_EWorkshopFileTypeCommunity);
- 	return true;
+HL_PRIM vbyte *HL_NAME(ugc_query_get_metadata)(vuid sHandle, int iIndex){
+	if (!CheckInit()) return NULL;
+	char pchMetadata[5000];
+	SteamUGC()->GetQueryUGCMetadata(hl_to_uint64(sHandle), iIndex, pchMetadata, 5000);
+	return hl_copy_bytes((vbyte*)pchMetadata, strlen(pchMetadata) + 1);
 }
-DEFINE_PRIM(_BOOL, create_ugc_item, _I32);
+
+HL_PRIM vdynamic *HL_NAME(ugc_query_get_result)(vuid sHandle, int iIndex){
+	if (!CheckInit()) return NULL;
+
+	UGCQueryHandle_t handle = hl_to_uint64(sHandle);
+	SteamUGCDetails_t d;
+	HLValue v;
+
+	SteamUGC()->GetQueryUGCResult(handle, iIndex, &d);
+
+	v.Set("id", d.m_nPublishedFileId);
+	v.Set("result", (int)d.m_eResult);
+	v.Set("fileType", (int)d.m_eFileType);
+	v.Set("creatorApp", d.m_nCreatorAppID);
+	v.Set("consumerApp", d.m_nConsumerAppID);
+	v.Set("title", d.m_rgchTitle);
+	v.Set("description", d.m_rgchDescription);
+	v.Set("owner", d.m_ulSteamIDOwner);
+	v.Set("timeCreated", d.m_rtimeCreated);
+	v.Set("timeUpdated", d.m_rtimeUpdated);
+	v.Set("timeAddedToUserList", d.m_rtimeAddedToUserList);
+	v.Set("visibility", d.m_eVisibility);
+	v.Set("banned", d.m_bBanned);
+	v.Set("acceptedForUse", d.m_bAcceptedForUse);
+	v.Set("tagsTruncated", d.m_bTagsTruncated);
+	v.Set("tags", d.m_rgchTags);
+	v.Set("file", d.m_hFile);
+	v.Set("previewFile", d.m_hPreviewFile);
+	v.Set("fileName", d.m_pchFileName);
+	v.Set("fileSize", d.m_nFileSize);
+	v.Set("previewFileSize", d.m_nPreviewFileSize);
+	v.Set("url", d.m_rgchURL);
+	v.Set("votesup", d.m_unVotesUp);
+	v.Set("votesDown", d.m_unVotesDown);
+	v.Set("score", d.m_flScore);
+	v.Set("numChildren", d.m_unNumChildren);
+
+	return v.value;
+}
+
+DEFINE_PRIM(_UID, ugc_query_create_all_request, _I32 _I32 _I32 _I32 _I32);
+DEFINE_PRIM(_UID, ugc_query_create_user_request, _I32 _I32 _I32 _I32 _I32 _I32 _I32);
+DEFINE_PRIM(_UID, ugc_query_create_details_request, _ARR);
+
+DEFINE_PRIM(_BOOL, ugc_query_set_language, _UID _BYTES);
+DEFINE_PRIM(_BOOL, ugc_query_set_search_text, _UID _BYTES);
+DEFINE_PRIM(_BOOL, ugc_query_add_required_tag, _UID _BYTES);
+DEFINE_PRIM(_BOOL, ugc_query_add_required_key_value_tag, _UID _BYTES _BYTES);
+DEFINE_PRIM(_BOOL, ugc_query_add_excluded_tag, _UID _BYTES);
+DEFINE_PRIM(_BOOL, ugc_query_set_return_metadata, _UID _BOOL);
+DEFINE_PRIM(_BOOL, ugc_query_set_return_key_value_tags, _UID _BOOL);
+
+DEFINE_PRIM(_CRESULT, ugc_query_send_request, _UID _CALLB(_DYN));
+DEFINE_PRIM(_BOOL, ugc_query_release_request, _UID);
+
+DEFINE_PRIM(_ARR, ugc_query_get_key_value_tags, _UID _I32 _I32);
+DEFINE_PRIM(_BYTES, ugc_query_get_metadata, _UID _I32);
+DEFINE_PRIM(_DYN, ugc_query_get_result, _UID _I32);
+
 
 //-----------------------------------------------------------------------------------------------------------
-HL_PRIM bool HL_NAME(add_required_tag)(vbyte* handle, vbyte *tagName){
-	if (!CheckInit()) return false;
-	UGCQueryHandle_t u64Handle = strtoull((char*)handle, NULL, 0);
-	return SteamUGC()->AddRequiredTag(u64Handle, (char*)tagName);
-}
-DEFINE_PRIM(_BOOL, add_required_tag, _BYTES _BYTES);
+// UGC UPDATE
+//-----------------------------------------------------------------------------------------------------------
 
-HL_PRIM bool HL_NAME(add_required_key_value_tag)(vbyte *handle, vbyte *pKey, vbyte *pValue){
-	if (!CheckInit()) return false;
-	UGCQueryHandle_t u64Handle = strtoull((char*)handle, NULL, 0);
-	return SteamUGC()->AddRequiredKeyValueTag(u64Handle, (char*)pKey, (char*)pValue);
+static void on_item_created(vclosure *c, CreateItemResult_t *result, bool error) {
+	if (!error && result->m_eResult == k_EResultOK) {
+		HLValue v;
+		v.Set("id", result->m_nPublishedFileId);
+		v.Set("userNeedsLegalAgreement", result->m_bUserNeedsToAcceptWorkshopLegalAgreement);
+		dyn_call_result(c, v.value, error);
+	}
+	else {
+		dyn_call_result(c, NULL, true);
+	}
 }
-DEFINE_PRIM(_BOOL, add_required_key_value_tag, _BYTES _BYTES _BYTES);
+HL_PRIM CClosureCallResult<CreateItemResult_t>* HL_NAME(ugc_item_create)(int appId, vclosure *closure) {
+	if (!CheckInit()) return NULL;
 
-HL_PRIM bool HL_NAME(add_excluded_tag)(vbyte *handle, vbyte *tagName){
-	if (!CheckInit()) return false;
-	UGCQueryHandle_t u64Handle = strtoull((char*)handle, NULL, 0);
-	return SteamUGC()->AddExcludedTag(u64Handle, (char*)tagName);
+	ASYNC_CALL(SteamUGC()->CreateItem(appId, k_EWorkshopFileTypeCommunity), CreateItemResult_t, on_item_created);
+	return m_call;
 }
-DEFINE_PRIM(_BOOL, add_excluded_tag, _BYTES _BYTES);
 
-HL_PRIM bool HL_NAME(set_return_metadata)(vbyte *handle, bool returnMetadata){
-	if (!CheckInit()) return false;
-	UGCQueryHandle_t u64Handle = strtoull((char*)handle, NULL, 0);
-	return SteamUGC()->SetReturnMetadata(u64Handle, returnMetadata);
-}
-DEFINE_PRIM(_BOOL, set_return_metadata, _BYTES _BOOL);
+HL_PRIM vuid HL_NAME(ugc_item_start_update)(int id, vuid itemID) {
+	if (!CheckInit()) return NULL;
 
-HL_PRIM bool HL_NAME(set_return_key_value_tags)(vbyte *handle, bool returnKeyValueTags){
-	if (!CheckInit()) return false;
-	UGCQueryHandle_t u64Handle = strtoull((char*)handle, NULL, 0);
-	return SteamUGC()->SetReturnKeyValueTags(u64Handle, returnKeyValueTags);
+	UGCUpdateHandle_t handle = SteamUGC()->StartItemUpdate(id, hl_to_uint64(itemID));
+	return hl_of_uint64(handle);
 }
-DEFINE_PRIM(_BOOL, set_return_key_value_tags, _BYTES _BOOL);
+
+static void on_item_updated(vclosure *c, SubmitItemUpdateResult_t *result, bool error) {
+	if (!error && result->m_eResult == k_EResultOK) {
+		vdynamic d;
+		d.t = &hlt_bool;
+		d.v.b = result->m_bUserNeedsToAcceptWorkshopLegalAgreement;
+		dyn_call_result(c, &d, error);
+	}
+	else {
+		dyn_call_result(c, NULL, true);
+	}
+}
+HL_PRIM CClosureCallResult<SubmitItemUpdateResult_t>* HL_NAME(ugc_item_submit_update)(vuid updateHandle, vbyte *changeNotes, vclosure *closure){
+	if (!CheckInit()) return NULL;
+
+	ASYNC_CALL(SteamUGC()->SubmitItemUpdate(hl_to_uint64(updateHandle), (char*)changeNotes), SubmitItemUpdateResult_t, on_item_updated);
+ 	return m_call;
+}
+
+HL_PRIM bool HL_NAME(ugc_item_set_update_language)(vuid updateHandle, vbyte *lang) {
+	if (!CheckInit()) return false;
+	return SteamUGC()->SetItemUpdateLanguage(hl_to_uint64(updateHandle), (char*)lang);
+}
+
+HL_PRIM bool HL_NAME(ugc_item_set_title)(vuid updateHandle, vbyte *title) {
+	if (!CheckInit()) return false;
+	return SteamUGC()->SetItemTitle(hl_to_uint64(updateHandle), (char*)title);
+}
+
+HL_PRIM bool HL_NAME(ugc_item_set_description)(vuid updateHandle, vbyte *description){
+	if(!CheckInit()) return false;
+	return SteamUGC()->SetItemDescription(hl_to_uint64(updateHandle), (char*)description);
+}
+
+HL_PRIM bool HL_NAME(ugc_item_set_metadata)(vuid updateHandle, vbyte *metadata) {
+	if (!CheckInit()) return false;
+	return SteamUGC()->SetItemMetadata(hl_to_uint64(updateHandle), (char*)metadata);
+}
+
+HL_PRIM bool HL_NAME(ugc_item_set_tags)(vuid updateHandle, varray *tags){
+	if (!CheckInit()) return false;
+
+	SteamParamStringArray_t pTags;
+	pTags.m_nNumStrings = tags->size;
+	pTags.m_ppStrings = (const char**)hl_aptr(tags, vbyte*);
+
+	return SteamUGC()->SetItemTags(hl_to_uint64(updateHandle), &pTags);
+}
+
+HL_PRIM bool HL_NAME(ugc_item_add_key_value_tag)(vuid updateHandle, vbyte *keyStr, vbyte *valueStr){
+	if (!CheckInit()) return false;
+	return SteamUGC()->AddItemKeyValueTag(hl_to_uint64(updateHandle), (char*)keyStr, (char*)valueStr);
+}
+
+HL_PRIM bool HL_NAME(ugc_item_remove_key_value_tags)(vuid updateHandle, vbyte *keyStr) {
+	if (!CheckInit()) return false;
+	return SteamUGC()->RemoveItemKeyValueTags(hl_to_uint64(updateHandle), (char*)keyStr);
+}
+
+HL_PRIM bool HL_NAME(ugc_item_set_visibility)(vuid updateHandle, int visibility) {
+	if (!CheckInit()) return false;
+	ERemoteStoragePublishedFileVisibility visibilityEnum = static_cast<ERemoteStoragePublishedFileVisibility>(visibility);
+	return SteamUGC()->SetItemVisibility(hl_to_uint64(updateHandle), visibilityEnum);
+}
+
+HL_PRIM bool HL_NAME(ugc_item_set_content)(vuid updateHandle, vbyte *path){
+	if (!CheckInit()) return false;
+	return SteamUGC()->SetItemContent(hl_to_uint64(updateHandle), (char*)path);
+}
+
+HL_PRIM bool HL_NAME(ugc_item_set_preview_image)(vuid updateHandle, vbyte *path){
+	if (!CheckInit()) return false;
+	return SteamUGC()->SetItemPreview(hl_to_uint64(updateHandle), (char*)path);
+}
+
+
+DEFINE_PRIM(_CRESULT, ugc_item_create, _I32 _CALLB(_DYN));
+DEFINE_PRIM(_UID, ugc_item_start_update, _I32 _UID);
+DEFINE_PRIM(_CRESULT, ugc_item_submit_update, _UID _BYTES _CALLB(_BOOL));
+DEFINE_PRIM(_BOOL, ugc_item_set_update_language, _UID _BYTES);
+DEFINE_PRIM(_BOOL, ugc_item_set_title, _UID _BYTES);
+DEFINE_PRIM(_BOOL, ugc_item_set_description, _UID _BYTES);
+DEFINE_PRIM(_BOOL, ugc_item_set_metadata, _UID _BYTES);
+DEFINE_PRIM(_BOOL, ugc_item_set_tags, _UID _ARR);
+DEFINE_PRIM(_BOOL, ugc_item_add_key_value_tag, _UID _BYTES _BYTES);
+DEFINE_PRIM(_BOOL, ugc_item_remove_key_value_tags, _UID _BYTES);
+DEFINE_PRIM(_BOOL, ugc_item_set_visibility, _UID _I32);
+DEFINE_PRIM(_BOOL, ugc_item_set_content, _UID _BYTES);
+DEFINE_PRIM(_BOOL, ugc_item_set_preview_image, _UID _BYTES);

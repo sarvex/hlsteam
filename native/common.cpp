@@ -14,12 +14,30 @@ CSteamID hl_to_uid( vuid v ) {
 	return CSteamID(data.v);
 }
 
+uint64 hl_to_uint64(vuid v) {
+	union {
+		vbyte b[8];
+		uint64 v;
+	} data;
+	memcpy(data.b, v, 8);
+	return data.v;
+}
+
 vuid hl_of_uid( CSteamID uid ) {
 	union {
 		vbyte b[8];
 		uint64 v;
 	} data;
 	data.v = uid.ConvertToUint64();
+	return (vuid)hl_copy_bytes(data.b, 8);
+}
+
+vuid hl_of_uint64(uint64 uid) {
+	union {
+		vbyte b[8];
+		uint64 v;
+	} data;
+	data.v = uid;
 	return (vuid)hl_copy_bytes(data.b, 8);
 }
 
@@ -41,36 +59,6 @@ void split(const std::string &s, char delim, std::vector<std::string> &elems) {
 	while (std::getline(ss, item, delim)) {
 		elems.push_back(item);
 	}
-}
-
-//generates a parameter string array from comma-delimeted-values
-SteamParamStringArray_t * getSteamParamStringArray(const char * str){
-	std::string stdStr = str;
-
-	//NOTE: this will probably fail if the string includes Unicode, but Steam tags probably don't support that?
-	std::vector<std::string> v;
-	split(stdStr, ',', v);
-
-	SteamParamStringArray_t * params = new SteamParamStringArray_t;
-
-	int count = v.size();
-
-	params->m_nNumStrings = (int32) count;
-	params->m_ppStrings = new const char *[count];
-
-	for(int i = 0; i < count; i++) {
-		params->m_ppStrings[i] = v[i].c_str();
-	}
-
-	return params;
-}
-
-void deleteSteamParamStringArray(SteamParamStringArray_t * params){
-	for(int i = 0; i < params->m_nNumStrings; i++){
-		delete params->m_ppStrings[i];
-	}
-	delete[] params->m_ppStrings;
-	delete params;
 }
 
 
@@ -185,6 +173,7 @@ HL_PRIM bool HL_NAME(is_steam_running)(){
 }
 
 HL_PRIM vbyte *HL_NAME(get_current_game_language)(){
+	if (!CheckInit()) return NULL;
 	return (vbyte*)SteamApps()->GetCurrentGameLanguage();
 }
 

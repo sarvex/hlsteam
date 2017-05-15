@@ -21,6 +21,8 @@ void dyn_call_result( vclosure *c, vdynamic *p, bool error );
 void hl_set_uid( vdynamic *out, int64 uid );
 CSteamID hl_to_uid( vuid v );
 vuid hl_of_uid( CSteamID id );
+uint64 hl_to_uint64(vuid v);
+vuid hl_of_uint64(uint64 id);
 
 template< class T >
 class CClosureCallResult : public CCallResult<CClosureCallResult<T>,T> {
@@ -57,13 +59,6 @@ typedef enum {
 	ScoreUploaded,
 	ScoreDownloaded,
 	GlobalStatsReceived,
-	UGCLegalAgreementStatus,
-	UGCItemCreated,
-	UGCItemUpdateSubmitted,
-	RemoteStorageFileShared,
-	ItemDownloaded,
-	ItemInstalled,
-	UGCQueryCompleted
 } event_type;
 
 class CallbackHandler {
@@ -97,22 +92,6 @@ public:
 	void OnGlobalStatsReceived(GlobalStatsReceived_t* pResult, bool bIOFailure);
 	CCallResult<CallbackHandler, GlobalStatsReceived_t> m_callResultRequestGlobalStats;
 
-	void CreateUGCItem(AppId_t nConsumerAppId, EWorkshopFileType eFileType);
-	void OnUGCItemCreated( CreateItemResult_t *pResult, bool bIOFailure);
-	CCallResult<CallbackHandler, CreateItemResult_t> m_callResultCreateUGCItem;
-
-	void SendQueryUGCRequest(UGCQueryHandle_t handle);
-	void OnUGCQueryCompleted( SteamUGCQueryCompleted_t* pResult, bool bIOFailure);
-	CCallResult<CallbackHandler, SteamUGCQueryCompleted_t> m_callResultUGCQueryCompleted;
-
-	void SubmitUGCItemUpdate(UGCUpdateHandle_t handle, const char *pchChangeNote);
-	void OnItemUpdateSubmitted( SubmitItemUpdateResult_t *pResult, bool bIOFailure);
-	CCallResult<CallbackHandler, SubmitItemUpdateResult_t> m_callResultSubmitUGCItemUpdate;
-
-	void FileShare(const char* fileName);
-	void OnFileShared( RemoteStorageFileShareResult_t *pResult, bool bIOFailure);
-	CCallResult<CallbackHandler, RemoteStorageFileShareResult_t> m_callResultFileShare;
-
 };
 
 class HLValue {
@@ -125,7 +104,7 @@ public:
 		hl_dyn_setp(value, hl_hash_utf8(name), &hlt_uid, hl_of_uid(uid));
 	}
 	void Set( const char *name, uint64 uid ) {
-		Set(name,CSteamID(uid));
+		hl_dyn_setp(value, hl_hash_utf8(name), &hlt_uid, hl_of_uint64(uid));
 	}
 	void Set( const char *name, uint32 v ) {
 		Set(name,(int)v);
@@ -135,6 +114,15 @@ public:
 	}
 	void Set( const char *name, int v ) {
 		hl_dyn_seti(value, hl_hash_utf8(name), &hlt_i32, v);
+	}
+	void Set(const char *name, double v) {
+		hl_dyn_setd(value, hl_hash_utf8(name), v);
+	}
+	void Set(const char *name, float v) {
+		hl_dyn_setf(value, hl_hash_utf8(name), v);
+	}
+	void Set( const char *name, const char *b ) {
+		hl_dyn_setp(value, hl_hash_utf8(name), &hlt_bytes, hl_copy_bytes((vbyte*)b, strlen(b)+1));
 	}
 	void Set( const char *name, vdynamic *d ) {
 		hl_dyn_setp(value, hl_hash_utf8(name), &hlt_dyn, d);

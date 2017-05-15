@@ -1,0 +1,126 @@
+package steam.ugc;
+import steam.UID;
+
+enum ItemState {
+	Subscribed;
+	LegacyItem;
+	Installed;
+	NeedsUpdate;
+	Downloading;
+	DownloadPending;
+}
+
+@:hlNative("steam")
+class Item {
+
+	// TODO public static function fromInt( i : Int )
+	public var id : UID;
+
+	public static function init( onDownloaded : Item -> Void, onInstalled : Item -> Void ){
+		Api.registerGlobalEvent(3400 + 6, function(data:{file:UID}){
+			onDownloaded(new Item(data.file));
+		});
+		Api.registerGlobalEvent(3400 + 5, function(data:{file:UID}){
+			onInstalled(new Item(data.file));
+		});
+	}
+
+	public static function create( appId : Int, cb : Null<Item> -> Bool -> Void ){
+		ugc_item_create(appId,function(obj, error){
+			if( error ){
+				cb(null,false);
+				return;
+			}
+			cb(new Item(obj.id), obj.userNeedsLegalAgreement);
+		});
+	}
+
+	public static function listSubscribed() : Array<Item> {
+		var a = get_subscribed_items();
+		return a == null ? null : [for( it in a ) new Item(it)];
+	}
+
+	inline function new( b : UID ){
+		id = b;
+	}
+
+	public function getState() : haxe.EnumFlags<ItemState> {
+		return haxe.EnumFlags.ofInt( get_item_state(id) );
+	}
+
+	public function getDownloadInfo() : {downloaded: Float, total: Float} {
+		var downloaded = 0.;
+		var total = 0.;
+
+		if( !get_item_download_info(id, downloaded, total) )
+			return null;
+		return {
+			downloaded: downloaded,
+			total: total
+		};
+	}
+
+	public function getInstallInfo(){
+		var r = get_item_install_info(id);
+		if( r == null ) return null;
+		return {
+			size: r.size,
+			timestamp: r.time,
+			path: @:privateAccess String.fromUTF8(r.path)
+		};
+	}
+
+	public function download( highPriority : Bool ) : Bool {
+		return download_item( id, highPriority );
+	}
+
+	public function subscribe( cb ){
+		subscribe_item( id, cb );
+	}
+
+	public function unsubscribe( cb ){
+		unsubscribe_item( id, cb );
+	}
+
+	public function toString(){
+		return 'UGCItem($id)';
+	}
+
+
+	// -- native
+
+	static function ugc_item_create( appId : Int, cb : Callback<Dynamic> ) : AsyncCall {
+		return null;
+	}
+	
+	static function get_subscribed_items() : hl.NativeArray<UID> {
+		return null;
+	}
+
+	static function get_item_state( item : UID ) : Int {
+		return 0;
+	}
+
+	static function get_item_download_info( item : UID, downloaded : hl.Ref<hl.F64>, total : hl.Ref<hl.F64> ) : Bool {
+		return false;
+	}
+
+	static function download_item( item : UID, hPriority: Bool ) : Bool {
+		return false;
+	}
+
+	static function get_item_install_info( item : UID ) : Dynamic {
+		return null;
+	}
+	
+	static function subscribe_item( item : UID, cb : Callback<UID> ) : AsyncCall {
+		return null;
+	}
+
+	static function unsubscribe_item( item : UID, cb : Callback<UID> ) : AsyncCall {
+		return null;
+	}
+
+
+}
+

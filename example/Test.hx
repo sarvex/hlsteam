@@ -3,10 +3,11 @@ import steam.Controller;
 
 class Test
 {
+
+	static var appID:Int = Std.parseInt(sys.io.File.getContent("steam_appid.txt"));
+
 	static function main()
 	{
-
-		var appID:Int = Std.parseInt(sys.io.File.getContent("steam_appid.txt"));
 
 		if( Api.restartIfNecessary(appID) ){
 			trace("Restart...");
@@ -15,7 +16,16 @@ class Test
 			trace("Start");
 		}
 
-		Api.init(appID);
+		if( !Api.init(appID) )
+			return;
+		
+		//testAchievements();
+		//testCloud();
+		testUGC();
+		//testController();
+	}
+
+	static function testAchievements(){
 		Api.whenAchievementStored = steamWrap_onAchievementStored;
 		Api.whenLeaderboardScoreDownloaded = steamWrap_onLeaderboardScoreDownloaded;
 
@@ -30,6 +40,9 @@ class Test
 		{
 			trace("You didn't define any achievements to test...");
 		}
+	}
+
+	static function testCloud(){
 
 		trace( "Cloud isEnabled= "+steam.Cloud.isEnabled() );
 		trace( "Cloud count= "+steam.Cloud.count() );
@@ -44,7 +57,31 @@ class Test
 				trace("UID="+uid);
 			});
 		}
+	}
 
+	static function testUGC(){
+
+		trace("UGC Items");
+		trace( steam.ugc.Item.listSubscribed() );
+
+		trace("UGC User Query");
+		var q = steam.ugc.Query.userList(steam.Api.getUser(), Published, All, CreationOrderDesc, appID, appID, 1);
+		q.send(function(succeed){
+			if( !succeed ){
+				trace("Query error");
+				return;
+			}
+
+			trace( "results="+q.resultsReturned );
+			if( q.resultsReturned > 0 ){
+				var r = q.getResult(0);
+				trace( "Title="+r.title );
+			}
+		});
+	
+	}
+	
+	static function testController(){
 		
 		//The controller code below assumes you have already read the Steam Docs
 		//on controller support and set up the "default" test configuration, so that
