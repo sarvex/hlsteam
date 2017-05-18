@@ -81,7 +81,7 @@ class Lobby {
 
 	public function getMemberData( user : User, key : String ) : String {
 		var v = get_lobby_member_data(uid, user.uid, key.toUtf8());
-		return String.fromUTF8(v);
+		return v == null ? null : String.fromUTF8(v);
 	}
 
 	public function setMemberData( key : String, value : String ) {
