@@ -39,7 +39,7 @@ class User {
 
 	public function getID32() {
 		// lower 32 bits seems to be unique, then padded with 0x01100001
-		return Std.parseInt("0x" + uid.toString().substr(0, 8));
+		return (cast uid : hl.Bytes).getI32(0);
 	}
 
 	function get_name() {
