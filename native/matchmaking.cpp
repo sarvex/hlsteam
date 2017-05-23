@@ -33,7 +33,7 @@ vdynamic *CallbackHandler::EncodeLobbyJoinRequest( GameLobbyJoinRequested_t *d )
 	return ret.value;
 }
 
-// --------- Lobby Search / Create --------------------------
+// --------- Lobby Search --------------------------
 
 static void on_lobby_list( vclosure *c, LobbyMatchList_t *result, bool error ) {
 	vdynamic d;
@@ -51,6 +51,42 @@ HL_PRIM CClosureCallResult<LobbyMatchList_t>* HL_NAME(request_lobby_list)( vclos
 HL_PRIM vuid HL_NAME(get_lobby_by_index)( int index ) {
 	return hl_of_uid(SteamMatchmaking()->GetLobbyByIndex(index));
 }
+
+HL_PRIM void HL_NAME(request_filter_string)( vbyte *key, vbyte *value, int type ) {
+	SteamMatchmaking()->AddRequestLobbyListStringFilter((char*)key,(char*)value,(ELobbyComparison)type);
+}
+
+HL_PRIM void HL_NAME(request_filter_numerical)( vbyte *key, int value, int type ) {
+	SteamMatchmaking()->AddRequestLobbyListNumericalFilter((char*)key,value,(ELobbyComparison)type);
+}
+
+HL_PRIM void HL_NAME(request_filter_near_value)( vbyte *key, int value ) {
+	SteamMatchmaking()->AddRequestLobbyListNearValueFilter((char*)key,value);
+}
+
+HL_PRIM void HL_NAME(request_filter_slots_available)( int slots ) {
+	SteamMatchmaking()->AddRequestLobbyListFilterSlotsAvailable(slots);
+}
+
+HL_PRIM void HL_NAME(request_filter_distance)( int distance ) {
+	SteamMatchmaking()->AddRequestLobbyListDistanceFilter((ELobbyDistanceFilter)distance);
+}
+
+HL_PRIM void HL_NAME(request_result_count)( int max ) {
+	SteamMatchmaking()->AddRequestLobbyListResultCountFilter(max);
+}
+
+DEFINE_PRIM(_CRESULT, request_lobby_list, _CALLB(_I32));
+DEFINE_PRIM(_UID, get_lobby_by_index, _I32);
+
+DEFINE_PRIM(_VOID, request_filter_string, _BYTES _BYTES _I32);
+DEFINE_PRIM(_VOID, request_filter_numerical, _BYTES _I32 _I32);
+DEFINE_PRIM(_VOID, request_filter_near_value, _BYTES _I32);
+DEFINE_PRIM(_VOID, request_filter_slots_available, _I32);
+DEFINE_PRIM(_VOID, request_filter_distance, _I32);
+DEFINE_PRIM(_VOID, request_result_count, _I32);
+
+// --------- Lobby Create / Manage --------------------------
 
 static void on_lobby_created( vclosure *c, LobbyCreated_t *result, bool error ) {
 	vdynamic d;
@@ -115,15 +151,18 @@ HL_PRIM int HL_NAME(get_lobby_member_limit)( vuid uid ) {
 	return SteamMatchmaking()->GetLobbyMemberLimit(hl_to_uid(uid));
 }
 
-DEFINE_PRIM(_CRESULT, request_lobby_list, _CALLB(_I32));
+HL_PRIM void HL_NAME(set_lobby_member_limit)( vuid uid, int count ) {
+	SteamMatchmaking()->SetLobbyMemberLimit(hl_to_uid(uid), count);
+}
+
 DEFINE_PRIM(_CRESULT, create_lobby, _I32 _I32 _CALLB(_UID));
-DEFINE_PRIM(_UID, get_lobby_by_index, _I32);
 DEFINE_PRIM(_VOID, leave_lobby, _UID);
 DEFINE_PRIM(_CRESULT, join_lobby, _UID _CALLB(_BOOL));
 
 DEFINE_PRIM(_I32, get_num_lobby_members, _UID);
 DEFINE_PRIM(_UID, get_lobby_member_by_index, _UID _I32);
 DEFINE_PRIM(_I32, get_lobby_member_limit, _UID);
+DEFINE_PRIM(_VOID, set_lobby_member_limit, _UID _I32);
 
 DEFINE_PRIM(_UID, get_lobby_owner, _UID);
 DEFINE_PRIM(_VOID, lobby_invite_friends, _UID);

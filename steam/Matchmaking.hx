@@ -19,12 +19,36 @@ package steam;
 	public var Invisible = 3;
 }
 
+@:enum abstract ComparisonFilter(Int) {
+	var LessThanEqual = -2;
+	var LessThan = -1;
+	var Equal = 0;
+	var GreaterThan = 1;
+	var GreaterThanEqual = 2;
+	var NotEqual = 3;
+}
+
+@:enum abstract DistanceFilter(Int) {
+	var Close = 0;
+	var Default = 1;
+	var Far = 2;
+	var Worldwide = 3;
+}
+
 private enum LobbyChatFlag {
 	Entered;
 	Left;
 	Disconnected;
 	Kicked;
 	Banned;
+}
+
+typedef LobbyListFilters = {
+	@:optional var stringFilters : Array<{ key : String, value : String, comparison : ComparisonFilter }>;
+	@:optional var intFilters : Array<{ key : String, value : Int, comparison : ComparisonFilter }>;
+	@:optional var nearFilters : Array<{ key : String, value : Int }>;
+	@:optional var distance : DistanceFilter;
+	@:optional var availableSlots : Int;
 }
 
 @:hlNative("steam")
@@ -86,7 +110,25 @@ class Matchmaking {
 		return l;
 	}
 
-	public static function requestLobbyList( onLobbyList : Array<Lobby> -> Void ) {
+	public static function requestLobbyList( onLobbyList : Array<Lobby> -> Void, ?filters : LobbyListFilters, ?resultsCount : Int ) {
+		if( filters != null ) {
+			var f = filters;
+			if( f.stringFilters != null )
+				for( f in f.stringFilters )
+					@:privateAccess request_filter_string(f.key.toUtf8(), f.value.toUtf8(), f.comparison);
+			if( f.intFilters != null )
+				for( f in f.intFilters )
+					@:privateAccess request_filter_numerical(f.key.toUtf8(), f.value, f.comparison);
+			if( f.nearFilters != null )
+				for( f in f.nearFilters )
+					@:privateAccess request_filter_near_value(f.key.toUtf8(), f.value);
+			if( f.distance != null )
+				request_filter_distance(f.distance);
+			if( f.availableSlots != null )
+				request_filter_slots_available(f.availableSlots);
+		}
+		if( resultsCount != null )
+			request_result_count(resultsCount);
 		request_lobby_list(function(count, error) {
 			if( error ) {
 				onLobbyList(null);
@@ -141,6 +183,24 @@ class Matchmaking {
 
 	static function get_lobby_by_index( index : Int ) : UID {
 		return null;
+	}
+
+	static function request_filter_string( key : hl.Bytes, value : hl.Bytes, comp : ComparisonFilter ) {
+	}
+
+	static function request_filter_numerical( key : hl.Bytes, value : Int, comp : ComparisonFilter ) {
+	}
+
+	static function request_filter_near_value( key : hl.Bytes, value : Int ) {
+	}
+
+	static function request_filter_slots_available( value : Int ) {
+	}
+
+	static function request_filter_distance( value : DistanceFilter ) {
+	}
+
+	static function request_result_count( value : Int ) {
 	}
 
 }

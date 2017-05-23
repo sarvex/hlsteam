@@ -30,7 +30,7 @@ class Lobby {
 
 	public var uid(default, null) : UID;
 	public var owner(get, never) : User;
-	public var maxMembers(get, never) : Int;
+	public var maxMembers(get, set) : Int;
 
 	public function new(uid:UID) {
 		this.uid = uid;
@@ -145,6 +145,11 @@ class Lobby {
 		return get_lobby_member_limit(uid);
 	}
 
+	function set_maxMembers(v) {
+		set_lobby_member_limit(uid, v);
+		return v;
+	}
+
 	// --- HL stubs ----
 
 	static function request_lobby_data( uid : UID ) {
@@ -214,6 +219,9 @@ class Lobby {
 
 	static function get_lobby_member_limit( uid : UID ) {
 		return 0;
+	}
+
+	static function set_lobby_member_limit( uid : UID, count : Int ) {
 	}
 
 }
