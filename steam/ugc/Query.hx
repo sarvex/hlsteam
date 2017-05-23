@@ -71,8 +71,8 @@ class Result {
 class Query {
 
 	var id : UID;
-	var returnKeyValueTags(default,set) : Bool;
-	var returnMetadata(default,set) : Bool;
+	public var returnKeyValueTags(default,set) : Bool;
+	public var returnMetadata(default,set) : Bool;
 
 	public var sent(default,null) : Bool = false;
 	public var resultsReturned(default,null) : Int;
