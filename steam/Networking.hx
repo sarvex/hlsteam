@@ -64,20 +64,34 @@ class Networking {
 				api.onConnectionError(User.fromUID(data.uid), data.error);
 		});
 
-		haxe.MainLoop.add(function() {
-			if( api == null ) return;
-			// decode message !
-			var len = 0;
-			while( is_p2p_packet_available(len, 0) ) {
-				if( len > bufferSize ) {
-					bufferSize = len;
-					buffer = new hl.Bytes(bufferSize);
-				}
-				var uid = read_p2p_packet(buffer, bufferSize, len, 0);
-				if( uid == null ) continue;
-				api.onData(User.fromUID(uid), buffer.toBytes(len));
+		haxe.MainLoop.add(checkP2PMessage);
+	}
+
+	static function checkP2PMessage() {
+		if( api == null ) return;
+		// decode message !
+		var len = 0;
+		while( true ) {
+			var result;
+			try {
+				result = is_p2p_packet_available(len, 0);
+			} catch( e : Dynamic ) {
+				var flags = new haxe.EnumFlags<hl.UI.DialogFlags>();
+				flags.set(IsError);
+				hl.UI.dialog("Error", "An error occured in network layer, Steam can no longer be reached.\n("+Std.string(e)+")", flags);
+				Sys.exit(1);
+				return;
 			}
-		});
+			if( !result )
+				break;
+			if( len > bufferSize ) {
+				bufferSize = len;
+				buffer = new hl.Bytes(bufferSize);
+			}
+			var uid = read_p2p_packet(buffer, bufferSize, len, 0);
+			if( uid == null ) continue;
+			api.onData(User.fromUID(uid), buffer.toBytes(len));
+		}
 	}
 
 	public static function sendP2P( user : User, data : haxe.io.Bytes, type : PacketType ) {
