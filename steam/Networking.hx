@@ -97,8 +97,9 @@ class Networking {
 	public static function sendP2P( user : User, data : haxe.io.Bytes, type : PacketType, pos = 0, len = -1 ) {
 		if( len < 0 ) len = data.length;
 		if( !send_p2p_packet(user.uid, (data:hl.Bytes).offset(pos), len, type, 0) )
-			throw "Fail to send P2P packet (len="+len+")";
+			return false;
 		addConnection(user);
+		return true;
 	}
 
 	public static function closeSession( user : User ) {
