@@ -36,21 +36,30 @@ class Lobby {
 		this.uid = uid;
 	}
 
-	public function setData( key : String, value : String ) {
+	public function set( key : String, value : Dynamic ) {
+		setRawData(key, haxe.Serializer.run(value));
+	}
+
+	public function setRawData( key : String, value : String ) {
 		if( !set_lobby_data(uid, key.toUtf8(), value.toUtf8()) )
 			throw "Failed to set lobby data";
 	}
 
-	public function removeData( key : String ) {
+	public function remove( key : String ) {
 		return delete_lobby_data(uid, key.toUtf8());
 	}
 
-	public function getData( key : String ) : String {
+	public function get( key : String ) : Dynamic {
+		var str = getRawData(key);
+		return str == null || str.length == 0 ? null : haxe.Unserializer.run(str);
+	}
+
+	public function getRawData( key : String ) {
 		var v = get_lobby_data(uid, key.toUtf8());
 		return v == null ? null : String.fromUTF8(v);
 	}
 
-	public function getAllData( maxSize = 65536 ) : Map<String,String> {
+	public function getAllRaw( maxSize = 65536 ) : Map<String,String> {
 		var m = new Map();
 		var tmpKey = new hl.Bytes(256);
 		var tmpData = new hl.Bytes(maxSize);
@@ -58,6 +67,21 @@ class Lobby {
 			if( !get_lobby_data_byindex(uid, i, tmpKey, 256, tmpData, maxSize) )
 				throw "Too much data";
 			m.set(String.fromUTF8(tmpKey), String.fromUTF8(tmpData));
+		}
+		return m;
+	}
+
+	public function getAll( maxSize = 65536 ) : Map<String,Dynamic> {
+		var m = getAllRaw(maxSize);
+		var out = new Map();
+		for( k in m.keys() ) {
+			var value = m.get(k);
+			if( value.length > 0 )
+				try {
+					out.set(k, haxe.Unserializer.run(value));
+				} catch( e : Dynamic ) {
+					// ignore
+				}
 		}
 		return m;
 	}
@@ -138,6 +162,9 @@ class Lobby {
 	}
 
 	public function dispose() {
+		onDataUpdated = function() {};
+		onUserDataUpdated = onUserJoined = onUserLeft = function(_) {};
+		onChatMessage = function(_, _) {};
 		@:privateAccess Matchmaking.lobbies.remove(uid.toString());
 	}
 
