@@ -20,6 +20,7 @@ HL_PRIM varray *HL_NAME(get_subscribed_items)(){
 	PublishedFileId_t* pvecPublishedFileID = new PublishedFileId_t[numSubscribed];
 
 	int result = SteamUGC()->GetSubscribedItems(pvecPublishedFileID, numSubscribed);
+	if (result <= 0) return hl_alloc_array(&hlt_bytes, 0);
 
 	varray *a = hl_alloc_array(&hlt_bytes, result);
 	vuid *aa = hl_aptr(a, vuid);
