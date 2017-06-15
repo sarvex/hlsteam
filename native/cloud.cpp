@@ -61,6 +61,10 @@ HL_PRIM CClosureCallResult<RemoteStorageFileShareResult_t>* HL_NAME(file_share)(
 	return m_call;
 }
 
+HL_PRIM bool HL_NAME(is_cloud_enabled_for_account)() {
+	if (!CheckInit()) return false;
+	return SteamRemoteStorage()->IsCloudEnabledForAccount();
+}
 
 HL_PRIM bool HL_NAME(is_cloud_enabled_for_app)(){
 	if (!CheckInit()) return false;
@@ -92,5 +96,6 @@ DEFINE_PRIM(_BOOL, file_write, _BYTES _BYTES _I32);
 DEFINE_PRIM(_BOOL, file_delete, _BYTES);
 DEFINE_PRIM(_CRESULT, file_share, _BYTES _CALLB(_UID));
 DEFINE_PRIM(_BOOL, is_cloud_enabled_for_app, _NO_ARG);
+DEFINE_PRIM(_BOOL, is_cloud_enabled_for_account, _NO_ARG);
 DEFINE_PRIM(_VOID, set_cloud_enabled_for_app, _BOOL);
 DEFINE_PRIM(_VOID, get_quota, _NO_ARG _REF(_F64) _REF(_F64));

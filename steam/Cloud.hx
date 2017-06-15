@@ -52,7 +52,15 @@ class Cloud {
 	}
 
 	public static function isEnabled():Bool {
+		return _IsCloudEnabledForApp() && _IsCloudEnabledForAccount();
+	}
+
+	public static function isEnabledForApp():Bool {
 		return _IsCloudEnabledForApp();
+	}
+
+	public static function isEnabledForAccount():Bool {
+		return _IsCloudEnabledForAccount();
 	}
 
 	public static function enable(b:Bool):Void {
@@ -71,6 +79,7 @@ class Cloud {
 	@:hlNative("steam","get_file_size") private static function _GetFileSize( name : hl.Bytes ) : Int { return 0; }
 	@:hlNative("steam","file_share") private static function _FileShare( name : hl.Bytes, onResult : Callback<UID> ): AsyncCall{ return null; };
 	@:hlNative("steam","is_cloud_enabled_for_app") private static function _IsCloudEnabledForApp() : Bool { return false; }
+	@:hlNative("steam","is_cloud_enabled_for_account") private static function _IsCloudEnabledForAccount() : Bool { return false; }
 	@:hlNative("steam","set_cloud_enabled_for_app") private static function _SetCloudEnabledForApp( enabled : Bool ) : Void {};
 
 }
