@@ -195,6 +195,11 @@ HL_PRIM bool HL_NAME(ugc_query_set_return_key_value_tags)(vuid handle, bool retu
 	return SteamUGC()->SetReturnKeyValueTags(hl_to_uint64(handle), returnKeyValueTags);
 }
 
+HL_PRIM bool HL_NAME(ugc_query_set_return_children)(vuid handle, bool returnChildren) {
+	if (!CheckInit()) return false;
+	return SteamUGC()->SetReturnChildren(hl_to_uint64(handle), returnChildren);
+}
+
 static void on_query_completed(vclosure *c, SteamUGCQueryCompleted_t *result, bool error) {
 	if (!error && result->m_eResult == k_EResultOK) {
 		HLValue v;
@@ -225,7 +230,7 @@ HL_PRIM varray *HL_NAME(ugc_query_get_key_value_tags)(vuid cHandle, int iIndex, 
 
 	char key[255];
 	char *value = new char[maxValueLength];
-	int num = SteamUGC()->GetQueryUGCNumKeyValueTags(hl_to_uint64(cHandle), iIndex);
+	int num = SteamUGC()->GetQueryUGCNumKeyValueTags(handle, iIndex);
 	varray *ret = hl_alloc_array(&hlt_bytes, num<<1);
 	vbyte **a = hl_aptr(ret, vbyte*);
 	for (int i = 0; i < num; i++) {
@@ -235,6 +240,25 @@ HL_PRIM varray *HL_NAME(ugc_query_get_key_value_tags)(vuid cHandle, int iIndex, 
 		a[i*2+1] = hl_copy_bytes((vbyte*)value, strlen(value) + 1);
 	}
 	delete value;
+	return ret;
+}
+
+HL_PRIM varray *HL_NAME(ugc_query_get_children)(vuid cHandle, int iIndex, int maxChildren) {
+	if (!CheckInit()) return NULL;
+
+	PublishedFileId_t *children = new PublishedFileId_t[maxChildren];
+	if (!SteamUGC()->GetQueryUGCChildren(hl_to_uint64(cHandle), iIndex, children, maxChildren))
+		return NULL;
+	int num = 0;
+	while( num < maxChildren ){
+		if (!children[num]) break;
+		num++;
+	}
+	varray *ret = hl_alloc_array(&hlt_bytes, num);
+	vbyte **a = hl_aptr(ret, vbyte*);
+	for (int i = 0; i < num; i++)
+		a[i] = hl_of_uint64(children[i]);
+	delete children;
 	return ret;
 }
 
@@ -295,11 +319,13 @@ DEFINE_PRIM(_BOOL, ugc_query_add_required_key_value_tag, _UID _BYTES _BYTES);
 DEFINE_PRIM(_BOOL, ugc_query_add_excluded_tag, _UID _BYTES);
 DEFINE_PRIM(_BOOL, ugc_query_set_return_metadata, _UID _BOOL);
 DEFINE_PRIM(_BOOL, ugc_query_set_return_key_value_tags, _UID _BOOL);
+DEFINE_PRIM(_BOOL, ugc_query_set_return_children, _UID _BOOL);
 
 DEFINE_PRIM(_CRESULT, ugc_query_send_request, _UID _CALLB(_DYN));
 DEFINE_PRIM(_BOOL, ugc_query_release_request, _UID);
 
 DEFINE_PRIM(_ARR, ugc_query_get_key_value_tags, _UID _I32 _I32);
+DEFINE_PRIM(_ARR, ugc_query_get_children, _UID _I32 _I32);
 DEFINE_PRIM(_BYTES, ugc_query_get_metadata, _UID _I32);
 DEFINE_PRIM(_DYN, ugc_query_get_result, _UID _I32);
 

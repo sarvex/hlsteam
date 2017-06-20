@@ -33,6 +33,7 @@ class Result {
 	public var numChildren : Int;
 	public var keyValueTags : Array<{key: String, value: String}>;
 	public var metadata : String;
+	public var children : Array<steam.ugc.Item>;
 
 	function new( obj : Dynamic ){
 		id = obj.id;
@@ -60,10 +61,17 @@ class Result {
 		votesDown = obj.votesDown;
 		score = obj.score;
 		numChildren = obj.numChildren;
+		children = [];
 	}
 
 	inline public function get_item(){
 		return @:privateAccess new Item(id);
+	}
+
+	public function getKeyValueTag( key : String ) : String {
+		for( o in keyValueTags )
+			if( o.key == key ) return o.value;
+		return null;
 	}
 }
 
@@ -73,6 +81,7 @@ class Query {
 	var id : UID;
 	public var returnKeyValueTags(default,set) : Bool;
 	public var returnMetadata(default,set) : Bool;
+	public var returnChildren(default,set) : Bool;
 
 	public var sent(default,null) : Bool = false;
 	public var resultsReturned(default,null) : Int;
@@ -134,6 +143,11 @@ class Query {
 		return returnKeyValueTags = b;
 	}
 
+	public function set_returnChildren( b : Bool ){
+		ugc_query_set_return_children(id,b);
+		return returnChildren = b;
+	}
+
 	public function send( cb : Bool -> Void ){
 		sent = true;
 		ugc_query_send_request(id,function(obj,error){
@@ -172,6 +186,11 @@ class Query {
 			if( s != null ) res.metadata = @:privateAccess String.fromUTF8(s);
 		}
 
+		if( returnChildren && res.numChildren > 0 ){
+			var r = ugc_query_get_children(id,index,res.numChildren);
+			if( r != null ) res.children = [for( uid in r ) @:privateAccess new Item(uid)];
+		}
+
 		return res;
 	}
 
@@ -186,10 +205,12 @@ class Query {
 	static function ugc_query_add_required_key_value_tag( query : UID, key : hl.Bytes, value : hl.Bytes ) : Bool { return false; }
 	static function ugc_query_add_excluded_tag( query : UID, tag : hl.Bytes ) : Bool { return false; }
 	static function ugc_query_set_return_metadata( query : UID, r : Bool ) : Bool { return false; }
+	static function ugc_query_set_return_children( query : UID, r : Bool ) : Bool { return false; }
 	static function ugc_query_set_return_key_value_tags( query : UID, r : Bool ) : Bool { return false; }
 	static function ugc_query_send_request( query : UID, cb : Callback<Dynamic> ) : AsyncCall { return null; }
 	static function ugc_query_release_request( query : UID ) : Bool { return false; }
 	static function ugc_query_get_key_value_tags( query : UID, index : Int, maxValueLength : Int ) : hl.NativeArray<hl.Bytes> { return null; }
+	static function ugc_query_get_children( query : UID, index : Int, numChildren : Int ) : hl.NativeArray<UID> { return null; }
 	static function ugc_query_get_metadata( query : UID, index : Int ) : hl.Bytes { return null; }
 	static function ugc_query_get_result( query : UID, index : Int ) : Dynamic { return null; }
 

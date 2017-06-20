@@ -13,8 +13,13 @@ enum ItemState {
 @:hlNative("steam")
 class Item {
 
-	// TODO public static function fromInt( i : Int )
 	public var id : UID;
+
+	public static function fromInt( i : Int ){
+		var b = haxe.io.Bytes.alloc(8);
+		b.setInt32(0, i);
+		return new Item(steam.UID.fromBytes(b));
+	}
 
 	public static function init( onDownloaded : Item -> Void, onInstalled : Item -> Void ){
 		Api.registerGlobalEvent(3400 + 6, function(data:{file:UID}){
