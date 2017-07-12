@@ -97,6 +97,13 @@ class User {
 		return u;
 	}
 
+	public static function fromUID32( uid : Int ) {
+		var bytes = new hl.Bytes(8);
+		bytes.setI32(0, uid);
+		bytes.setI32(4, 0x01100001);
+		return fromUID(cast bytes);
+	}
+
 	static function request_user_information( uid : UID, nameOnly : Bool ) {
 		return false;
 	}
