@@ -84,11 +84,11 @@ class Friends {
 	}
 
 	public static function activateOverlay( overlay : OverlayKind, ?uid : UID ) {
-		activate_overlay( overlay == None ? null : @:privateAccess overlay.toString().toUtf8(), uid);
+		activate_overlay_user( overlay == None ? null : @:privateAccess overlay.toString().toUtf8(), uid);
 	}
 
-	static function get_friends( flags : FriendFlags ) : hl.NativeArray<hl.Bytes>;
-	static function has_friend( uid : UID, flags : FriendFlags ) : Bool;
-	static function activate_overlay( overlay : hl.Bytes, uid : UID ) : Void;
+	static function get_friends( flags : FriendFlags ) : hl.NativeArray<UID> { return null; }
+	static function has_friend( uid : UID, flags : FriendFlags ) : Bool { return false; }
+	static function activate_overlay_user( overlay : hl.Bytes, uid : UID ) : Void {}
 
 }
