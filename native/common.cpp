@@ -177,6 +177,20 @@ HL_PRIM vbyte *HL_NAME(get_current_game_language)(){
 	return (vbyte*)SteamApps()->GetCurrentGameLanguage();
 }
 
+vdynamic *CallbackHandler::EncodeAuthSessionTicketResponse(GetAuthSessionTicketResponse_t *d) {
+	HLValue ret;
+	ret.Set("authTicket", d->m_hAuthTicket);
+	ret.Set("result", d->m_eResult);
+	return ret.value;
+}
+
+
+HL_PRIM vbyte *HL_NAME(get_auth_ticket)( int *size, int *authTicket ) {
+	vbyte *ticket = hl_alloc_bytes(1024);
+	*authTicket = SteamUser()->GetAuthSessionTicket(ticket,1024,(uint32*)size);
+	return ticket;
+}
+
 HL_PRIM void HL_NAME(cancel_call_result)( CClosureCallResult<int> *m_call ) {
 	m_call->Cancel();
 	delete m_call;
@@ -189,4 +203,5 @@ DEFINE_PRIM(_BOOL, boverlay_needs_present, _NO_ARG);
 DEFINE_PRIM(_BOOL, is_steam_in_big_picture_mode, _NO_ARG);
 DEFINE_PRIM(_BOOL, is_steam_running, _NO_ARG);
 DEFINE_PRIM(_BYTES, get_current_game_language, _NO_ARG);
+DEFINE_PRIM(_BYTES, get_auth_ticket, _REF(_I32) _REF(_I32));
 DEFINE_PRIM(_VOID, cancel_call_result, _CRESULT);

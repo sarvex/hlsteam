@@ -136,7 +136,7 @@ HL_PRIM vuid HL_NAME(ugc_query_create_all_request)(int queryType, int matchingUG
 HL_PRIM vuid HL_NAME(ugc_query_create_user_request)(int uid, int listType, int matchingUGCType, int sortOrder, int creatorAppID, int consumerAppID, int page) {
 	if (!CheckInit()) return NULL;
 
-	EUserUGCList eListType = (EUserUGCList)eListType;
+	EUserUGCList eListType = (EUserUGCList)listType;
 	EUGCMatchingUGCType eMatchingUGCType = (EUGCMatchingUGCType)matchingUGCType;
 	EUserUGCListSortOrder eSortOrder = (EUserUGCListSortOrder)sortOrder;
 	AppId_t nCreatorAppID = creatorAppID;

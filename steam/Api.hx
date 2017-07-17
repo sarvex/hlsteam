@@ -83,6 +83,15 @@ class Api
 				onOverlay( data.active );
 		});
 
+		// GetAuthSessionTicketResponse_t
+		registerGlobalEvent(100 + 63, function(data:{authTicket: Int, result:Int}){
+			var cb = authTicketCallbacks.get(data.authTicket);
+			if( cb !=null ){
+				cb(data.result == 1);
+				authTicketCallbacks.remove(data.authTicket);
+			}
+		});
+
 		// if we get this far, the dlls loaded ok and we need Steam to init.
 		// otherwise, we're trying to run the Steam version without the Steam client
 		active = _Init(steamWrap_onEvent, onGlobalEvent);
@@ -104,6 +113,7 @@ class Api
 	}
 
 	static var globalEvents = new Map<Int,Dynamic->Void>();
+	static var authTicketCallbacks : Map<Int, Bool->Void> = new Map();
 
 	@:noComplete public static function registerGlobalEvent( event : Int, callb : Dynamic -> Void ) {
 		globalEvents.set(event, callb);
@@ -335,6 +345,27 @@ class Api
 		return true;
 	}
 
+	public static function getAuthTicket( ?onReady : Bool->Void ) : haxe.io.Bytes {
+		var size = 0;
+		var authTicket = 0;
+		var ticket = _GetAuthTicket(size,authTicket);
+		if( size == 0 || authTicket == 0 )
+			return null;
+		if( onReady != null ){
+			authTicketCallbacks.set(authTicket, onReady);
+			// Timeout
+			haxe.Timer.delay(function(){
+				var cb = authTicketCallbacks.get(authTicket);
+				if( cb != null ){
+					cb(false);
+					authTicketCallbacks.remove(authTicket);
+				}
+			}, 15000); //15sec
+		}
+
+		return ticket.toBytes(size);
+	}
+
 	//PRIVATE:
 
 	private static var haveGlobalStats:Bool;
@@ -452,6 +483,7 @@ class Api
 	@:hlNative("steam","is_steam_in_big_picture_mode") private static function _IsSteamInBigPictureMode() : Bool { return false; }
 	@:hlNative("steam","is_steam_running") private static function _IsSteamRunning() : Bool { return false; }
 	@:hlNative("steam","get_current_game_language") private static function _GetCurrentGameLanguage() : hl.Bytes { return null; }
+	@:hlNative("steam","get_auth_ticket") private static function _GetAuthTicket( size : hl.Ref<Int>, authTicket : hl.Ref<Int> ) : hl.Bytes { return null; }
 	@:hlNative("steam","open_overlay") private static function _OpenOverlay( url : hl.Bytes ) : Bool { return false; }
 }
 
