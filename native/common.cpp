@@ -84,7 +84,7 @@ bool CheckInit(){
 	return SteamUser() && SteamUser()->BLoggedOn() && SteamUserStats() && (s_callbackHandler != 0) && (g_eventHandler != 0);
 }
 
-void GlobalEvent( int id, vdynamic *v ) {
+static void GlobalEvent( int id, vdynamic *v ) {
 	vdynamic i;
 	vdynamic *args[2];
 	i.t = &hlt_i32;

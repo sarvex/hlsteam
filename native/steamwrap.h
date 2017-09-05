@@ -12,6 +12,7 @@
 #include <map>
 
 #include <steam/steam_api.h>
+#include <steam/steam_gameserver.h>
 
 typedef vbyte *		vuid;
 #define _UID		_BYTES
@@ -75,6 +76,8 @@ public:
 
 #	define EVENT_DECL(name,type) STEAM_CALLBACK(CallbackHandler, On##name, type, m_##name); vdynamic *Encode##name( type *t );
 #	include "events.h"
+
+#	define EVENT_IMPL(name,type) vdynamic *CallbackHandler::Encode##name( type *d )
 
 	void FindLeaderboard(const char* name);
 	void OnLeaderboardFound( LeaderboardFindResult_t *pResult, bool bIOFailure);

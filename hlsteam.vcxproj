@@ -206,6 +206,7 @@
     <ClCompile Include="native\common.cpp" />
     <ClCompile Include="native\controller.cpp" />
     <ClCompile Include="native\friends.cpp" />
+    <ClCompile Include="native\gameserver.cpp" />
     <ClCompile Include="native\matchmaking.cpp" />
     <ClCompile Include="native\networking.cpp" />
     <ClCompile Include="native\stats.cpp" />
@@ -213,6 +214,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="native\events.h" />
+    <ClInclude Include="native\serverevents.h" />
     <ClInclude Include="native\steamwrap.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

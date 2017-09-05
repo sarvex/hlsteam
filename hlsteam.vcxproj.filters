@@ -9,9 +9,11 @@
     <ClCompile Include="native\cloud.cpp" />
     <ClCompile Include="native\friends.cpp" />
     <ClCompile Include="native\networking.cpp" />
+    <ClCompile Include="native\gameserver.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="native\steamwrap.h" />
     <ClInclude Include="native\events.h" />
+    <ClInclude Include="native\serverevents.h" />
   </ItemGroup>
 </Project>
