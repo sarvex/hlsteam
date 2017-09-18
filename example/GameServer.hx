@@ -4,10 +4,21 @@ class GameServer {
 
 	public static function main() {
 
-		var config : Dynamic = haxe.Json.parse(sys.io.File.getContent("config.json"));
+		if( Sys.args()[0] == "-client" ) {
+			GameClient.main();
+			return;
+		}
 
-		if( !steam.GameServer.init(new sys.net.Host(config.host), config.port, config.gamePort, config.queryPort, Authentification, config.version) )
+		var config : Dynamic = haxe.Json.parse(sys.io.File.getContent("config.json"));
+		var host = new sys.net.Host(config.host);
+
+		if( !steam.GameServer.init(host, config.port, config.gamePort, config.queryPort, AuthentificationAndSecure, config.version) )
 			throw "Can't init game server";
+
+		log("Server started on " + host.toString() + ":" + config.port);
+
+		steam.GameServer.setConfig(config.name, config.name, config.description);
+		steam.GameServer.setInfo(4, false, config.name, 0, "DefaultMap");
 
 		steam.GameServer.logonAnonymous(function(ok) {
 			if( !ok ) {
@@ -17,8 +28,6 @@ class GameServer {
 			log("LOGIN OK");
 			steam.GameServer.enableHeartbeats(true);
 		});
-
-		GameClient.main();
 	}
 
 }
@@ -31,6 +40,8 @@ class GameClient {
 		if( !steam.Api.init(app) )
 			throw "Can't init steam client";
 		log("Client connected");
+		var config : Dynamic = haxe.Json.parse(sys.io.File.getContent("config.json"));
+		steam.GameServer.requestInternetServerList(steam.Api.appId, {});
 	}
 
 }

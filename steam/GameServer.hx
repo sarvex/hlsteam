@@ -24,8 +24,15 @@ class GameServer {
 		if( initDone ) return true;
 		haxe.MainLoop.add(runGameServer);
 		gameserver_setup(onGlobalEvent);
-		gameserver_config( @:privateAccess "".toUtf8(), @:privateAccess "Test Server".toUtf8(), @:privateAccess "desc".toUtf8() );
 		return true;
+	}
+
+	public static function setConfig( modDir : String, product : String, desc : String ) {
+		@:privateAccess gameserver_config( modDir.toUtf8(), product.toUtf8(), desc.toUtf8() );
+	}
+
+	public static function setInfo( maxPlayers, password,  serverName : String, botCount : Int, mapName : String ) {
+		@:privateAccess gameserver_info( maxPlayers, password, serverName.toUtf8(), botCount, mapName.toUtf8() );
 	}
 
 	static function onGlobalEvent( event : Int, data : Dynamic ) {
@@ -81,6 +88,23 @@ class GameServer {
 	}
 
 	static function gameserver_config( modDir : hl.Bytes, name : hl.Bytes, desc : hl.Bytes ) {
+	}
+
+	static function gameserver_info( maxPlayers : Int, password : Bool, serverName : hl.Bytes, botCount : Int, mapName : hl.Bytes ) {
+	}
+
+	public static function requestInternetServerList( appId : Int, ?filters : {} ) {
+		var fields = filters == null ? [] : Reflect.fields(filters);
+		var n = new hl.NativeArray(fields.length * 2);
+		var p = 0;
+		for( f in fields ) {
+			n[p++] = @:privateAccess f.toUtf8();
+			n[p++] = @:privateAccess Std.string(Reflect.field(filters,f)).toUtf8();
+		}
+		request_internet_server_list(appId, n);
+	}
+
+	static function request_internet_server_list( appId : Int, filters : hl.NativeArray<hl.Bytes> ) {
 	}
 
 }

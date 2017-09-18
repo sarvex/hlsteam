@@ -213,5 +213,4 @@ DEFINE_PRIM(_BOOL, get_lobby_data_byindex, _UID _I32 _BYTES _I32 _BYTES _I32);
 DEFINE_PRIM(_BYTES, get_lobby_member_data, _UID _UID _BYTES);
 DEFINE_PRIM(_VOID, set_lobby_member_data, _UID _BYTES _BYTES);
 
-// --------- User Data --------------------------
-
+// ---------

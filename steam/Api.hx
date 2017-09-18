@@ -45,6 +45,7 @@ class Api
 	 * Whether the Steam API is detected & initialized or not. If false, all calls will fail
 	 */
 	public static var active(default, null):Bool = false;
+	public static var appId(default, null) : Int;
 
 	/**
 	 * The Steam Controller API
@@ -371,7 +372,6 @@ class Api
 	private static var haveGlobalStats:Bool;
 	private static var haveReceivedUserStats:Bool;
 	private static var wantStoreStats:Bool;
-	private static var appId:Int;
 
 	private static var leaderboardIds:Array<String>;
 	private static var leaderboardOps:List<LeaderboardOp>;

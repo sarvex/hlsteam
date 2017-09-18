@@ -106,6 +106,15 @@ void HL_NAME(gameserver_config)( char *modDir, char *product, char *desc ) {
 	SteamGameServer()->SetModDir(modDir);
 	SteamGameServer()->SetProduct(product);
 	SteamGameServer()->SetGameDescription(desc);
+	SteamGameServer()->SetDedicatedServer(true);
+}
+
+void HL_NAME(gameserver_info)( int maxPlayers, bool password, char *serverName, int botCount, char *mapName ) {
+	SteamGameServer()->SetMaxPlayerCount(maxPlayers);
+	SteamGameServer()->SetPasswordProtected(password);
+	SteamGameServer()->SetServerName(serverName);
+	SteamGameServer()->SetBotPlayerCount(botCount);
+	SteamGameServer()->SetMapName(mapName);
 }
 
 DEFINE_PRIM(_BOOL, gameserver_init, _I32 _I32 _I32 _I32 _I32 _BYTES);
@@ -115,3 +124,40 @@ DEFINE_PRIM(_VOID, gameserver_shutdown, _NO_ARG);
 DEFINE_PRIM(_VOID, gameserver_logon_anonymous, _NO_ARG);
 DEFINE_PRIM(_VOID, gameserver_enable_heartbeats, _BOOL);
 DEFINE_PRIM(_VOID, gameserver_config, _BYTES _BYTES _BYTES);
+DEFINE_PRIM(_VOID, gameserver_info, _I32 _BOOL _BYTES _I32 _BYTES);
+
+// --------- list --------------------------
+
+class HLServerResponse : public ISteamMatchmakingServerListResponse {
+public:
+	void ServerResponded( HServerListRequest hRequest, int iServer ) {
+		printf("RESPONDED %d\n",iServer);
+	}
+
+	void ServerFailedToRespond( HServerListRequest hRequest, int iServer ) {
+		gameserveritem_t *details = SteamMatchmakingServers()->GetServerDetails(hRequest,iServer);
+		unsigned int ip = details->m_NetAdr.GetIP();
+		printf("SERVER DIDN'T ANSWER %d.%d.%d.%d:%d\n",(ip >> 24),(ip >> 16) & 0xFF, (ip >> 8) & 0xFF, ip & 0xFF, details->m_NetAdr.GetQueryPort());
+	}
+
+	void RefreshComplete( HServerListRequest hRequest, EMatchMakingServerResponse response ) {
+		printf("COMPLETE %d\n", response);
+	}
+};
+
+HL_PRIM void HL_NAME(request_internet_server_list)( int appId, varray *filters ) {
+	int nfilters = filters ? filters->size >> 1 : 0;
+	HLServerResponse *api = new HLServerResponse();
+	MatchMakingKeyValuePair_t *tfilters = new MatchMakingKeyValuePair_t[nfilters];
+	int i;
+	for(i=0;i<nfilters;i++) {
+		strcpy(tfilters[i].m_szKey, hl_aptr(filters,char*)[i<<1]);
+		strcpy(tfilters[i].m_szValue, hl_aptr(filters,char*)[(i<<1)+1]);
+	}
+	SteamMatchmakingServers()->RequestInternetServerList(appId,&tfilters,nfilters,api);
+	delete tfilters;
+}
+
+DEFINE_PRIM(_VOID, request_internet_server_list, _I32 _ARR);
+
+// ---------
