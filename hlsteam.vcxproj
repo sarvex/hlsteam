@@ -104,13 +104,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <TargetExt>.hdll</TargetExt>
-    <IncludePath>native\include;C:\Projects\haxeTools\hashlink\src;$(IncludePath)</IncludePath>
+    <IncludePath>native\include;../../hashlink/src;$(IncludePath)</IncludePath>
     <LibraryPath>native\lib\win32;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseVS2013|Win32'">
     <TargetExt>.hdll</TargetExt>
-    <IncludePath>native\include;C:\Projects\haxeTools\hashlink\src;$(IncludePath)</IncludePath>
-    <LibraryPath>native\lib\win32;$(LibraryPath)</LibraryPath>
+    <IncludePath>native\include;../../hashlink/src;$(IncludePath)</IncludePath>
+    <LibraryPath>native\lib\win32;../../hashlink/ReleaseVS2013;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LibraryPath>native\lib\win64;$(LibraryPath)</LibraryPath>
