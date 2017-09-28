@@ -130,24 +130,48 @@ DEFINE_PRIM(_VOID, gameserver_info, _I32 _BOOL _BYTES _I32 _BYTES);
 
 class HLServerResponse : public ISteamMatchmakingServerListResponse {
 public:
+
+	vclosure *callb;
+
+	HLServerResponse( vclosure *callb ) {
+		this->callb = callb;
+		hl_add_root(&this->callb);
+	}
+
+	~HLServerResponse() {
+		hl_remove_root(&this->callb);
+	}
+
 	void ServerResponded( HServerListRequest hRequest, int iServer ) {
-		printf("RESPONDED %d\n",iServer);
+		saveServer(hRequest,iServer);
 	}
 
 	void ServerFailedToRespond( HServerListRequest hRequest, int iServer ) {
+		saveServer(hRequest,iServer);
+	}
+
+	void saveServer( HServerListRequest hRequest, int iServer ) {
 		gameserveritem_t *details = SteamMatchmakingServers()->GetServerDetails(hRequest,iServer);
-		unsigned int ip = details->m_NetAdr.GetIP();
-		printf("SERVER DIDN'T ANSWER %d.%d.%d.%d:%d\n",(ip >> 24),(ip >> 16) & 0xFF, (ip >> 8) & 0xFF, ip & 0xFF, details->m_NetAdr.GetQueryPort());
+		HLValue v;
+		v.Set("ip", details->m_NetAdr.GetIP());
+		v.Set("port", details->m_NetAdr.GetQueryPort());
+		v.Set("ping", details->m_bHadSuccessfulResponse ? details->m_nPing : -1);
+		v.Set("id", details->m_steamID);
+		hl_dyn_call(callb, &v.value, 1);
+		//printf("SERVER DIDN'T ANSWER %d.%d.%d.%d:%d\n",(ip >> 24),(ip >> 16) & 0xFF, (ip >> 8) & 0xFF, ip & 0xFF, );
 	}
 
 	void RefreshComplete( HServerListRequest hRequest, EMatchMakingServerResponse response ) {
-		printf("COMPLETE %d\n", response);
+		vdynamic *arg = NULL;
+		hl_dyn_call(callb, &arg, 1);
+		//printf("COMPLETE %d\n", response);
+		delete this;
 	}
 };
 
-HL_PRIM void HL_NAME(request_internet_server_list)( int appId, varray *filters ) {
+HL_PRIM void HL_NAME(request_internet_server_list)( int appId, varray *filters, vclosure *callb ) {
 	int nfilters = filters ? filters->size >> 1 : 0;
-	HLServerResponse *api = new HLServerResponse();
+	HLServerResponse *api = new HLServerResponse(callb);
 	MatchMakingKeyValuePair_t *tfilters = new MatchMakingKeyValuePair_t[nfilters];
 	int i;
 	for(i=0;i<nfilters;i++) {
@@ -158,6 +182,6 @@ HL_PRIM void HL_NAME(request_internet_server_list)( int appId, varray *filters )
 	delete tfilters;
 }
 
-DEFINE_PRIM(_VOID, request_internet_server_list, _I32 _ARR);
+DEFINE_PRIM(_VOID, request_internet_server_list, _I32 _ARR _FUN(_VOID, _DYN));
 
 // ---------

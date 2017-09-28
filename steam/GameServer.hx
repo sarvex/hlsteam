@@ -93,7 +93,7 @@ class GameServer {
 	static function gameserver_info( maxPlayers : Int, password : Bool, serverName : hl.Bytes, botCount : Int, mapName : hl.Bytes ) {
 	}
 
-	public static function requestInternetServerList( appId : Int, ?filters : {} ) {
+	public static function requestInternetServerList( appId : Int, ?filters : {}, ?onResults : Array<{ id : UID, ip : Int, port : Int, ping : Int }> -> Void ) {
 		var fields = filters == null ? [] : Reflect.fields(filters);
 		var n = new hl.NativeArray(fields.length * 2);
 		var p = 0;
@@ -101,10 +101,11 @@ class GameServer {
 			n[p++] = @:privateAccess f.toUtf8();
 			n[p++] = @:privateAccess Std.string(Reflect.field(filters,f)).toUtf8();
 		}
-		request_internet_server_list(appId, n);
+		var results = [];
+		request_internet_server_list(appId, n, function(r) if( r != null ) results.push(r) else onResults(results));
 	}
 
-	static function request_internet_server_list( appId : Int, filters : hl.NativeArray<hl.Bytes> ) {
+	static function request_internet_server_list( appId : Int, filters : hl.NativeArray<hl.Bytes>, onResult : Dynamic -> Void ) {
 	}
 
 }
