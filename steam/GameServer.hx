@@ -51,6 +51,16 @@ class GameServer {
 	public static function enableHeartbeats( b : Bool ) {
 	}
 
+	@:hlNative("steam", "gameserver_get_public_ip")
+	public static function getPublicIP() : Int {
+		return 0;
+	}
+
+	@:hlNative("steam", "gameserver_get_steam_id")
+	public static function getSteamID() : UID {
+		return null;
+	}
+
 	public static function logonAnonymous( onLogin : Bool -> Void ) {
 
 		var ucb = 100;

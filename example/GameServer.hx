@@ -3,7 +3,6 @@ import Sys.println in log;
 class GameServer {
 
 	public static function main() {
-
 		if( Sys.args()[0] == "-client" ) {
 			GameClient.main();
 			return;
@@ -17,7 +16,7 @@ class GameServer {
 		if( !sys.FileSystem.exists("steam_appid.txt") )
 			throw "Missing steam_appid.txt";
 
-		if( !steam.GameServer.init(host, config.port, config.gamePort, config.queryPort, AuthentificationAndSecure, config.version) )
+		if( !steam.GameServer.init(host, config.port, config.gamePort, config.queryPort, Authentification, config.version) )
 			throw "Can't init game server";
 
 		log("Server started");
@@ -32,6 +31,9 @@ class GameServer {
 			}
 			log("LOGIN OK");
 			steam.GameServer.enableHeartbeats(true);
+			log("UID = " + steam.GameServer.getSteamID().toString());
+			var ip = steam.GameServer.getPublicIP();
+			log("IP = " + (ip >>> 24) + "." + ((ip >> 16) & 0xFF) + "." + ((ip >> 8) & 0xFF) + "." + (ip & 0xFF));
 		});
 	}
 

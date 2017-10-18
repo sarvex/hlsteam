@@ -117,6 +117,14 @@ void HL_NAME(gameserver_info)( int maxPlayers, bool password, char *serverName, 
 	SteamGameServer()->SetMapName(mapName);
 }
 
+vuid HL_NAME(gameserver_get_steam_id)() {
+	return hl_of_uid(SteamGameServer()->GetSteamID());
+}
+
+int HL_NAME(gameserver_get_public_ip)() {
+	return (int)SteamGameServer()->GetPublicIP();
+}
+
 DEFINE_PRIM(_BOOL, gameserver_init, _I32 _I32 _I32 _I32 _I32 _BYTES);
 DEFINE_PRIM(_VOID, gameserver_setup, _FUN(_VOID, _I32 _DYN));
 DEFINE_PRIM(_VOID, gameserver_runcallbacks, _NO_ARG);
@@ -125,6 +133,8 @@ DEFINE_PRIM(_VOID, gameserver_logon_anonymous, _NO_ARG);
 DEFINE_PRIM(_VOID, gameserver_enable_heartbeats, _BOOL);
 DEFINE_PRIM(_VOID, gameserver_config, _BYTES _BYTES _BYTES);
 DEFINE_PRIM(_VOID, gameserver_info, _I32 _BOOL _BYTES _I32 _BYTES);
+DEFINE_PRIM(_UID, gameserver_get_steam_id, _NO_ARG);
+DEFINE_PRIM(_I32, gameserver_get_public_ip, _NO_ARG);
 
 // --------- list --------------------------
 
