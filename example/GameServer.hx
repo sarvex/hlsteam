@@ -31,9 +31,23 @@ class GameServer {
 			}
 			log("LOGIN OK");
 			steam.GameServer.enableHeartbeats(true);
-			log("UID = " + steam.GameServer.getSteamID().toString());
+			var id = steam.GameServer.getSteamID();
+			log("UID = " + id.toString());
 			var ip = steam.GameServer.getPublicIP();
 			log("IP = " + (ip >>> 24) + "." + ((ip >> 16) & 0xFF) + "." + ((ip >> 8) & 0xFF) + "." + (ip & 0xFF));
+
+			sys.io.File.saveContent("server.conf", haxe.Serializer.run({ id : id.getBytes() }));
+
+
+			steam.Networking.startP2P({
+				onData : function(user, data) {
+					trace(user, data);
+					steam.Networking.sendP2P(user, haxe.io.Bytes.ofString("Ping!"), Reliable);
+				},
+				onConnectionRequest : function(user) { trace(user); return true; },
+				onConnectionError : function(user,status) trace(user, status),
+			});
+
 		});
 	}
 
@@ -47,6 +61,21 @@ class GameClient {
 		if( !steam.Api.init(app) )
 			throw "Can't init steam client";
 		log("Client connected");
+
+		var serverInfos : { id : haxe.io.Bytes } = haxe.Unserializer.run(sys.io.File.getContent("server.conf"));
+
+		trace(serverInfos.id.toHex());
+
+		steam.Networking.startP2P({
+			onData : function(user, data) trace(user, data),
+			onConnectionRequest : function(user) { trace(user); return true; },
+			onConnectionError : function(user,status) trace(user, status),
+		});
+
+		var server = steam.User.fromUID(steam.UID.fromBytes(serverInfos.id));
+		steam.Networking.sendP2P(server, haxe.io.Bytes.ofString("Hello!"), Reliable);
+
+		/*
 		var config : Dynamic = haxe.Json.parse(sys.io.File.getContent("config.json"));
 		steam.GameServer.requestInternetServerList(steam.Api.appId, {}, function(list) {
 			Sys.println("Servers found: " + list);
@@ -56,7 +85,7 @@ class GameClient {
 			}
 			var cnx = list[0];
 			trace(cnx.id.toString());
-		});
+		});*/
 	}
 
 }

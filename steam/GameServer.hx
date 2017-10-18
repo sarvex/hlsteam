@@ -37,6 +37,8 @@ class GameServer {
 
 	static function onGlobalEvent( event : Int, data : Dynamic ) {
 		var callb = globalEvents.get(event);
+		if( callb == null )
+			callb = @:privateAccess Api.globalEvents.get(event);
 		if( callb != null )
 			callb(data);
 		else

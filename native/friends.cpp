@@ -8,6 +8,8 @@ vdynamic *CallbackHandler::EncodePersonaChange( PersonaStateChange_t *d ) {
 }
 
 HL_PRIM vbyte *HL_NAME(get_user_name)( vuid uid ) {
+	if( !SteamFriends() )
+		return (vbyte*)"Unknown";
 	return (vbyte*)SteamFriends()->GetFriendPersonaName(hl_to_uid(uid));
 }
 
