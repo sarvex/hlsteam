@@ -236,8 +236,8 @@ HL_PRIM varray *HL_NAME(ugc_query_get_key_value_tags)(vuid cHandle, int iIndex, 
 	for (int i = 0; i < num; i++) {
 		SteamUGC()->GetQueryUGCKeyValueTag(handle, iIndex, i, key, 255, value, maxValueLength);
 		
-		a[i*2] = hl_copy_bytes((vbyte*)key, strlen(key) + 1);
-		a[i*2+1] = hl_copy_bytes((vbyte*)value, strlen(value) + 1);
+		a[i*2] = hl_copy_bytes((vbyte*)key, (int)strlen(key) + 1);
+		a[i*2+1] = hl_copy_bytes((vbyte*)value, (int)strlen(value) + 1);
 	}
 	delete value;
 	return ret;
@@ -266,7 +266,7 @@ HL_PRIM vbyte *HL_NAME(ugc_query_get_metadata)(vuid sHandle, int iIndex){
 	if (!CheckInit()) return NULL;
 	char pchMetadata[5000];
 	SteamUGC()->GetQueryUGCMetadata(hl_to_uint64(sHandle), iIndex, pchMetadata, 5000);
-	return hl_copy_bytes((vbyte*)pchMetadata, strlen(pchMetadata) + 1);
+	return hl_copy_bytes((vbyte*)pchMetadata, (int)strlen(pchMetadata) + 1);
 }
 
 HL_PRIM vdynamic *HL_NAME(ugc_query_get_result)(vuid sHandle, int iIndex){

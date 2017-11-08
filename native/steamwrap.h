@@ -125,7 +125,7 @@ public:
 		hl_dyn_setf(value, hl_hash_utf8(name), v);
 	}
 	void Set( const char *name, const char *b ) {
-		hl_dyn_setp(value, hl_hash_utf8(name), &hlt_bytes, hl_copy_bytes((vbyte*)b, strlen(b)+1));
+		hl_dyn_setp(value, hl_hash_utf8(name), &hlt_bytes, hl_copy_bytes((vbyte*)b, (int)strlen(b)+1));
 	}
 	void Set( const char *name, vdynamic *d ) {
 		hl_dyn_setp(value, hl_hash_utf8(name), &hlt_dyn, d);
