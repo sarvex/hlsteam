@@ -24,3 +24,5 @@ temp/
 /example/steam_appid.txt
 /example/server.conf
 /x64
+/native/*.o
+/steam.hdll

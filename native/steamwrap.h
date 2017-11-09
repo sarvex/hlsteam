@@ -134,7 +134,6 @@ public:
 
 extern CallbackHandler *s_callbackHandler;
 
-void GlobalEvent( int type, vdynamic *data );
 void SendEvent(event_type type, bool success, const char *data);
 bool CheckInit();
 

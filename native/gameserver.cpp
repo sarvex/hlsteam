@@ -1,5 +1,7 @@
 #include "steamwrap.h"
 
+static void GlobalEvent( int id, vdynamic *v );
+
 class GameServerHandler {
 	std::map<std::string, void*> m;
 public:
