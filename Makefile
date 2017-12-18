@@ -4,7 +4,7 @@ ifndef ARCH
 	ARCH = $(LBITS)
 endif
 
-CFLAGS = -Wall -O3 -I src -std=c11 -I native/include -fPIC -I ../sdk/public/steam
+CFLAGS = -Wall -O3 -I src -std=c11 -I native/include -fPIC -I ../sdk/public
 LFLAGS = -lhl -lsteam_api -lstdc++ -L native/lib/linux$(ARCH) -L ../sdk/redistributable_bin/linux$(ARCH)
 
 SRC = native/cloud.o native/common.o native/controller.o native/friends.o native/gameserver.o \
