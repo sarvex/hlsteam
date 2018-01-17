@@ -66,12 +66,38 @@ class GameServer {
 	public static function logonAnonymous( onLogin : Bool -> Void ) {
 
 		var ucb = 100;
+		var wasLogin = false;
 		//SteamServersConnected_t
-		registerGlobalEvent(ucb + 1, function(_) onLogin(true));
+		registerGlobalEvent(ucb + 1, function(_) {
+			wasLogin = true;
+			onLogin(true);
+		});
 		//SteamServerConnectFailure_t
 		registerGlobalEvent(ucb + 2, function(r) { customTrace("CONNECT FAILURE " + r); onLogin(false); });
 		//SteamServersDisconnected_t
-		registerGlobalEvent(ucb + 3, function(r) { customTrace("DISCONNECTED " + r); onLogin(false); });
+		registerGlobalEvent(ucb + 3, function(r) {
+			if( !wasLogin ) {
+				customTrace("CONNECT FAILURE " + r);
+				onLogin(false);
+				return;
+			}
+			customTrace("GameServer Disconnected, retrying...");
+			var result : Null<Bool> = null;
+			var old = onLogin;
+			onLogin = function(ok) result = ok;
+			gameserver_logon_anonymous(); // try again login
+			var time = haxe.Timer.stamp();
+			while( result != null && haxe.Timer.stamp() - time < 10 ) {
+				runGameServer();
+				Sys.sleep(0.01);
+			}
+			customTrace("GameServer reconnected = " + result);
+			onLogin = old;
+			if( result == true )
+				return;
+			onLogin(false);
+			onLogin = function(_) {};
+		});
 
 		registerGlobalEvent(ucb + 15, function(_) { /* ignore VAC flag */ });
 
