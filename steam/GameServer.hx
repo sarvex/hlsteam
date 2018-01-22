@@ -87,7 +87,7 @@ class GameServer {
 			onLogin = function(ok) result = ok;
 			gameserver_logon_anonymous(); // try again login
 			var time = haxe.Timer.stamp();
-			while( result != null && haxe.Timer.stamp() - time < 10 ) {
+			while( result == null && haxe.Timer.stamp() - time < 10 ) {
 				runGameServer();
 				Sys.sleep(0.01);
 			}
