@@ -20,7 +20,10 @@ HL_PRIM varray *HL_NAME(get_subscribed_items)(){
 	PublishedFileId_t* pvecPublishedFileID = new PublishedFileId_t[numSubscribed];
 
 	int result = SteamUGC()->GetSubscribedItems(pvecPublishedFileID, numSubscribed);
-	if (result <= 0) return hl_alloc_array(&hlt_bytes, 0);
+	if( result <= 0 ) {
+		delete pvecPublishedFileID;
+		return hl_alloc_array(&hlt_bytes, 0);
+	}
 
 	varray *a = hl_alloc_array(&hlt_bytes, result);
 	vuid *aa = hl_aptr(a, vuid);
@@ -33,13 +36,13 @@ HL_PRIM varray *HL_NAME(get_subscribed_items)(){
 }
 
 HL_PRIM int HL_NAME(get_item_state)(vuid publishedFileID){
-	if (!CheckInit()) return 0;
+	if (!CheckInit() || publishedFileID  == NULL) return 0;
 	PublishedFileId_t nPublishedFileID = (PublishedFileId_t)hl_to_uint64(publishedFileID);
 	return SteamUGC()->GetItemState(nPublishedFileID);
 }
 
 HL_PRIM bool HL_NAME(get_item_download_info)(vuid publishedFileID, double *downloaded, double *total ){
-	if (!CheckInit()) return false;
+	if (!CheckInit() || publishedFileID  == NULL) return false;
 
 	PublishedFileId_t nPublishedFileID = (PublishedFileId_t)hl_to_uint64(publishedFileID);
 
@@ -58,14 +61,14 @@ HL_PRIM bool HL_NAME(get_item_download_info)(vuid publishedFileID, double *downl
 }
 
 HL_PRIM bool HL_NAME(download_item)(vuid publishedFileID, bool highPriority){
-	if (!CheckInit()) return false;
+	if (!CheckInit() || publishedFileID == NULL) return false;
 	PublishedFileId_t nPublishedFileID = (PublishedFileId_t)hl_to_uint64(publishedFileID);
 
 	return SteamUGC()->DownloadItem(nPublishedFileID, highPriority);
 }
 
 HL_PRIM vdynamic *HL_NAME(get_item_install_info)(vuid publishedFileID){
-	if (!CheckInit()) return NULL;
+	if (!CheckInit() || publishedFileID  == NULL) return NULL;
 
 	PublishedFileId_t nPublishedFileID = (PublishedFileId_t)hl_to_uint64(publishedFileID);
 
@@ -98,12 +101,12 @@ static void on_item_subscribed(vclosure *c, RemoteStorageSubscribePublishedFileR
 	}
 }
 HL_PRIM CClosureCallResult<RemoteStorageSubscribePublishedFileResult_t>* HL_NAME(subscribe_item)(vuid publishedFileID, vclosure *closure) {
-	if (!CheckInit()) return NULL;
+	if (!CheckInit() || publishedFileID  == NULL) return NULL;
 	ASYNC_CALL(SteamUGC()->SubscribeItem(hl_to_uint64(publishedFileID)), RemoteStorageSubscribePublishedFileResult_t, on_item_subscribed);
 	return m_call;
 }
 HL_PRIM CClosureCallResult<RemoteStorageSubscribePublishedFileResult_t>* HL_NAME(unsubscribe_item)(vuid publishedFileID, vclosure *closure) {
-	if (!CheckInit()) return NULL;
+	if (!CheckInit() || publishedFileID  == NULL) return NULL;
 	ASYNC_CALL(SteamUGC()->UnsubscribeItem(hl_to_uint64(publishedFileID)), RemoteStorageSubscribePublishedFileResult_t, on_item_subscribed);
 	return m_call;
 }
@@ -148,12 +151,12 @@ HL_PRIM vuid HL_NAME(ugc_query_create_user_request)(int uid, int listType, int m
 }
 
 HL_PRIM vuid HL_NAME(ugc_query_create_details_request)(varray *fileIDs){
-	if (!CheckInit()) return NULL;
+	if (!CheckInit() || fileIDs == NULL) return NULL;
 
 	PublishedFileId_t * pvecPublishedFileID = new PublishedFileId_t[fileIDs->size];
 	vuid *ids = hl_aptr(fileIDs, vuid);
 	for (int i = 0; i < fileIDs->size; i++)
-		pvecPublishedFileID[i] = hl_to_uint64(ids[i]);
+		pvecPublishedFileID[i] = ids[i] ? hl_to_uint64(ids[i]) : 0;
 
 	UGCQueryHandle_t result = SteamUGC()->CreateQueryUGCDetailsRequest(pvecPublishedFileID, fileIDs->size);
 	delete pvecPublishedFileID;
@@ -161,42 +164,42 @@ HL_PRIM vuid HL_NAME(ugc_query_create_details_request)(varray *fileIDs){
 }
 
 HL_PRIM bool HL_NAME(ugc_query_set_language)(vuid handle, vbyte *lang) {
-	if (!CheckInit()) return false;
+	if (!CheckInit() || handle == NULL) return false;
 	return SteamUGC()->SetLanguage(hl_to_uint64(handle), (char*)lang);
 }
 
 HL_PRIM bool HL_NAME(ugc_query_set_search_text)(vuid handle, vbyte *search) {
-	if (!CheckInit()) return false;
+	if (!CheckInit() || handle == NULL) return false;
 	return SteamUGC()->SetSearchText(hl_to_uint64(handle), (char*)search);
 }
 
 HL_PRIM bool HL_NAME(ugc_query_add_required_tag)(vuid handle, vbyte *tagName) {
-	if (!CheckInit()) return false;
+	if (!CheckInit() || handle == NULL) return false;
 	return SteamUGC()->AddRequiredTag(hl_to_uint64(handle), (char*)tagName);
 }
 
 HL_PRIM bool HL_NAME(ugc_query_add_required_key_value_tag)(vuid handle, vbyte *pKey, vbyte *pValue) {
-	if (!CheckInit()) return false;
+	if (!CheckInit() || handle == NULL) return false;
 	return SteamUGC()->AddRequiredKeyValueTag(hl_to_uint64(handle), (char*)pKey, (char*)pValue);
 }
 
 HL_PRIM bool HL_NAME(ugc_query_add_excluded_tag)(vuid handle, vbyte *tagName) {
-	if (!CheckInit()) return false;
+	if (!CheckInit() || handle == NULL) return false;
 	return SteamUGC()->AddExcludedTag(hl_to_uint64(handle), (char*)tagName);
 }
 
 HL_PRIM bool HL_NAME(ugc_query_set_return_metadata)(vuid handle, bool returnMetadata) {
-	if (!CheckInit()) return false;
+	if (!CheckInit() || handle == NULL) return false;
 	return SteamUGC()->SetReturnMetadata(hl_to_uint64(handle), returnMetadata);
 }
 
 HL_PRIM bool HL_NAME(ugc_query_set_return_key_value_tags)(vuid handle, bool returnKeyValueTags) {
-	if (!CheckInit()) return false;
+	if (!CheckInit() || handle == NULL) return false;
 	return SteamUGC()->SetReturnKeyValueTags(hl_to_uint64(handle), returnKeyValueTags);
 }
 
 HL_PRIM bool HL_NAME(ugc_query_set_return_children)(vuid handle, bool returnChildren) {
-	if (!CheckInit()) return false;
+	if (!CheckInit() || handle == NULL) return false;
 	return SteamUGC()->SetReturnChildren(hl_to_uint64(handle), returnChildren);
 }
 
@@ -213,18 +216,18 @@ static void on_query_completed(vclosure *c, SteamUGCQueryCompleted_t *result, bo
 	}
 }
 HL_PRIM CClosureCallResult<SteamUGCQueryCompleted_t>* HL_NAME(ugc_query_send_request)(vuid cHandle, vclosure *closure){
-	if (!CheckInit()) return NULL;
+	if (!CheckInit() || cHandle == NULL) return NULL;
 	ASYNC_CALL(SteamUGC()->SendQueryUGCRequest(hl_to_uint64(cHandle)), SteamUGCQueryCompleted_t, on_query_completed);
 	return m_call;
 }
 
 HL_PRIM bool HL_NAME(ugc_query_release_request)(vuid cHandle) {
-	if (!CheckInit()) return false;
+	if (!CheckInit() || cHandle == NULL) return false;
 	return SteamUGC()->ReleaseQueryUGCRequest(hl_to_uint64(cHandle));
 }
 
 HL_PRIM varray *HL_NAME(ugc_query_get_key_value_tags)(vuid cHandle, int iIndex, int maxValueLength ){
-	if (!CheckInit()) return NULL;
+	if (!CheckInit() || cHandle == NULL) return NULL;
 
 	UGCQueryHandle_t handle = hl_to_uint64(cHandle);
 
@@ -244,11 +247,13 @@ HL_PRIM varray *HL_NAME(ugc_query_get_key_value_tags)(vuid cHandle, int iIndex, 
 }
 
 HL_PRIM varray *HL_NAME(ugc_query_get_children)(vuid cHandle, int iIndex, int maxChildren) {
-	if (!CheckInit()) return NULL;
+	if (!CheckInit() || cHandle == NULL || maxChildren <= 0) return NULL;
 
 	PublishedFileId_t *children = new PublishedFileId_t[maxChildren];
-	if (!SteamUGC()->GetQueryUGCChildren(hl_to_uint64(cHandle), iIndex, children, maxChildren))
+	if( !SteamUGC()->GetQueryUGCChildren(hl_to_uint64(cHandle), iIndex, children, maxChildren) ) {
+		delete children;
 		return NULL;
+	}
 	int num = 0;
 	while( num < maxChildren ){
 		if (!children[num]) break;
@@ -263,14 +268,14 @@ HL_PRIM varray *HL_NAME(ugc_query_get_children)(vuid cHandle, int iIndex, int ma
 }
 
 HL_PRIM vbyte *HL_NAME(ugc_query_get_metadata)(vuid sHandle, int iIndex){
-	if (!CheckInit()) return NULL;
+	if (!CheckInit() || sHandle == NULL) return NULL;
 	char pchMetadata[5000];
 	SteamUGC()->GetQueryUGCMetadata(hl_to_uint64(sHandle), iIndex, pchMetadata, 5000);
 	return hl_copy_bytes((vbyte*)pchMetadata, (int)strlen(pchMetadata) + 1);
 }
 
 HL_PRIM vdynamic *HL_NAME(ugc_query_get_result)(vuid sHandle, int iIndex){
-	if (!CheckInit()) return NULL;
+	if (!CheckInit() || sHandle == NULL) return NULL;
 
 	UGCQueryHandle_t handle = hl_to_uint64(sHandle);
 	SteamUGCDetails_t d;
@@ -371,34 +376,34 @@ static void on_item_updated(vclosure *c, SubmitItemUpdateResult_t *result, bool 
 	}
 }
 HL_PRIM CClosureCallResult<SubmitItemUpdateResult_t>* HL_NAME(ugc_item_submit_update)(vuid updateHandle, vbyte *changeNotes, vclosure *closure){
-	if (!CheckInit()) return NULL;
+	if (!CheckInit() || updateHandle == NULL) return NULL;
 
 	ASYNC_CALL(SteamUGC()->SubmitItemUpdate(hl_to_uint64(updateHandle), (char*)changeNotes), SubmitItemUpdateResult_t, on_item_updated);
  	return m_call;
 }
 
 HL_PRIM bool HL_NAME(ugc_item_set_update_language)(vuid updateHandle, vbyte *lang) {
-	if (!CheckInit()) return false;
+	if (!CheckInit() || updateHandle == NULL) return false;
 	return SteamUGC()->SetItemUpdateLanguage(hl_to_uint64(updateHandle), (char*)lang);
 }
 
 HL_PRIM bool HL_NAME(ugc_item_set_title)(vuid updateHandle, vbyte *title) {
-	if (!CheckInit()) return false;
+	if (!CheckInit() || updateHandle == NULL) return false;
 	return SteamUGC()->SetItemTitle(hl_to_uint64(updateHandle), (char*)title);
 }
 
 HL_PRIM bool HL_NAME(ugc_item_set_description)(vuid updateHandle, vbyte *description){
-	if(!CheckInit()) return false;
+	if(!CheckInit() || updateHandle == NULL) return false;
 	return SteamUGC()->SetItemDescription(hl_to_uint64(updateHandle), (char*)description);
 }
 
 HL_PRIM bool HL_NAME(ugc_item_set_metadata)(vuid updateHandle, vbyte *metadata) {
-	if (!CheckInit()) return false;
+	if (!CheckInit() || updateHandle == NULL) return false;
 	return SteamUGC()->SetItemMetadata(hl_to_uint64(updateHandle), (char*)metadata);
 }
 
 HL_PRIM bool HL_NAME(ugc_item_set_tags)(vuid updateHandle, varray *tags){
-	if (!CheckInit()) return false;
+	if (!CheckInit() || updateHandle == NULL || tags == NULL) return false;
 
 	SteamParamStringArray_t pTags;
 	pTags.m_nNumStrings = tags->size;
@@ -408,28 +413,28 @@ HL_PRIM bool HL_NAME(ugc_item_set_tags)(vuid updateHandle, varray *tags){
 }
 
 HL_PRIM bool HL_NAME(ugc_item_add_key_value_tag)(vuid updateHandle, vbyte *keyStr, vbyte *valueStr){
-	if (!CheckInit()) return false;
+	if (!CheckInit() || updateHandle == NULL) return false;
 	return SteamUGC()->AddItemKeyValueTag(hl_to_uint64(updateHandle), (char*)keyStr, (char*)valueStr);
 }
 
 HL_PRIM bool HL_NAME(ugc_item_remove_key_value_tags)(vuid updateHandle, vbyte *keyStr) {
-	if (!CheckInit()) return false;
+	if (!CheckInit() || updateHandle == NULL) return false;
 	return SteamUGC()->RemoveItemKeyValueTags(hl_to_uint64(updateHandle), (char*)keyStr);
 }
 
 HL_PRIM bool HL_NAME(ugc_item_set_visibility)(vuid updateHandle, int visibility) {
-	if (!CheckInit()) return false;
+	if (!CheckInit() || updateHandle == NULL) return false;
 	ERemoteStoragePublishedFileVisibility visibilityEnum = static_cast<ERemoteStoragePublishedFileVisibility>(visibility);
 	return SteamUGC()->SetItemVisibility(hl_to_uint64(updateHandle), visibilityEnum);
 }
 
 HL_PRIM bool HL_NAME(ugc_item_set_content)(vuid updateHandle, vbyte *path){
-	if (!CheckInit()) return false;
+	if (!CheckInit() || updateHandle == NULL) return false;
 	return SteamUGC()->SetItemContent(hl_to_uint64(updateHandle), (char*)path);
 }
 
 HL_PRIM bool HL_NAME(ugc_item_set_preview_image)(vuid updateHandle, vbyte *path){
-	if (!CheckInit()) return false;
+	if (!CheckInit() || updateHandle == NULL) return false;
 	return SteamUGC()->SetItemPreview(hl_to_uint64(updateHandle), (char*)path);
 }
 
