@@ -1,11 +1,19 @@
 LBITS := $(shell getconf LONG_BIT)
 
+UNAME := $(shell uname)
+
 ifndef ARCH
 	ARCH = $(LBITS)
 endif
 
-CFLAGS = -Wall -O3 -I src -std=c11 -I native/include -fPIC -I ../sdk/public
-LFLAGS = -lhl -lsteam_api -lstdc++ -L native/lib/linux$(ARCH) -L ../sdk/redistributable_bin/linux$(ARCH)
+ifeq ($(UNAME),Darwin)
+OS=osx
+else
+OS=linux
+endif
+
+CFLAGS = -Wall -O3 -I src -I native/include -fPIC -I ../sdk/public
+LFLAGS = -lhl -lsteam_api -lstdc++ -L native/lib/$(OS)$(ARCH) -L ../sdk/redistributable_bin/$(OS)$(ARCH)
 
 SRC = native/cloud.o native/common.o native/controller.o native/friends.o native/gameserver.o \
 	native/matchmaking.o native/networking.o native/stats.o native/ugc.o
@@ -15,7 +23,7 @@ all: ${SRC}
 
 install:
 	cp steam.hdll /usr/lib
-	cp native/lib/linux$(ARCH)/libsteam_api.* /usr/lib
+	cp native/lib/$(OS)$(ARCH)/libsteam_api.* /usr/lib
 	
 .SUFFIXES : .cpp .o
 
