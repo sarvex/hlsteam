@@ -1,9 +1,9 @@
 package steam;
 
 typedef NetworkApi = {
-	private function onConnectionRequest( u : User ) : Bool;
-	private function onConnectionError( u : User, error : NetworkStatus ) : Void;
-	private function onData( u : User, data : haxe.io.Bytes ) : Void;
+	function onConnectionRequest( u : User ) : Bool;
+	function onConnectionError( u : User, error : NetworkStatus ) : Void;
+	function onData( u : User, data : haxe.io.Bytes ) : Void;
 }
 
 @:enum abstract NetworkStatus(Int) {
