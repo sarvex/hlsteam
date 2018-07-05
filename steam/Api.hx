@@ -248,6 +248,17 @@ class Api
 		return _IsOverlayEnabled();
 	}
 
+	public static function isDlcInstalled( appid : Int ) : Bool {
+		if( !active )
+			return false;
+		return _IsDlcInstalled(appid);
+	}
+
+	@:hlNative("steam","is_dlc_installed")
+	static function _IsDlcInstalled( appid : Int ) : Bool {
+		return false;
+	}
+
 	public static function BOverlayNeedsPresent() {
 		if (!active)
 			return false;

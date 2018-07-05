@@ -56,9 +56,15 @@ HL_PRIM void HL_NAME(activate_overlay_user)( vbyte *dialog, vuid uid ) {
 		SteamFriends()->ActivateGameOverlayToUser((char*)dialog,hl_to_uid(uid));
 }
 
+HL_PRIM void HL_NAME(activate_overlay_store)( int appid, int flag ) {
+	SteamFriends()->ActivateGameOverlayToStore((AppId_t)appid,(EOverlayToStoreFlag)flag);
+}
+
 DEFINE_PRIM(_BYTES, get_user_name, _UID);
 DEFINE_PRIM(_BYTES, get_user_avatar, _UID _I32 _REF(_I32) _REF(_I32));
 DEFINE_PRIM(_BOOL, request_user_information, _UID _BOOL);
 DEFINE_PRIM(_ARR, get_friends, _I32);
 DEFINE_PRIM(_BOOL, has_friend, _UID _I32);
 DEFINE_PRIM(_VOID, activate_overlay_user, _BYTES _UID);
+DEFINE_PRIM(_VOID, activate_overlay_store, _I32 _I32);
+

@@ -177,6 +177,10 @@ HL_PRIM vbyte *HL_NAME(get_current_game_language)(){
 	return (vbyte*)SteamApps()->GetCurrentGameLanguage();
 }
 
+HL_PRIM bool HL_NAME(is_dlc_installed)( int appid ) {
+	return SteamApps()->BIsDlcInstalled((AppId_t)appid);
+}
+
 vdynamic *CallbackHandler::EncodeAuthSessionTicketResponse(GetAuthSessionTicketResponse_t *d) {
 	HLValue ret;
 	ret.Set("authTicket", d->m_hAuthTicket);
@@ -199,6 +203,7 @@ HL_PRIM void HL_NAME(cancel_call_result)( CClosureCallResult<int> *m_call ) {
 DEFINE_PRIM(_UID, get_steam_id, _NO_ARG);
 DEFINE_PRIM(_BOOL, restart_app_if_necessary, _I32);
 DEFINE_PRIM(_BOOL, is_overlay_enabled, _NO_ARG);
+DEFINE_PRIM(_BOOL, is_dlc_installed, _I32);
 DEFINE_PRIM(_BOOL, boverlay_needs_present, _NO_ARG);
 DEFINE_PRIM(_BOOL, is_steam_in_big_picture_mode, _NO_ARG);
 DEFINE_PRIM(_BOOL, is_steam_running, _NO_ARG);

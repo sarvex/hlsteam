@@ -70,6 +70,12 @@ package steam;
 	public function toString() return this;
 }
 
+@:enum abstract OverlayToStoreFlag(Int) {
+	var None = 0;
+	var AddToCart = 1;
+	var AddToCartAndShow = 2;
+}
+
 @:hlNative("steam")
 class Friends {
 
@@ -86,6 +92,8 @@ class Friends {
 	public static function activateOverlay( overlay : OverlayKind, ?uid : UID ) {
 		activate_overlay_user( overlay == None ? null : @:privateAccess overlay.toString().toUtf8(), uid);
 	}
+	
+	public static function activateOverlayStore( appId : Int, flags : OverlayToStoreFlag ) : Void {}
 
 	static function get_friends( flags : FriendFlags ) : hl.NativeArray<UID> { return null; }
 	static function has_friend( uid : UID, flags : FriendFlags ) : Bool { return false; }
