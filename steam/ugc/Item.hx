@@ -14,6 +14,8 @@ enum ItemState {
 class Item {
 
 	public var id : UID;
+	public static var downloadedCallbacks = new Array<Item->Void>();
+	public static var installedCallbacks = new Array<Item->Void>();
 
 	public static function fromInt( i : Int ){
 		var b = haxe.io.Bytes.alloc(8);
@@ -22,11 +24,19 @@ class Item {
 	}
 
 	public static function init( onDownloaded : Item -> Void, onInstalled : Item -> Void ){
+		downloadedCallbacks.push(onDownloaded);
+		installedCallbacks.push(onInstalled);
 		Api.registerGlobalEvent(3400 + 6, function(data:{file:UID}){
-			onDownloaded(new Item(data.file));
+			var item = new Item(data.file);
+			for( callback in downloadedCallbacks ){
+				callback(item);
+			}
 		});
 		Api.registerGlobalEvent(3400 + 5, function(data:{file:UID}){
-			onInstalled(new Item(data.file));
+			var item = new Item(data.file);
+			for( callback in installedCallbacks ){
+				callback(item);
+			}
 		});
 	}
 
