@@ -181,6 +181,14 @@ HL_PRIM bool HL_NAME(is_dlc_installed)( int appid ) {
 	return SteamApps()->BIsDlcInstalled((AppId_t)appid);
 }
 
+HL_PRIM vbyte *HL_NAME(get_current_beta_name)() {
+	static char name[1024];
+	if (!CheckInit()) return NULL;
+	if (!SteamApps()->GetCurrentBetaName(name, 1024))
+		return NULL;
+	return (vbyte*)name;
+}
+
 vdynamic *CallbackHandler::EncodeAuthSessionTicketResponse(GetAuthSessionTicketResponse_t *d) {
 	HLValue ret;
 	ret.Set("authTicket", d->m_hAuthTicket);
@@ -210,3 +218,4 @@ DEFINE_PRIM(_BOOL, is_steam_running, _NO_ARG);
 DEFINE_PRIM(_BYTES, get_current_game_language, _NO_ARG);
 DEFINE_PRIM(_BYTES, get_auth_ticket, _REF(_I32) _REF(_I32));
 DEFINE_PRIM(_VOID, cancel_call_result, _CRESULT);
+DEFINE_PRIM(_BYTES, get_current_beta_name, _NO_ARG);
