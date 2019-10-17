@@ -1,6 +1,3 @@
-/native/include/hl.h
-/native/include/steam/*.h
-/native/lib/*
 /native/obj
 /native/all_objs
 /native/*.pdb
@@ -13,14 +10,11 @@ temp/
 *.user
 /.vs
 /*.hl
-
+/sdk
 /ReleaseVS2013
-
 *.sdf
 /steam_appid.txt
-
 /example/gameserver.hl
-
 /example/steam_appid.txt
 /example/server.conf
 /x64
