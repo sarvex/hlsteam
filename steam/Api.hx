@@ -202,6 +202,11 @@ class Api
 		return l==null ? null : @:privateAccess String.fromUTF8(l);
 	}
 
+	public static function getCurrentBetaName():String {
+		var l = _GetCurrentBetaName();
+		return l == null ? null : @:privateAccess String.fromUTF8(l);
+	}
+
 	/**
 	 * Get a stat from steam as a float
 	 * Kinda awkwardly returns 0 on errors and uses 0 for checking success
@@ -496,6 +501,7 @@ class Api
 	@:hlNative("steam","get_current_game_language") private static function _GetCurrentGameLanguage() : hl.Bytes { return null; }
 	@:hlNative("steam","get_auth_ticket") private static function _GetAuthTicket( size : hl.Ref<Int>, authTicket : hl.Ref<Int> ) : hl.Bytes { return null; }
 	@:hlNative("steam","open_overlay") private static function _OpenOverlay( url : hl.Bytes ) : Bool { return false; }
+	@:hlNative("steam","get_current_beta_name") private static function _GetCurrentBetaName() : hl.Bytes { return null; }
 }
 
 class LeaderboardScore {
