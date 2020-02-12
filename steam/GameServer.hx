@@ -67,22 +67,22 @@ class GameServer {
 
 		var ucb = 100;
 		//SteamServersConnected_t
-		registerGlobalEvent(ucb + 1, function(_) {
+		registerGlobalEvent(ucb + 1, function(_:Dynamic) {
 			if( onLogin == null ) return;
 			registerGlobalEvent(ucb + 3, onDisconnected);
 			onLogin(true);
 			onLogin = null;
 		});
 		//SteamServerConnectFailure_t
-		registerGlobalEvent(ucb + 2, function(r) { if( onLogin == null ) return; customTrace("CONNECT FAILURE " + r); onLogin(false); onLogin = null; });
+		registerGlobalEvent(ucb + 2, function(r:Dynamic) { if( onLogin == null ) return; customTrace("CONNECT FAILURE " + r); onLogin(false); onLogin = null; });
 		//SteamServersDisconnected_t
-		registerGlobalEvent(ucb + 3, function(r) { if( onLogin == null ) return; customTrace("CONNECT FAILURE " + r); onLogin(false); onLogin = null; });
-		registerGlobalEvent(ucb + 15, function(_) { /* ignore VAC flag */ });
+		registerGlobalEvent(ucb + 3, function(r:Dynamic) { if( onLogin == null ) return; customTrace("CONNECT FAILURE " + r); onLogin(false); onLogin = null; });
+		registerGlobalEvent(ucb + 15, function(_:Dynamic) { /* ignore VAC flag */ });
 
 		gameserver_logon_anonymous();
 	}
 
-	static function onDisconnected(_) {
+	static function onDisconnected(_:Dynamic) {
 		customTrace("Gameserver disconnected, retrying...");
 		logonAnonymous(function(b) {
 			if( b ) {
