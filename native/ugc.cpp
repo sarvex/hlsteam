@@ -372,9 +372,13 @@ static void on_item_updated(vclosure *c, SubmitItemUpdateResult_t *result, bool 
 		dyn_call_result(c, &d, error);
 	}
 	else {
-		dyn_call_result(c, NULL, true);
+		vdynamic d;
+		d.t = &hlt_i32;
+		d.v.i = result->m_eResult;
+		dyn_call_result(c, &d, true);
 	}
 }
+
 HL_PRIM CClosureCallResult<SubmitItemUpdateResult_t>* HL_NAME(ugc_item_submit_update)(vuid updateHandle, vbyte *changeNotes, vclosure *closure){
 	if (!CheckInit() || updateHandle == NULL) return NULL;
 

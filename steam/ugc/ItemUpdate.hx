@@ -16,7 +16,7 @@ class ItemUpdate {
 		id = updId;
 	}
 
-	public function submit( notes : String, cb : Bool -> Bool -> Void ){
+	public function submit( notes : String, cb : Bool -> Dynamic -> Void ){
 		return ugc_item_submit_update(id,@:privateAccess notes.toUtf8(), function(needsAgreement,error) cb(!error,needsAgreement));
 	}
 
