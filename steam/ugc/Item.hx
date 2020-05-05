@@ -100,7 +100,23 @@ class Item {
 	public function toString(){
 		return 'UGCItem($id)';
 	}
+	
+	public function delete( cb : Int -> Bool -> Void ) {
+		return delete_item(id, cb);
+	}
+	
+	public function addAppDependency( appId : Int, cb : Int -> Bool -> Void ) {
+		return add_app_dependency(id, appId, cb);
+	}
 
+	public function removeAppDependency( appId : Int, cb : Int -> Bool -> Void ) {
+		return remove_app_dependency(id, appId, cb);
+	}
+
+	public function getAppDependencies( cb : { result : Int, deps : hl.NativeArray<Int> } -> Bool -> Void ) {
+		return get_app_dependencies(id, cb);
+	}
+	
 
 	// -- native
 
@@ -136,6 +152,21 @@ class Item {
 		return null;
 	}
 
+	static function delete_item( item : UID, cb : Callback<Int> ) : AsyncCall {
+		return null;
+	}
+
+	static function add_app_dependency( item : UID, appId : Int, cb : Callback<Int> ) : AsyncCall {
+		return null;
+	}
+
+	static function remove_app_dependency( item : UID, appId : Int, cb : Callback<Int> ) : AsyncCall {
+		return null;
+	}
+	
+	static function get_app_dependencies( item : UID, cb : Callback<Dynamic> ) : AsyncCall {
+		return null;
+	}
 
 }
 

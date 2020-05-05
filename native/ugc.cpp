@@ -111,6 +111,62 @@ HL_PRIM CClosureCallResult<RemoteStorageSubscribePublishedFileResult_t>* HL_NAME
 	return m_call;
 }
 
+static void on_item_deleted(vclosure *c, DeleteItemResult_t *result, bool error) {
+	vdynamic d;
+	d.t = &hlt_i32;
+	d.v.i = result->m_eResult;
+	dyn_call_result(c, &d, error);
+}
+
+HL_PRIM CClosureCallResult<DeleteItemResult_t>* HL_NAME(delete_item)(vuid updateHandle, vclosure *closure){
+	if (!CheckInit() || updateHandle == NULL) return NULL;
+	ASYNC_CALL(SteamUGC()->DeleteItem(hl_to_uint64(updateHandle)), DeleteItemResult_t, on_item_deleted);
+	return m_call;
+}
+
+static void on_app_added(vclosure *c, AddAppDependencyResult_t *result, bool error) {
+	vdynamic d;
+	d.t = &hlt_i32;
+	d.v.i = result->m_eResult;
+	dyn_call_result(c, &d, error);
+}
+
+HL_PRIM CClosureCallResult<AddAppDependencyResult_t>* HL_NAME(add_app_dependency)(vuid updateHandle, int appId, vclosure *closure){
+	if (!CheckInit() || updateHandle == NULL) return NULL;
+	ASYNC_CALL(SteamUGC()->AddAppDependency(hl_to_uint64(updateHandle), appId), AddAppDependencyResult_t, on_app_added);
+	return m_call;
+}
+
+static void on_app_removed(vclosure *c, RemoveAppDependencyResult_t *result, bool error) {
+	vdynamic d;
+	d.t = &hlt_i32;
+	d.v.i = result->m_eResult;
+	dyn_call_result(c, &d, error);
+}
+
+HL_PRIM CClosureCallResult<RemoveAppDependencyResult_t>* HL_NAME(remove_app_dependency)(vuid updateHandle, int appId, vclosure *closure){
+	if (!CheckInit() || updateHandle == NULL) return NULL;
+	ASYNC_CALL(SteamUGC()->RemoveAppDependency(hl_to_uint64(updateHandle), appId), RemoveAppDependencyResult_t, on_app_removed);
+	return m_call;
+}
+
+static void on_app_dependencies(vclosure *c, GetAppDependenciesResult_t *result, bool error) {
+	HLValue ret;
+	int count = result->m_nNumAppDependencies;
+	varray *deps = hl_alloc_array(&hlt_i32,count);
+	int i;
+	for(i=0;i<count;i++)
+		hl_aptr(deps,int)[i] = result->m_rgAppIDs[i];
+	ret.Set("result", result->m_eResult);
+	ret.Set("deps", (vdynamic*)deps);
+	dyn_call_result(c, ret.value, error);
+}
+
+HL_PRIM CClosureCallResult<GetAppDependenciesResult_t>* HL_NAME(get_app_dependencies)(vuid updateHandle, vclosure *closure){
+	if (!CheckInit() || updateHandle == NULL) return NULL;
+	ASYNC_CALL(SteamUGC()->GetAppDependencies(hl_to_uint64(updateHandle)), GetAppDependenciesResult_t, on_app_dependencies);
+	return m_call;
+}
 
 DEFINE_PRIM(_ARR, get_subscribed_items, _NO_ARG);
 DEFINE_PRIM(_I32, get_item_state, _UID);
@@ -119,6 +175,10 @@ DEFINE_PRIM(_BOOL, download_item, _UID _BOOL);
 DEFINE_PRIM(_DYN, get_item_install_info, _UID);
 DEFINE_PRIM(_CRESULT, subscribe_item, _UID _CALLB(_UID));
 DEFINE_PRIM(_CRESULT, unsubscribe_item, _UID _CALLB(_UID));
+DEFINE_PRIM(_CRESULT, delete_item, _UID _CALLB(_I32));
+DEFINE_PRIM(_CRESULT, add_app_dependency, _UID _I32 _CALLB(_I32));
+DEFINE_PRIM(_CRESULT, remove_app_dependency, _UID _I32 _CALLB(_I32));
+DEFINE_PRIM(_CRESULT, get_app_dependencies, _UID _CALLB(_DYN));
 
 //-----------------------------------------------------------------------------------------------------------
 // UGC QUERY
@@ -441,7 +501,6 @@ HL_PRIM bool HL_NAME(ugc_item_set_preview_image)(vuid updateHandle, vbyte *path)
 	if (!CheckInit() || updateHandle == NULL) return false;
 	return SteamUGC()->SetItemPreview(hl_to_uint64(updateHandle), (char*)path);
 }
-
 
 DEFINE_PRIM(_CRESULT, ugc_item_create, _I32 _CALLB(_DYN));
 DEFINE_PRIM(_UID, ugc_item_start_update, _I32 _UID);
