@@ -17,7 +17,7 @@ class ItemUpdate {
 	}
 
 	public function submit( notes : String, cb : Bool -> Dynamic -> Void ){
-		return ugc_item_submit_update(id,@:privateAccess notes == null ? null : notes.toUtf8(), function(needsAgreement,error) cb(!error,needsAgreement));
+		return ugc_item_submit_update(id,notes == null ? null : @:privateAccess notes.toUtf8(), function(needsAgreement,error) cb(!error,needsAgreement));
 	}
 
 	public function setUpdateLanguage( lang : String ){
