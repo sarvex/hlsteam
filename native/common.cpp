@@ -181,6 +181,15 @@ HL_PRIM bool HL_NAME(is_dlc_installed)( int appid ) {
 	return SteamApps()->BIsDlcInstalled((AppId_t)appid);
 }
 
+HL_PRIM vbyte *HL_NAME(get_app_install_dir)(int app_id) {
+	vbyte *install_dir = hl_alloc_bytes(1024);
+	int r = SteamApps()->GetAppInstallDir(app_id, (char*)install_dir, 1024);
+	if (r)
+		return install_dir;
+	else
+		return NULL;
+}
+
 HL_PRIM vbyte *HL_NAME(get_current_beta_name)() {
 	static char name[1024];
 	if (!CheckInit()) return NULL;
@@ -208,10 +217,32 @@ HL_PRIM void HL_NAME(cancel_call_result)( CClosureCallResult<int> *m_call ) {
 	delete m_call;
 }
 
+HL_PRIM bool HL_NAME(is_app_installed)(int app_id)
+{
+	return SteamApps()->BIsAppInstalled(app_id);
+}
+
+HL_PRIM bool HL_NAME(is_app_owned)(int app_id)
+{
+	ISteamAppTicket* SteamAppTicket = (ISteamAppTicket*)SteamClient()->GetISteamGenericInterface(SteamAPI_GetHSteamUser(), SteamAPI_GetHSteamPipe(), STEAMAPPTICKET_INTERFACE_VERSION);
+	if (SteamAppTicket == NULL) {
+		return false;
+	}
+
+	char buffer[256];
+	uint32 iAppID;
+	uint32 iSteamID;
+	uint32 iSignature;
+	uint32 cbSignature;
+	uint32 ret = SteamAppTicket->GetAppOwnershipTicketData(app_id, buffer, 256, &iAppID, &iSteamID, &iSignature, &cbSignature);
+	return ret != 0;
+}
+
 DEFINE_PRIM(_UID, get_steam_id, _NO_ARG);
 DEFINE_PRIM(_BOOL, restart_app_if_necessary, _I32);
 DEFINE_PRIM(_BOOL, is_overlay_enabled, _NO_ARG);
 DEFINE_PRIM(_BOOL, is_dlc_installed, _I32);
+DEFINE_PRIM(_BYTES, get_app_install_dir, _I32);
 DEFINE_PRIM(_BOOL, boverlay_needs_present, _NO_ARG);
 DEFINE_PRIM(_BOOL, is_steam_in_big_picture_mode, _NO_ARG);
 DEFINE_PRIM(_BOOL, is_steam_running, _NO_ARG);
@@ -219,3 +250,5 @@ DEFINE_PRIM(_BYTES, get_current_game_language, _NO_ARG);
 DEFINE_PRIM(_BYTES, get_auth_ticket, _REF(_I32) _REF(_I32));
 DEFINE_PRIM(_VOID, cancel_call_result, _CRESULT);
 DEFINE_PRIM(_BYTES, get_current_beta_name, _NO_ARG);
+DEFINE_PRIM(_BOOL, is_app_installed, _I32);
+DEFINE_PRIM(_BOOL, is_app_owned, _I32);

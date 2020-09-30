@@ -264,6 +264,28 @@ class Api
 		return false;
 	}
 
+	@:hlNative("steam","get_app_install_dir")
+	static function _GetAppInstallDir( appid : Int ) : hl.Bytes {
+		return null;
+	}
+
+	public static function getAppInstallDir( appid : Int ) : String {
+		var dir = _GetAppInstallDir(appid);
+		if(dir == null)
+			return null;
+		return @:privateAccess String.fromUTF8(dir);
+	}
+	
+	@:hlNative("steam","is_app_owned")
+	public static function isAppOwned( appid : Int ) : Bool {
+		return false;
+	}
+		
+	@:hlNative("steam","is_app_installed")
+	public static function isAppInstalled( appid : Int ) : Bool {
+		return false;
+	}
+	
 	public static function BOverlayNeedsPresent() {
 		if (!active)
 			return false;
