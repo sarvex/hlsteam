@@ -13,6 +13,7 @@
 
 #include <steam/steam_api.h>
 #include <steam/steam_gameserver.h>
+#include <steam/isteamappticket.h>
 
 typedef vbyte *		vuid;
 #define _UID		_BYTES
