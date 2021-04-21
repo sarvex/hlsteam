@@ -238,6 +238,86 @@ HL_PRIM bool HL_NAME(is_app_owned)(int app_id)
 	return ret != 0;
 }
 
+class EncryptedAppTicketRequest
+{
+private:
+	CCallResult< EncryptedAppTicketRequest, EncryptedAppTicketResponse_t > m_EncryptedAppTicketResponseCallResult;
+	vclosure* m_callback;
+
+public:
+
+	EncryptedAppTicketRequest(vclosure* cb, void* data, int data_size)
+	{
+		m_callback = cb;
+		if (m_callback == nullptr)
+			return;
+		hl_add_root(&m_callback);
+		SteamAPICall_t steamCb = SteamUser()->RequestEncryptedAppTicket(data, data_size);
+		m_EncryptedAppTicketResponseCallResult.Set(steamCb, this, &EncryptedAppTicketRequest::OnResponse);
+	}
+
+	~EncryptedAppTicketRequest()
+	{
+		if (m_callback != nullptr)
+		{
+			hl_remove_root(&m_callback);
+		}
+	}
+
+	void OnResponse(EncryptedAppTicketResponse_t *response, bool bIOFailure)
+	{
+		vbyte* ticket = nullptr;
+		uint32 size = 0;
+		if (bIOFailure)
+		{
+			printf("[HLSTEAM] RequestEncryptedAppTicket : failure\n");
+		}
+		else
+		{
+			switch (response->m_eResult)
+			{
+			case k_EResultOK:
+				ticket = hl_alloc_bytes(1024);
+				if (!SteamUser()->GetEncryptedAppTicket((uint32*) ticket, 1024, &size))
+				{
+					printf("[HLSTEAM] GetEncryptedAppTicket : failure\n");
+					ticket = nullptr;
+					size = 0;
+				}
+				printf("size: %d\n", size);
+				break;
+			case k_EResultNoConnection:
+				printf("[HLSTEAM] RequestEncryptedAppTicket : no connection\n");
+				break;
+			case k_EResultDuplicateRequest:
+				printf("[HLSTEAM] RequestEncryptedAppTicket : duplicate request\n");
+				break;
+			case k_EResultLimitExceeded:
+				printf("[HLSTEAM] RequestEncryptedAppTicket : limit exceeded\n");
+				break;
+			}
+		}
+
+		vdynamic hl_ticket;
+		hl_ticket.t = &hlt_bytes;
+		hl_ticket.v.ptr = ticket;
+		vdynamic hl_size;
+		hl_size.t = &hlt_i32;
+		hl_size.v.i = (int) size;
+		vdynamic* args[2];
+		args[0] = &hl_ticket;
+		args[1] = &hl_size;
+
+		hl_dyn_call(m_callback, args, 2);
+		delete this;
+	}
+};
+
+HL_PRIM void HL_NAME(request_encrypted_app_ticket)(vbyte* data, int size, vclosure* cb)
+{
+	EncryptedAppTicketRequest *request = new EncryptedAppTicketRequest(cb, data, size);
+}
+
 DEFINE_PRIM(_UID, get_steam_id, _NO_ARG);
 DEFINE_PRIM(_BOOL, restart_app_if_necessary, _I32);
 DEFINE_PRIM(_BOOL, is_overlay_enabled, _NO_ARG);
@@ -248,6 +328,7 @@ DEFINE_PRIM(_BOOL, is_steam_in_big_picture_mode, _NO_ARG);
 DEFINE_PRIM(_BOOL, is_steam_running, _NO_ARG);
 DEFINE_PRIM(_BYTES, get_current_game_language, _NO_ARG);
 DEFINE_PRIM(_BYTES, get_auth_ticket, _REF(_I32) _REF(_I32));
+DEFINE_PRIM(_VOID, request_encrypted_app_ticket, _BYTES _I32 _FUN(_VOID, _BYTES _I32));
 DEFINE_PRIM(_VOID, cancel_call_result, _CRESULT);
 DEFINE_PRIM(_BYTES, get_current_beta_name, _NO_ARG);
 DEFINE_PRIM(_BOOL, is_app_installed, _I32);

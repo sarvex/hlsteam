@@ -405,6 +405,17 @@ class Api
 		return ticket.toBytes(size);
 	}
 
+	public static function getEncryptedAppTicket(data : haxe.io.Bytes, onReady : haxe.io.Bytes->Void ) : Void {
+		var hlb = data != null ? hl.Bytes.fromBytes(data) : null;
+		var len = data != null ? data.length : 0;
+		_RequestEncryptedAppTicket(hlb, len, function(rd : hl.Bytes, rds : Int) {
+			if(onReady == null)
+				return;
+			var d = rd != null ? rd.toBytes(rds) : null;
+			onReady(d);
+		});
+	}
+
 	//PRIVATE:
 
 	private static var haveGlobalStats:Bool;
@@ -522,6 +533,7 @@ class Api
 	@:hlNative("steam","is_steam_running") private static function _IsSteamRunning() : Bool { return false; }
 	@:hlNative("steam","get_current_game_language") private static function _GetCurrentGameLanguage() : hl.Bytes { return null; }
 	@:hlNative("steam","get_auth_ticket") private static function _GetAuthTicket( size : hl.Ref<Int>, authTicket : hl.Ref<Int> ) : hl.Bytes { return null; }
+	@:hlNative("?steam","request_encrypted_app_ticket") private static function _RequestEncryptedAppTicket( data : hl.Bytes, size : Int, encryptedAppTicket : (hl.Bytes, Int) -> Void ) : Void { return; }
 	@:hlNative("steam","open_overlay") private static function _OpenOverlay( url : hl.Bytes ) : Bool { return false; }
 	@:hlNative("steam","get_current_beta_name") private static function _GetCurrentBetaName() : hl.Bytes { return null; }
 }
