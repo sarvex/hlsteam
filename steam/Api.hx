@@ -264,7 +264,7 @@ class Api
 		return false;
 	}
 
-	@:hlNative("steam","get_app_install_dir")
+	@:hlNative("?steam","get_app_install_dir")
 	static function _GetAppInstallDir( appid : Int ) : hl.Bytes {
 		return null;
 	}
@@ -276,12 +276,12 @@ class Api
 		return @:privateAccess String.fromUTF8(dir);
 	}
 	
-	@:hlNative("steam","is_app_owned")
+	@:hlNative("?steam","is_app_owned")
 	public static function isAppOwned( appid : Int ) : Bool {
 		return false;
 	}
 		
-	@:hlNative("steam","is_app_installed")
+	@:hlNative("?steam","is_app_installed")
 	public static function isAppInstalled( appid : Int ) : Bool {
 		return false;
 	}
