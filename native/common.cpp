@@ -238,6 +238,21 @@ HL_PRIM bool HL_NAME(is_app_owned)(int app_id)
 	return ret != 0;
 }
 
+HL_PRIM bool HL_NAME(is_subscribed)()
+{
+	return SteamApps()->BIsSubscribed();
+}
+
+HL_PRIM bool HL_NAME(is_subscribed_from_family_sharing)()
+{
+	return SteamApps()->BIsSubscribedFromFamilySharing();
+}
+
+HL_PRIM bool HL_NAME(is_subscribed_from_free_weekend)()
+{
+	return SteamApps()->BIsSubscribedFromFreeWeekend();
+}
+
 class EncryptedAppTicketRequest
 {
 private:
@@ -333,3 +348,6 @@ DEFINE_PRIM(_VOID, cancel_call_result, _CRESULT);
 DEFINE_PRIM(_BYTES, get_current_beta_name, _NO_ARG);
 DEFINE_PRIM(_BOOL, is_app_installed, _I32);
 DEFINE_PRIM(_BOOL, is_app_owned, _I32);
+DEFINE_PRIM(_BOOL, is_subscribed, _BOOL);
+DEFINE_PRIM(_BOOL, is_subscribed_from_family_sharing, _BOOL);
+DEFINE_PRIM(_BOOL, is_subscribed_from_free_weekend, _BOOL);

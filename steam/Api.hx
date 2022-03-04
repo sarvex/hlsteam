@@ -536,6 +536,9 @@ class Api
 	@:hlNative("?steam","request_encrypted_app_ticket") private static function _RequestEncryptedAppTicket( data : hl.Bytes, size : Int, encryptedAppTicket : (hl.Bytes, Int) -> Void ) : Void { return; }
 	@:hlNative("steam","open_overlay") private static function _OpenOverlay( url : hl.Bytes ) : Bool { return false; }
 	@:hlNative("steam","get_current_beta_name") private static function _GetCurrentBetaName() : hl.Bytes { return null; }
+	@:hlNative("steam","is_subscribed") public static function IsSubscribed() : Bool { return false; }
+	@:hlNative("steam","is_subscribed_from_family_sharing") public static function IsSubscribedFromFamilySharing() : Bool { return null; }
+	@:hlNative("steam","is_subscribed_from_free_weekend") public static function IsSubscribedFromFreeWeekend() : Bool { return null; }
 }
 
 class LeaderboardScore {
