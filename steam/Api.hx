@@ -537,8 +537,8 @@ class Api
 	@:hlNative("steam","open_overlay") private static function _OpenOverlay( url : hl.Bytes ) : Bool { return false; }
 	@:hlNative("steam","get_current_beta_name") private static function _GetCurrentBetaName() : hl.Bytes { return null; }
 	@:hlNative("steam","is_subscribed") public static function isSubscribed() : Bool { return false; }
-	@:hlNative("steam","is_subscribed_from_family_sharing") public static function isSubscribedFromFamilySharing() : Bool { return false; }
-	@:hlNative("steam","is_subscribed_from_free_weekend") public static function isSubscribedFromFreeWeekend() : Bool { return false; }
+	@:hlNative("?steam","is_subscribed_from_family_sharing") public static function isSubscribedFromFamilySharing() : Bool { return false; }
+	@:hlNative("?steam","is_subscribed_from_free_weekend") public static function isSubscribedFromFreeWeekend() : Bool { return false; }
 }
 
 class LeaderboardScore {
